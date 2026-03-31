@@ -692,7 +692,6 @@
         <div class="stat-card"><div class="stat-value" id="statPaid">-</div><div class="stat-label">Paid</div></div>
         <div class="stat-card"><div class="stat-value" id="statProduction">-</div><div class="stat-label">In Production</div></div>
         <div class="stat-card"><div class="stat-value" id="statShipped">-</div><div class="stat-label">Shipped</div></div>
-        <div class="stat-card"><div class="stat-value" id="statRevenue">-</div><div class="stat-label">Revenue</div></div>
       </div>
 
       <div class="section-header">
@@ -1075,13 +1074,11 @@ function updateStats() {
   const paid = allOrders.filter(o => o.fulfillment.status === 'paid').length;
   const prod = allOrders.filter(o => o.fulfillment.status === 'in_production').length;
   const shipped = allOrders.filter(o => o.fulfillment.status === 'shipped' || o.fulfillment.status === 'delivered').length;
-  const revenue = allOrders.reduce((sum, o) => sum + o.amount, 0);
 
   document.getElementById('statTotal').textContent = total;
   document.getElementById('statPaid').textContent = paid;
   document.getElementById('statProduction').textContent = prod;
   document.getElementById('statShipped').textContent = shipped;
-  document.getElementById('statRevenue').textContent = '$' + (revenue / 100).toLocaleString('en-CA', { minimumFractionDigits: 0 });
 }
 
 // ============ RENDER ORDERS ============
