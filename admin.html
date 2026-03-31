@@ -1229,6 +1229,16 @@
                 }
 
                 const data = await response.json();
+
+                if (data.error) {
+                    document.getElementById('ordersTableBody').innerHTML = `<tr><td colspan="5" style="text-align:center; padding:2rem; color:var(--red);">API Error: ${data.error}${data.detail ? ' — ' + data.detail : ''}${data.message ? ' — ' + data.message : ''}</td></tr>`;
+                    return;
+                }
+
+                if (data.debug) {
+                    console.log('Orders debug:', data.debug);
+                }
+
                 allOrders = (data.orders || []).map(o => ({
                     id: o.id,
                     amount: (o.amount || 0) / 100,
