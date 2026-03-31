@@ -1246,6 +1246,7 @@
                     created: o.created,
                     customer_name: o.customer_name || '',
                     customer_email: o.customer_email || '',
+                    product_name: o.product_name || '',
                     metadata: o.metadata || {},
                     status: (o.fulfillment && o.fulfillment.status) || 'paid',
                     fulfillment: o.fulfillment || {}
@@ -1269,9 +1270,7 @@
 
             tbody.innerHTML = filtered.map(order => {
                 const date = new Date(order.created * 1000).toLocaleDateString();
-                const size = order.metadata.size || '';
-                const leather = order.metadata.leather || '';
-                const product = [size, leather].filter(Boolean).join(' \u2022 ') || 'Journal';
+                const product = order.product_name || [order.metadata.size, order.metadata.leather].filter(Boolean).join(' \u2022 ') || 'Journal';
                 const statusLabel = order.status.replace(/_/g, ' ').toUpperCase();
                 return `
                 <tr onclick="viewOrder('${order.id}')">
@@ -1388,9 +1387,8 @@
                 const status = ff.status || 'paid';
 
                 // Populate header
-                const size = meta.size || '';
-                const leather = meta.leather || '';
-                document.getElementById('orderProductName').textContent = [size, leather].filter(Boolean).join(' \u2022 ') || 'Kass Kreative Journal';
+                const productName = order.product_name || [meta.size, meta.leather].filter(Boolean).join(' \u2022 ') || 'Kass Kreative Journal';
+                document.getElementById('orderProductName').textContent = productName;
                 document.getElementById('orderID').textContent = `Order ID: #${order.id}`;
 
                 const statusBadge = document.getElementById('orderStatusBadge');
@@ -1402,10 +1400,17 @@
                 document.getElementById('customerEmail').textContent = order.customer_email || '\u2014';
                 document.getElementById('customerPhone').textContent = order.customer_phone || '\u2014';
 
-                // Shipping address
+                // Shipping address — handle multiple Stripe field formats
                 const sa = order.shipping_address;
                 if (sa && sa.address) {
-                    const parts = [sa.address.line1, sa.address.line2, [sa.address.city, sa.address.state, sa.address.postal_code].filter(Boolean).join(', '), sa.address.country].filter(Boolean);
+                    const addr = sa.address;
+                    const parts = [
+                        sa.name || '',
+                        addr.line1 || '',
+                        addr.line2 || '',
+                        [addr.city, addr.state || addr.province, addr.postal_code || addr.zip].filter(Boolean).join(', '),
+                        addr.country || ''
+                    ].filter(Boolean);
                     document.getElementById('shippingAddress').textContent = parts.join('\n');
                 } else {
                     document.getElementById('shippingAddress').textContent = '\u2014';
