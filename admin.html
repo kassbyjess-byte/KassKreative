@@ -571,6 +571,78 @@
       margin-top: 0.15rem;
     }
 
+    /* ============ SHIPPING ============ */
+    .shipping-section {
+      background: var(--cream);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      margin-top: 1.25rem;
+    }
+
+    .shipping-section h3 {
+      font-family: 'Inter', sans-serif;
+      font-size: 0.68rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-light);
+      margin-bottom: 0.75rem;
+    }
+
+    .rates-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      margin-top: 0.75rem;
+    }
+
+    .rate-option {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.85rem 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .rate-option:hover { border-color: var(--cognac); }
+    .rate-option.selected { border-color: var(--cognac); background: rgba(160,82,45,0.04); }
+
+    .rate-option .rate-service {
+      font-weight: 400;
+      font-size: 0.88rem;
+    }
+    .rate-option .rate-days {
+      font-size: 0.75rem;
+      color: var(--text-light);
+    }
+    .rate-option .rate-price {
+      font-weight: 500;
+      font-size: 0.95rem;
+      color: var(--cognac);
+    }
+
+    .label-result {
+      display: none;
+      background: var(--green-light);
+      border: 1px solid var(--green);
+      border-radius: 6px;
+      padding: 1rem;
+      margin-top: 1rem;
+    }
+    .label-result a {
+      color: var(--green);
+      font-weight: 500;
+      text-decoration: underline;
+    }
+    .label-result .tracking-info {
+      margin-top: 0.5rem;
+      font-size: 0.82rem;
+      color: var(--text-medium);
+    }
+
     /* ============ LOADING ============ */
     .spinner {
       display: inline-block;
@@ -885,6 +957,27 @@
 
           <div class="status-timeline" id="statusTimeline"></div>
         </div>
+
+        <!-- Shipping Section -->
+        <div class="shipping-section" id="shippingSection">
+          <h3>Shipping Label</h3>
+          <div id="shippingContent">
+            <button class="btn btn-secondary" onclick="handleGetRates()" id="getRatesBtn">Get Shipping Rates</button>
+          </div>
+          <div class="rates-list" id="ratesList" style="display:none;"></div>
+          <div style="margin-top:0.75rem; display:none;" id="buyLabelWrap">
+            <button class="btn btn-primary" onclick="handleBuyLabel()" id="buyLabelBtn">Purchase Label</button>
+          </div>
+          <div class="label-result" id="labelResult">
+            <p style="font-weight:500; color:var(--green); margin-bottom:0.25rem;">Label created!</p>
+            <a id="labelDownloadUrl" href="#" target="_blank">Download Label (PDF)</a>
+            <div class="tracking-info">
+              <span>Tracking: </span><strong id="labelTrackingNumber">—</strong>
+              <br><a id="labelTrackingUrl" href="#" target="_blank" style="font-size:0.78rem;">Track Package</a>
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
 
@@ -1199,6 +1292,27 @@ async function viewOrder(orderId) {
       timeline.innerHTML = '<div style="font-size:0.78rem;color:var(--text-light);padding:0.5rem 0 0 1rem;">No status history yet</div>';
     }
 
+    // Shipping section
+    selectedRateId = null;
+    document.getElementById('ratesList').style.display = 'none';
+    document.getElementById('buyLabelWrap').style.display = 'none';
+    document.getElementById('labelResult').style.display = 'none';
+    document.getElementById('getRatesBtn').style.display = 'inline-flex';
+
+    if (fulfillment.label_url) {
+      // Label already exists
+      document.getElementById('getRatesBtn').style.display = 'none';
+      document.getElementById('labelDownloadUrl').href = fulfillment.label_url;
+      document.getElementById('labelTrackingNumber').textContent = fulfillment.tracking || '—';
+      if (fulfillment.tracking_url) {
+        document.getElementById('labelTrackingUrl').href = fulfillment.tracking_url;
+        document.getElementById('labelTrackingUrl').style.display = 'inline';
+      } else {
+        document.getElementById('labelTrackingUrl').style.display = 'none';
+      }
+      document.getElementById('labelResult').style.display = 'block';
+    }
+
     showPage('orderDetail');
   } catch (err) {
     console.error('Failed to load order:', err);
@@ -1286,6 +1400,98 @@ function copyPaymentLink() {
     btn.textContent = 'Copied!';
     setTimeout(() => { btn.textContent = 'Copy Link'; }, 2000);
   });
+}
+
+// ============ SHIPPING ============
+let selectedRateId = null;
+
+async function handleGetRates() {
+  if (!currentOrderId) return;
+  const btn = document.getElementById('getRatesBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Getting rates...';
+
+  try {
+    const result = await apiFetch('/api/shipping/rates', {
+      method: 'POST',
+      body: JSON.stringify({ order_id: currentOrderId }),
+    });
+
+    if (result && result.rates && result.rates.length > 0) {
+      const ratesList = document.getElementById('ratesList');
+      ratesList.innerHTML = result.rates.map(r => `
+        <div class="rate-option" onclick="selectRate('${r.rate_id}', this)">
+          <div>
+            <div class="rate-service">${r.service}</div>
+            <div class="rate-days">${r.estimated_days ? r.estimated_days + ' business days' : 'Estimated delivery varies'}</div>
+          </div>
+          <div class="rate-price">$${parseFloat(r.amount).toFixed(2)} ${r.currency}</div>
+        </div>
+      `).join('');
+      ratesList.style.display = 'flex';
+      document.getElementById('buyLabelWrap').style.display = 'block';
+    } else {
+      alert('No shipping rates available. Check the shipping address.');
+      console.error(result);
+    }
+  } catch (err) {
+    alert('Failed to get rates.');
+    console.error(err);
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'Get Shipping Rates';
+}
+
+function selectRate(rateId, el) {
+  selectedRateId = rateId;
+  document.querySelectorAll('.rate-option').forEach(r => r.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+async function handleBuyLabel() {
+  if (!selectedRateId || !currentOrderId) {
+    alert('Please select a shipping rate first.');
+    return;
+  }
+
+  const btn = document.getElementById('buyLabelBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Creating label...';
+
+  try {
+    const result = await apiFetch('/api/shipping/label', {
+      method: 'POST',
+      body: JSON.stringify({ rate_id: selectedRateId, order_id: currentOrderId }),
+    });
+
+    if (result && result.success) {
+      document.getElementById('labelDownloadUrl').href = result.label_url;
+      document.getElementById('labelTrackingNumber').textContent = result.tracking_number || '—';
+      if (result.tracking_url) {
+        document.getElementById('labelTrackingUrl').href = result.tracking_url;
+        document.getElementById('labelTrackingUrl').style.display = 'inline';
+      } else {
+        document.getElementById('labelTrackingUrl').style.display = 'none';
+      }
+      document.getElementById('labelResult').style.display = 'block';
+      document.getElementById('ratesList').style.display = 'none';
+      document.getElementById('buyLabelWrap').style.display = 'none';
+      document.getElementById('getRatesBtn').style.display = 'none';
+
+      // Refresh order to update status/timeline
+      setTimeout(() => viewOrder(currentOrderId), 1000);
+    } else {
+      alert('Label creation failed. Check console for details.');
+      console.error(result);
+    }
+  } catch (err) {
+    alert('Failed to create label.');
+    console.error(err);
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'Purchase Label';
 }
 </script>
 
