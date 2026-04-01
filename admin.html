@@ -805,6 +805,7 @@
             background-color: var(--cognac-dark);
         }
     </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
 </head>
 <body>
     <!-- LOGIN PAGE -->
@@ -1640,7 +1641,48 @@
                     body: JSON.stringify({ label_url: labelUrl })
                 });
                 if (!res.ok) throw new Error('Failed to fetch');
-                const blob = await res.blob();
+                const pdfBytes = await res.arrayBuffer();
+
+                // Crop right half and resize to 4x6 for Phomemo PM-246S thermal printer
+                const { PDFDocument } = PDFLib;
+                const srcDoc = await PDFDocument.load(pdfBytes);
+                const srcPage = srcDoc.getPages()[0];
+                const { width: origW, height: origH } = srcPage.getSize();
+
+                // Crop to right half (past the "CUT HERE" line)
+                const cropLeft = (origW / 2) + 10;
+                const croppedW = origW - cropLeft;
+                const croppedH = origH;
+
+                // Target: 4x6 inches = 288x432 pts
+                const targetW = 288;
+                const targetH = 432;
+                const scale = Math.min(targetW / croppedW, targetH / croppedH);
+
+                // Create new 4x6 document
+                const newDoc = await PDFDocument.create();
+                const [embedded] = await newDoc.embedPages([srcPage], [{
+                    left: cropLeft,
+                    bottom: 0,
+                    right: origW,
+                    top: origH
+                }]);
+
+                const newPage = newDoc.addPage([targetW, targetH]);
+                const scaledW = croppedW * scale;
+                const scaledH = croppedH * scale;
+                const offsetX = (targetW - scaledW) / 2;
+                const offsetY = (targetH - scaledH) / 2;
+
+                newPage.drawPage(embedded, {
+                    x: offsetX,
+                    y: offsetY,
+                    width: scaledW,
+                    height: scaledH
+                });
+
+                const croppedPdf = await newDoc.save();
+                const blob = new Blob([croppedPdf], { type: 'application/pdf' });
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
@@ -1648,6 +1690,7 @@
                 a.click();
                 URL.revokeObjectURL(url);
             } catch (err) {
+                console.error('Label download error:', err);
                 alert('Failed to download label PDF. Please try again.');
             }
         }
