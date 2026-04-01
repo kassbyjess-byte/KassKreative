@@ -1643,16 +1643,21 @@
                 if (!res.ok) throw new Error('Failed to fetch');
                 const pdfBytes = await res.arrayBuffer();
 
-                // Crop right half and resize to 4x6 for Phomemo PM-246S thermal printer
+                // Crop to label content area and resize to 4x6 for Phomemo PM-246S thermal printer
                 const { PDFDocument } = PDFLib;
                 const srcDoc = await PDFDocument.load(pdfBytes);
                 const srcPage = srcDoc.getPages()[0];
                 const { width: origW, height: origH } = srcPage.getSize();
 
-                // Crop to right half (past the "CUT HERE" line)
-                const cropLeft = (origW / 2) + 10;
-                const croppedW = origW - cropLeft;
-                const croppedH = origH;
+                // Canada Post labels are 11"x8.5" landscape with label on right half
+                // Actual content starts ~1" right of center with ~1" top/bottom margins
+                // Tight crop to content area only (with small 5pt padding)
+                const cropLeft = (origW / 2) + 67;   // Just before content starts
+                const cropRight = origW - 34;          // Trim right margin
+                const cropBottom = 78;                  // Trim bottom margin
+                const cropTop = origH - 78;            // Trim top margin
+                const croppedW = cropRight - cropLeft;
+                const croppedH = cropTop - cropBottom;
 
                 // Target: 4x6 inches = 288x432 pts
                 const targetW = 288;
@@ -1663,9 +1668,9 @@
                 const newDoc = await PDFDocument.create();
                 const [embedded] = await newDoc.embedPages([srcPage], [{
                     left: cropLeft,
-                    bottom: 0,
-                    right: origW,
-                    top: origH
+                    bottom: cropBottom,
+                    right: cropRight,
+                    top: cropTop
                 }]);
 
                 const newPage = newDoc.addPage([targetW, targetH]);
