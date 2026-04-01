@@ -950,12 +950,10 @@
                                     <select id="leatherColourSelect" class="form-select">
                                         <option value="">Select Leather Colour</option>
                                         <option value="Chocolate Brown">Chocolate Brown</option>
-                                        <option value="Classic Tan">Classic Tan</option>
+                                        <option value="Forest Green">Forest Green</option>
+                                        <option value="Onyx Black">Onyx Black</option>
+                                        <option value="Ocean">Ocean</option>
                                         <option value="Cognac">Cognac</option>
-                                        <option value="Natural">Natural</option>
-                                        <option value="Black">Black</option>
-                                        <option value="Olive Green">Olive Green</option>
-                                        <option value="Navy Blue">Navy Blue</option>
                                         <option value="Burgundy">Burgundy</option>
                                     </select>
                                 </div>
@@ -963,11 +961,14 @@
                                     <label class="form-label">String Colour</label>
                                     <select id="stringColourSelect" class="form-select">
                                         <option value="">Select String Colour</option>
-                                        <option value="Natural">Natural</option>
-                                        <option value="Brown">Brown</option>
-                                        <option value="Black">Black</option>
-                                        <option value="Tan">Tan</option>
+                                        <option value="Baby Pink">Baby Pink</option>
                                         <option value="White">White</option>
+                                        <option value="Black">Black</option>
+                                        <option value="Forest Green">Forest Green</option>
+                                        <option value="Dark Blue">Dark Blue</option>
+                                        <option value="Burgundy">Burgundy</option>
+                                        <option value="Red">Red</option>
+                                        <option value="Lilac">Lilac</option>
                                     </select>
                                 </div>
                             </div>
@@ -1355,6 +1356,10 @@
                 btn.textContent = originalText;
                 btn.disabled = false;
             }
+        }
+
+        function createPaymentLink() {
+            document.getElementById('newOrderForm').requestSubmit();
         }
 
         function copyPaymentLink() {
