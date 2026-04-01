@@ -1612,8 +1612,9 @@
                     renderLabelResult(data);
                     loadOrderDetail();
                 } else {
-                    const details = data.details ? '\n\nDetails: ' + data.details.substring(0, 300) : '';
-                    alert('Label creation failed: ' + (data.error || 'Unknown error') + details);
+                    const details = data.details || '';
+                    console.error('Label creation error:', JSON.stringify(data));
+                    alert('Label creation failed:\n\n' + details);
                 }
             } catch (err) {
                 console.error('Error purchasing label:', err);
