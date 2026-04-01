@@ -1573,7 +1573,7 @@
                         <div class="rate-card-name">${rate.service}</div>
                         <div class="rate-card-price">$${parseFloat(rate.amount).toFixed(2)} ${rate.currency || 'CAD'}</div>
                     </div>
-                    <div class="rate-card-info">${rate.estimated_days ? rate.estimated_days + ' business days' : 'Est. days N/A'}</div>
+                    <div class="rate-card-info">${rate.estimated_days ? 'Delivery by ' + new Date(rate.estimated_days).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Estimated delivery N/A'}</div>
                 </div>
             `).join('');
 
