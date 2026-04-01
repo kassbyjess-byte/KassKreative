@@ -992,6 +992,22 @@
                                 <label class="form-label">Custom Description</label>
                                 <textarea id="customDescriptionInput" class="form-input" placeholder="Any additional notes or specifications..."></textarea>
                             </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">Shipping ($CAD)</label>
+                                    <input type="number" id="shippingInput" class="form-input" placeholder="0.00" min="0" step="0.01" value="" oninput="updateTotal()">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Duties & Taxes ($CAD)</label>
+                                    <input type="number" id="dutiesInput" class="form-input" placeholder="0.00" min="0" step="0.01" value="" oninput="updateTotal()">
+                                </div>
+                            </div>
+
+                            <div class="price-display" style="margin-top: 1rem;">
+                                <div class="price-label">Total (Journal + Shipping + Duties)</div>
+                                <div class="price-value" id="totalDisplay">$0</div>
+                            </div>
                         </div>
 
                         <div class="form-section">
@@ -1308,6 +1324,16 @@
             const size = document.getElementById('sizeSelect').value;
             const price = PRICES[size] || 0;
             document.getElementById('priceDisplay').textContent = price > 0 ? `$${price}` : '$0';
+            updateTotal();
+        }
+
+        function updateTotal() {
+            const size = document.getElementById('sizeSelect').value;
+            const price = PRICES[size] || 0;
+            const shipping = parseFloat(document.getElementById('shippingInput').value) || 0;
+            const duties = parseFloat(document.getElementById('dutiesInput').value) || 0;
+            const total = price + shipping + duties;
+            document.getElementById('totalDisplay').textContent = total > 0 ? `$${total.toFixed(2)}` : '$0';
         }
 
         async function handleCreateOrder(e) {
@@ -1319,6 +1345,8 @@
             const embossing = document.getElementById('embossingInput').value;
             const custom_description = document.getElementById('customDescriptionInput').value;
             const order_type = document.getElementById('orderTypeSelect').value;
+            const shipping = parseFloat(document.getElementById('shippingInput').value) || 0;
+            const duties = parseFloat(document.getElementById('dutiesInput').value) || 0;
 
             if (!size || !leather || !string_colour || !eyelet) {
                 alert('Please fill in all required fields');
@@ -1326,10 +1354,9 @@
             }
 
             const price = PRICES[size];
-            const btn = e.target.querySelector('button[type="submit"]');
-            const originalText = btn.textContent;
-            btn.textContent = 'CREATING...';
-            btn.disabled = true;
+            const btn = e.target.querySelector('button[type="button"]') || e.target.querySelector('button');
+            const originalText = btn ? btn.textContent : '';
+            if (btn) { btn.textContent = 'CREATING...'; btn.disabled = true; }
 
             try {
                 const token = localStorage.getItem('kass_token');
@@ -1339,7 +1366,7 @@
                         'Authorization': `Bearer ${token}`,
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({ size, price, leather, string_colour, eyelet, embossing, custom_description, order_type })
+                    body: JSON.stringify({ size, price, leather, string_colour, eyelet, embossing, custom_description, order_type, shipping, duties })
                 });
                 const data = await response.json();
 
@@ -1353,8 +1380,7 @@
                 console.error('Error creating order:', err);
                 alert('Failed to create payment link');
             } finally {
-                btn.textContent = originalText;
-                btn.disabled = false;
+                if (btn) { btn.textContent = originalText; btn.disabled = false; }
             }
         }
 
