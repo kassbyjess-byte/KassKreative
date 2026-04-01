@@ -1622,13 +1622,34 @@
             }
         }
 
+        async function downloadLabelViaProxy(labelUrl, trackingNumber) {
+            try {
+                const token = localStorage.getItem('kass_token');
+                const res = await fetch(`${API_BASE}/api/shipping/label-pdf`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ label_url: labelUrl })
+                });
+                if (!res.ok) throw new Error('Failed to fetch');
+                const blob = await res.blob();
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `shipping-label-${trackingNumber || 'label'}.pdf`;
+                a.click();
+                URL.revokeObjectURL(url);
+            } catch (err) {
+                alert('Failed to download label PDF. Please try again.');
+            }
+        }
+
         function renderLabelResult(data) {
             const resultEl = document.getElementById('labelResult');
             let labelLink = '';
             if (data.label_pdf) {
                 labelLink = `<a href="data:application/pdf;base64,${data.label_pdf}" download="shipping-label-${data.tracking_number || 'label'}.pdf" class="btn btn-primary btn-small">Download Label PDF</a>`;
             } else if (data.label_url) {
-                labelLink = `<a href="${data.label_url}" target="_blank">Download PDF</a>`;
+                labelLink = `<button onclick="downloadLabelViaProxy('${data.label_url}', '${data.tracking_number || ''}')" class="btn btn-primary btn-small">Download Label PDF</button>`;
             } else {
                 labelLink = 'Label not available';
             }
