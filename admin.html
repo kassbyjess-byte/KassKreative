@@ -1677,6 +1677,12 @@
 
         function renderExistingLabel(fulfillment) {
             const infoEl = document.getElementById('existingLabelInfo');
+            let labelLink = '';
+            if (fulfillment.label_url) {
+                labelLink = `<button onclick="downloadLabelViaProxy('${fulfillment.label_url}', '${fulfillment.tracking || ''}')" class="btn btn-primary btn-small">Download Label PDF</button>`;
+            } else {
+                labelLink = 'Label not available';
+            }
             infoEl.innerHTML = `
                 <div class="label-result">
                     <h4>Shipping Label</h4>
@@ -1687,7 +1693,7 @@
                         </div>
                         <div class="label-info-item">
                             <strong>Label:</strong>
-                            <a href="${fulfillment.label_url}" target="_blank">Download PDF</a>
+                            ${labelLink}
                         </div>
                         <div class="label-info-item">
                             <strong>Track Package:</strong>
