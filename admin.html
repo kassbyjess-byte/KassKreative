@@ -678,15 +678,24 @@
         .label-info-item {
             display: flex;
             justify-content: space-between;
+            align-items: center;
             font-size: 0.95rem;
+            flex-wrap: wrap;
+            gap: 0.5rem;
         }
 
         .label-info-item strong {
             color: var(--text-dark);
+            min-width: 140px;
         }
 
         .label-info-item a {
             color: var(--green);
+        }
+
+        .label-info-item .btn {
+            width: auto;
+            display: inline-block;
         }
 
         /* NEW ORDER PAGE */
