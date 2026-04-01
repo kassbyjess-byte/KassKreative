@@ -806,6 +806,11 @@
         }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script>
+        // Configure pdf.js worker
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    </script>
 </head>
 <body>
     <!-- LOGIN PAGE -->
@@ -1643,51 +1648,95 @@
                 if (!res.ok) throw new Error('Failed to fetch');
                 const pdfBytes = await res.arrayBuffer();
 
-                // Crop to label content area and resize to 4x6 for Phomemo PM-246S thermal printer
+                // === Rasterize right half of Canada Post label for Phomemo PM-246S ===
+                // Strategy: render the right half to a canvas image at 300 DPI,
+                // then embed that image into a clean 4x6 PDF.
+                // This produces the simplest possible PDF that thermal printers handle perfectly.
+
+                const DPI = 300;
+                const LABEL_W_IN = 4;
+                const LABEL_H_IN = 6;
+                const TARGET_W_PX = LABEL_W_IN * DPI;  // 1200
+                const TARGET_H_PX = LABEL_H_IN * DPI;  // 1800
+
+                // Load with pdf.js to render
+                const loadingTask = pdfjsLib.getDocument({ data: pdfBytes });
+                const pdfDoc = await loadingTask.promise;
+                const page = await pdfDoc.getPage(1);
+                const viewport = page.getViewport({ scale: 1.0 });
+
+                // Canada Post label is 11"x8.5" landscape (792x612 pts)
+                // Right half label content area:
+                // - starts ~55% from left (just past center dotted line)
+                // - extends to ~97% from left (small right margin)
+                // - top/bottom: ~12% margins
+                const origW = viewport.width;
+                const origH = viewport.height;
+
+                // Crop region in PDF points (matching the coordinates that worked in Python)
+                // These match the MediaBox from the working v3: x from 434.37 to 722.37, y from 73.89 to 505.89
+                const cropLeftPt = origW * 0.5485;   // ~434.4 for 792-wide page
+                const cropRightPt = origW * 0.9120;  // ~722.3
+                const cropTopPt = origH * 0.1207;    // ~73.9 (pdf.js y is from top)
+                const cropBottomPt = origH * 0.8268; // ~505.9
+
+                const cropWidthPt = cropRightPt - cropLeftPt;
+                const cropHeightPt = cropBottomPt - cropTopPt;
+
+                // Scale factor to render the crop region at target pixel size
+                const scaleX = TARGET_W_PX / cropWidthPt;
+                const scaleY = TARGET_H_PX / cropHeightPt;
+                const renderScale = Math.min(scaleX, scaleY);
+
+                // Render full page at high resolution
+                const renderViewport = page.getViewport({ scale: renderScale });
+
+                const canvas = document.createElement('canvas');
+                canvas.width = TARGET_W_PX;
+                canvas.height = TARGET_H_PX;
+                const ctx = canvas.getContext('2d');
+
+                // White background
+                ctx.fillStyle = '#FFFFFF';
+                ctx.fillRect(0, 0, TARGET_W_PX, TARGET_H_PX);
+
+                // Translate so the crop region maps to (0,0)
+                const offsetX = -cropLeftPt * renderScale;
+                const offsetY = -cropTopPt * renderScale;
+
+                // Center if there's a slight aspect ratio difference
+                const renderedCropW = cropWidthPt * renderScale;
+                const renderedCropH = cropHeightPt * renderScale;
+                const centerX = (TARGET_W_PX - renderedCropW) / 2;
+                const centerY = (TARGET_H_PX - renderedCropH) / 2;
+
+                ctx.translate(centerX + offsetX, centerY + offsetY);
+
+                await page.render({
+                    canvasContext: ctx,
+                    viewport: renderViewport
+                }).promise;
+
+                // Convert canvas to PNG blob
+                const imageBlob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+                const imageBytes = await imageBlob.arrayBuffer();
+
+                // Create clean 4x6 PDF with just the rasterized image
                 const { PDFDocument } = PDFLib;
-                const srcDoc = await PDFDocument.load(pdfBytes);
-                const srcPage = srcDoc.getPages()[0];
-                const { width: origW, height: origH } = srcPage.getSize();
-
-                // Canada Post labels are 11"x8.5" landscape with label on right half
-                // Actual content starts ~1" right of center with ~1" top/bottom margins
-                // Tight crop to content area only (with small 5pt padding)
-                const cropLeft = (origW / 2) + 67;   // Just before content starts
-                const cropRight = origW - 34;          // Trim right margin
-                const cropBottom = 78;                  // Trim bottom margin
-                const cropTop = origH - 78;            // Trim top margin
-                const croppedW = cropRight - cropLeft;
-                const croppedH = cropTop - cropBottom;
-
-                // Target: 4x6 inches = 288x432 pts
-                const targetW = 288;
-                const targetH = 432;
-                const scale = Math.min(targetW / croppedW, targetH / croppedH);
-
-                // Create new 4x6 document
                 const newDoc = await PDFDocument.create();
-                const [embedded] = await newDoc.embedPages([srcPage], [{
-                    left: cropLeft,
-                    bottom: cropBottom,
-                    right: cropRight,
-                    top: cropTop
-                }]);
+                const pngImage = await newDoc.embedPng(imageBytes);
 
-                const newPage = newDoc.addPage([targetW, targetH]);
-                const scaledW = croppedW * scale;
-                const scaledH = croppedH * scale;
-                const offsetX = (targetW - scaledW) / 2;
-                const offsetY = (targetH - scaledH) / 2;
-
-                newPage.drawPage(embedded, {
-                    x: offsetX,
-                    y: offsetY,
-                    width: scaledW,
-                    height: scaledH
+                // Page is exactly 4x6 inches (288x432 pts)
+                const newPage = newDoc.addPage([288, 432]);
+                newPage.drawImage(pngImage, {
+                    x: 0,
+                    y: 0,
+                    width: 288,
+                    height: 432
                 });
 
-                const croppedPdf = await newDoc.save();
-                const blob = new Blob([croppedPdf], { type: 'application/pdf' });
+                const finalPdf = await newDoc.save();
+                const blob = new Blob([finalPdf], { type: 'application/pdf' });
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
