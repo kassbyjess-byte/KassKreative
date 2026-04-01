@@ -1622,6 +1622,14 @@
 
         function renderLabelResult(data) {
             const resultEl = document.getElementById('labelResult');
+            let labelLink = '';
+            if (data.label_pdf) {
+                labelLink = `<a href="data:application/pdf;base64,${data.label_pdf}" download="shipping-label-${data.tracking_number || 'label'}.pdf" class="btn btn-primary btn-small">Download Label PDF</a>`;
+            } else if (data.label_url) {
+                labelLink = `<a href="${data.label_url}" target="_blank">Download PDF</a>`;
+            } else {
+                labelLink = 'Label not available';
+            }
             resultEl.innerHTML = `
                 <div class="label-result">
                     <h4>Shipping Label Created</h4>
@@ -1632,7 +1640,7 @@
                         </div>
                         <div class="label-info-item">
                             <strong>Label:</strong>
-                            <a href="${data.label_url}" target="_blank">Download PDF</a>
+                            ${labelLink}
                         </div>
                         <div class="label-info-item">
                             <strong>Track Package:</strong>
