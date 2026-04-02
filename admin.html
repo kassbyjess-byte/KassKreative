@@ -1652,10 +1652,12 @@
                 if (!res.ok) throw new Error('Failed to fetch');
                 const pdfBytes = await res.arrayBuffer();
 
-                // === Rasterize right half of Canada Post label for Phomemo PM-246S ===
-                // Strategy: render the right half to a canvas image at 300 DPI,
-                // then embed that image into a clean 4x6 PDF.
-                // This produces the simplest possible PDF that thermal printers handle perfectly.
+                // === Auto-detect & crop Canada Post label for Phomemo PM-246S (4x6) ===
+                // Strategy:
+                // 1. Render full page at preview resolution
+                // 2. Scan pixels to find actual content bounds (non-white area)
+                // 3. If 2-up layout detected (landscape page), isolate the right label
+                // 4. Re-render the label region at 300 DPI into a clean 4x6 PDF
 
                 const DPI = 300;
                 const LABEL_W_IN = 4;
@@ -1663,36 +1665,125 @@
                 const TARGET_W_PX = LABEL_W_IN * DPI;  // 1200
                 const TARGET_H_PX = LABEL_H_IN * DPI;  // 1800
 
-                // Load with pdf.js to render
+                // Load with pdf.js
                 const loadingTask = pdfjsLib.getDocument({ data: pdfBytes });
                 const pdfDoc = await loadingTask.promise;
                 const page = await pdfDoc.getPage(1);
                 const viewport = page.getViewport({ scale: 1.0 });
-
-                // Canada Post label is 11"x8.5" landscape (792x612 pts)
-                // Right half label content area:
-                // - starts ~55% from left (just past center dotted line)
-                // - extends to ~97% from left (small right margin)
-                // - top/bottom: ~12% margins
                 const origW = viewport.width;
                 const origH = viewport.height;
 
-                // Crop region in PDF points (matching the coordinates that worked in Python)
-                // These match the MediaBox from the working v3: x from 434.37 to 722.37, y from 73.89 to 505.89
-                const cropLeftPt = origW * 0.50;     // Start at center of page
-                const cropRightPt = origW * 0.995;   // Full right edge
-                const cropTopPt = origH * 0.02;      // Small top margin
-                const cropBottomPt = origH * 0.98;   // Small bottom margin
+                console.log(`[Label] Raw PDF page: ${origW} x ${origH} pts (${(origW/72).toFixed(1)}" x ${(origH/72).toFixed(1)}")`);
 
-                const cropWidthPt = cropRightPt - cropLeftPt;
-                const cropHeightPt = cropBottomPt - cropTopPt;
+                // Step 1: Render full page at preview scale to detect content bounds
+                const PREVIEW_SCALE = 2.0;  // ~144 DPI — enough for content detection
+                const prevViewport = page.getViewport({ scale: PREVIEW_SCALE });
+                const prevCanvas = document.createElement('canvas');
+                prevCanvas.width = prevViewport.width;
+                prevCanvas.height = prevViewport.height;
+                const prevCtx = prevCanvas.getContext('2d');
+                prevCtx.fillStyle = '#FFFFFF';
+                prevCtx.fillRect(0, 0, prevCanvas.width, prevCanvas.height);
+                await page.render({ canvasContext: prevCtx, viewport: prevViewport }).promise;
 
-                // Scale factor to render the crop region at target pixel size
+                // Step 2: Scan for non-white pixels to find content bounds
+                const imgData = prevCtx.getImageData(0, 0, prevCanvas.width, prevCanvas.height);
+                const pixels = imgData.data;
+                const pw = prevCanvas.width;
+                const ph = prevCanvas.height;
+                const WHITE_THRESHOLD = 245;  // pixels lighter than this are "white"
+
+                let minX = pw, maxX = 0, minY = ph, maxY = 0;
+                for (let y = 0; y < ph; y++) {
+                    for (let x = 0; x < pw; x++) {
+                        const i = (y * pw + x) * 4;
+                        if (pixels[i] < WHITE_THRESHOLD || pixels[i+1] < WHITE_THRESHOLD || pixels[i+2] < WHITE_THRESHOLD) {
+                            if (x < minX) minX = x;
+                            if (x > maxX) maxX = x;
+                            if (y < minY) minY = y;
+                            if (y > maxY) maxY = y;
+                        }
+                    }
+                }
+
+                console.log(`[Label] Content bounds (px @${PREVIEW_SCALE}x): x=${minX}-${maxX}, y=${minY}-${maxY}`);
+
+                // Convert pixel bounds back to PDF points
+                let contentLeft = minX / PREVIEW_SCALE;
+                let contentRight = maxX / PREVIEW_SCALE;
+                let contentTop = minY / PREVIEW_SCALE;
+                let contentBottom = maxY / PREVIEW_SCALE;
+
+                console.log(`[Label] Content bounds (pts): x=${contentLeft.toFixed(1)}-${contentRight.toFixed(1)}, y=${contentTop.toFixed(1)}-${contentBottom.toFixed(1)}`);
+
+                // Step 3: Determine if this is a 2-up layout
+                // Canada Post 2-up labels are landscape (~11"x8.5") with two labels side by side
+                // Single labels are portrait or already ~4x6
+                const isLandscape = origW > origH;
+                const contentWidth = contentRight - contentLeft;
+                const contentHeight = contentBottom - contentTop;
+
+                let cropLeft, cropRight, cropTop, cropBottom;
+
+                if (isLandscape && contentWidth > origW * 0.7) {
+                    // 2-up layout: content spans most of the page width
+                    // The shipping label is on the RIGHT half
+                    // Scan for the vertical gap/divider near the center
+                    const centerX = Math.round(pw / 2);
+                    let dividerX = centerX;
+
+                    // Scan columns near center to find the gap (column of mostly white pixels)
+                    const scanRange = Math.round(pw * 0.08);  // scan +/- 8% from center
+                    let bestGapX = centerX;
+                    let bestGapScore = 0;
+
+                    for (let x = centerX - scanRange; x <= centerX + scanRange; x++) {
+                        let whiteCount = 0;
+                        for (let y = Math.round(ph * 0.1); y < Math.round(ph * 0.9); y++) {
+                            const i = (y * pw + x) * 4;
+                            if (pixels[i] >= WHITE_THRESHOLD && pixels[i+1] >= WHITE_THRESHOLD && pixels[i+2] >= WHITE_THRESHOLD) {
+                                whiteCount++;
+                            }
+                        }
+                        if (whiteCount > bestGapScore) {
+                            bestGapScore = whiteCount;
+                            bestGapX = x;
+                        }
+                    }
+
+                    dividerX = bestGapX / PREVIEW_SCALE;
+                    console.log(`[Label] 2-up layout detected. Divider at ${dividerX.toFixed(1)} pts`);
+
+                    // Right label: from divider to right content edge, with small padding
+                    cropLeft = dividerX + 2;  // skip past the divider line
+                    cropRight = contentRight + 3;  // small padding
+                    cropTop = contentTop - 2;
+                    cropBottom = contentBottom + 2;
+                } else {
+                    // Single label layout: use the full content area with small padding
+                    console.log(`[Label] Single label layout detected.`);
+                    cropLeft = contentLeft - 2;
+                    cropRight = contentRight + 2;
+                    cropTop = contentTop - 2;
+                    cropBottom = contentBottom + 2;
+                }
+
+                // Clamp to page bounds
+                cropLeft = Math.max(0, cropLeft);
+                cropRight = Math.min(origW, cropRight);
+                cropTop = Math.max(0, cropTop);
+                cropBottom = Math.min(origH, cropBottom);
+
+                const cropWidthPt = cropRight - cropLeft;
+                const cropHeightPt = cropBottom - cropTop;
+
+                console.log(`[Label] Final crop (pts): x=${cropLeft.toFixed(1)}-${cropRight.toFixed(1)}, y=${cropTop.toFixed(1)}-${cropBottom.toFixed(1)} (${cropWidthPt.toFixed(1)} x ${cropHeightPt.toFixed(1)})`);
+
+                // Step 4: Render the cropped label at full DPI
                 const scaleX = TARGET_W_PX / cropWidthPt;
                 const scaleY = TARGET_H_PX / cropHeightPt;
                 const renderScale = Math.min(scaleX, scaleY);
 
-                // Render full page at high resolution
                 const renderViewport = page.getViewport({ scale: renderScale });
 
                 const canvas = document.createElement('canvas');
@@ -1704,17 +1795,15 @@
                 ctx.fillStyle = '#FFFFFF';
                 ctx.fillRect(0, 0, TARGET_W_PX, TARGET_H_PX);
 
-                // Translate so the crop region maps to (0,0)
-                const offsetX = -cropLeftPt * renderScale;
-                const offsetY = -cropTopPt * renderScale;
-
-                // Center if there's a slight aspect ratio difference
+                // Translate so the crop region maps to (0,0), centered
+                const offsetX = -cropLeft * renderScale;
+                const offsetY = -cropTop * renderScale;
                 const renderedCropW = cropWidthPt * renderScale;
                 const renderedCropH = cropHeightPt * renderScale;
-                const centerX = (TARGET_W_PX - renderedCropW) / 2;
-                const centerY = (TARGET_H_PX - renderedCropH) / 2;
+                const centerXOff = (TARGET_W_PX - renderedCropW) / 2;
+                const centerYOff = (TARGET_H_PX - renderedCropH) / 2;
 
-                ctx.translate(centerX + offsetX, centerY + offsetY);
+                ctx.translate(centerXOff + offsetX, centerYOff + offsetY);
 
                 await page.render({
                     canvasContext: ctx,
