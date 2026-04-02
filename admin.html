@@ -1628,7 +1628,11 @@
                     loadOrderDetail();
                 } else {
                     const details = data.details || '';
-                    console.error('Label creation error:', JSON.stringify(data));
+                    const xmlSent = data.xml_sent || '';
+                    console.error('=== LABEL CREATION ERROR ===');
+                    console.error('Full response:', JSON.stringify(data, null, 2));
+                    console.error('XML sent to Canada Post:', xmlSent);
+                    console.error('Full error details:', details);
                     alert('Label creation failed:\n\n' + details);
                 }
             } catch (err) {
