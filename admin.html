@@ -1679,10 +1679,10 @@
 
                 // Crop region in PDF points (matching the coordinates that worked in Python)
                 // These match the MediaBox from the working v3: x from 434.37 to 722.37, y from 73.89 to 505.89
-                const cropLeftPt = origW * 0.5485;   // ~434.4 for 792-wide page
-                const cropRightPt = origW * 0.9120;  // ~722.3
-                const cropTopPt = origH * 0.1207;    // ~73.9 (pdf.js y is from top)
-                const cropBottomPt = origH * 0.8268; // ~505.9
+                const cropLeftPt = origW * 0.50;     // Start at center of page
+                const cropRightPt = origW * 0.995;   // Full right edge
+                const cropTopPt = origH * 0.02;      // Small top margin
+                const cropBottomPt = origH * 0.98;   // Small bottom margin
 
                 const cropWidthPt = cropRightPt - cropLeftPt;
                 const cropHeightPt = cropBottomPt - cropTopPt;
