@@ -448,6 +448,11 @@
             color: var(--green);
         }
 
+        .status-local_pickup {
+            background-color: #fef3c7;
+            color: #92400e;
+        }
+
         /* FORMS */
         .form-row {
             display: grid;
@@ -1113,6 +1118,7 @@
                                     <option value="in_production">In Production</option>
                                     <option value="shipped">Shipped</option>
                                     <option value="delivered">Delivered</option>
+                                    <option value="local_pickup">Local Pickup</option>
                                 </select>
                             </div>
                             <div class="form-group">
@@ -1134,7 +1140,16 @@
 
                     <div class="shipping-section">
                         <h3>Shipping</h3>
-                        <button type="button" class="btn btn-primary btn-small" onclick="handleGetRates()">Get Shipping Rates</button>
+
+                        <div style="display: flex; gap: 1rem; align-items: center; margin-bottom: 1.5rem;">
+                            <button type="button" class="btn btn-primary btn-small" onclick="handleGetRates()" id="getRatesBtn">Get Shipping Rates</button>
+                            <span style="color: var(--text-light);">or</span>
+                            <button type="button" class="btn btn-secondary btn-small" onclick="markLocalPickup()" id="localPickupBtn">Local Pickup</button>
+                        </div>
+
+                        <div id="localPickupConfirm" style="display:none; margin-bottom: 1.5rem; padding: 1rem; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px;">
+                            <span style="font-weight: 600; color: #166534;">Local Pickup</span> — Order marked for customer pickup. No shipping label needed.
+                        </div>
 
                         <div id="ratesContainer" style="display:none; margin-top: 1.5rem;">
                             <div class="rate-cards" id="rateCards"></div>
@@ -1554,34 +1569,36 @@
                 }
 
                 journalSpecs.innerHTML = journalsList.map((j, i) => {
-                    const title = journalsList.length > 1 ? `<h3 style="margin-bottom: 0.75rem; color: var(--primary);">Journal ${i + 1}</h3>` : '';
+                    const title = journalsList.length > 1 ? `<h3 style="margin: 0 0 0.75rem 0; color: var(--primary);">Journal ${i + 1}</h3>` : '';
                     const wrapStyle = journalsList.length > 1 ? 'border: 1px solid var(--border); border-radius: 12px; padding: 1rem; margin-bottom: 1rem;' : '';
                     return `
-                    <div class="detail-grid journal-detail-edit" data-journal-detail-index="${i}" style="${wrapStyle}">
+                    <div class="journal-detail-edit" data-journal-detail-index="${i}" style="${wrapStyle}">
                         ${title}
-                        <div class="detail-card">
-                            <div class="detail-label">Size</div>
-                            ${makeSelect('jd-size', sizeOptions, j.size)}
-                        </div>
-                        <div class="detail-card">
-                            <div class="detail-label">Leather Colour</div>
-                            ${makeSelect('jd-leather', leatherOptions, j.leather)}
-                        </div>
-                        <div class="detail-card">
-                            <div class="detail-label">String Colour</div>
-                            ${makeSelect('jd-string', stringOptions, j.string_colour)}
-                        </div>
-                        <div class="detail-card">
-                            <div class="detail-label">Eyelet</div>
-                            ${makeSelect('jd-eyelet', eyeletOptions, j.eyelet)}
-                        </div>
-                        <div class="detail-card">
-                            <div class="detail-label">Embossing</div>
-                            <input type="text" class="form-input jd-embossing" value="${(j.embossing || '').replace(/"/g, '&quot;')}" placeholder="Optional embossing text" style="margin-top:0.25rem;">
-                        </div>
-                        <div class="detail-card">
-                            <div class="detail-label">Custom Notes</div>
-                            <textarea class="form-input jd-custom-desc" placeholder="Any additional notes..." style="margin-top:0.25rem;">${j.custom_description || ''}</textarea>
+                        <div class="detail-grid" style="margin-bottom: 0;">
+                            <div class="detail-card">
+                                <div class="detail-label">Size</div>
+                                ${makeSelect('jd-size', sizeOptions, j.size)}
+                            </div>
+                            <div class="detail-card">
+                                <div class="detail-label">Leather Colour</div>
+                                ${makeSelect('jd-leather', leatherOptions, j.leather)}
+                            </div>
+                            <div class="detail-card">
+                                <div class="detail-label">String Colour</div>
+                                ${makeSelect('jd-string', stringOptions, j.string_colour)}
+                            </div>
+                            <div class="detail-card">
+                                <div class="detail-label">Eyelet</div>
+                                ${makeSelect('jd-eyelet', eyeletOptions, j.eyelet)}
+                            </div>
+                            <div class="detail-card">
+                                <div class="detail-label">Embossing</div>
+                                <input type="text" class="form-input jd-embossing" value="${(j.embossing || '').replace(/"/g, '&quot;')}" placeholder="Optional embossing text" style="margin-top:0.25rem;">
+                            </div>
+                            <div class="detail-card">
+                                <div class="detail-label">Custom Notes</div>
+                                <textarea class="form-input jd-custom-desc" placeholder="Any additional notes..." style="margin-top:0.25rem;">${j.custom_description || ''}</textarea>
+                            </div>
                         </div>
                     </div>`;
                 }).join('') + `
@@ -1602,10 +1619,21 @@
                 const history = ff.history || [];
                 renderTimeline(history);
 
-                // Shipping label
-                if (ff.label_url) {
+                // Shipping section — handle local pickup vs shipped
+                if (status === 'local_pickup') {
+                    document.getElementById('localPickupConfirm').style.display = 'block';
+                    document.getElementById('getRatesBtn').style.display = 'none';
+                    document.getElementById('localPickupBtn').style.display = 'none';
+                    document.getElementById('existingLabelInfo').style.display = 'none';
+                } else if (ff.label_url) {
+                    document.getElementById('localPickupConfirm').style.display = 'none';
+                    document.getElementById('getRatesBtn').style.display = '';
+                    document.getElementById('localPickupBtn').style.display = '';
                     renderExistingLabel(ff);
                 } else {
+                    document.getElementById('localPickupConfirm').style.display = 'none';
+                    document.getElementById('getRatesBtn').style.display = '';
+                    document.getElementById('localPickupBtn').style.display = '';
                     document.getElementById('existingLabelInfo').style.display = 'none';
                 }
 
@@ -1634,14 +1662,16 @@
             }
 
             const html = `
-            <div class="detail-grid journal-detail-edit" data-journal-detail-index="${newIndex}" style="border: 1px solid var(--border); border-radius: 12px; padding: 1rem; margin-bottom: 1rem;">
-                <h3 style="margin-bottom: 0.75rem; color: var(--primary);">Journal ${newIndex + 1}</h3>
-                <div class="detail-card"><div class="detail-label">Size</div><select class="form-select jd-size" style="margin-top:0.25rem;">${opts(sizeOptions)}</select></div>
-                <div class="detail-card"><div class="detail-label">Leather Colour</div><select class="form-select jd-leather" style="margin-top:0.25rem;">${opts(leatherOptions)}</select></div>
-                <div class="detail-card"><div class="detail-label">String Colour</div><select class="form-select jd-string" style="margin-top:0.25rem;">${opts(stringOptions)}</select></div>
-                <div class="detail-card"><div class="detail-label">Eyelet</div><select class="form-select jd-eyelet" style="margin-top:0.25rem;">${opts(eyeletOptions)}</select></div>
-                <div class="detail-card"><div class="detail-label">Embossing</div><input type="text" class="form-input jd-embossing" placeholder="Optional embossing text" style="margin-top:0.25rem;"></div>
-                <div class="detail-card"><div class="detail-label">Custom Notes</div><textarea class="form-input jd-custom-desc" placeholder="Any additional notes..." style="margin-top:0.25rem;"></textarea></div>
+            <div class="journal-detail-edit" data-journal-detail-index="${newIndex}" style="border: 1px solid var(--border); border-radius: 12px; padding: 1rem; margin-bottom: 1rem;">
+                <h3 style="margin: 0 0 0.75rem 0; color: var(--primary);">Journal ${newIndex + 1}</h3>
+                <div class="detail-grid" style="margin-bottom: 0;">
+                    <div class="detail-card"><div class="detail-label">Size</div><select class="form-select jd-size" style="margin-top:0.25rem;">${opts(sizeOptions)}</select></div>
+                    <div class="detail-card"><div class="detail-label">Leather Colour</div><select class="form-select jd-leather" style="margin-top:0.25rem;">${opts(leatherOptions)}</select></div>
+                    <div class="detail-card"><div class="detail-label">String Colour</div><select class="form-select jd-string" style="margin-top:0.25rem;">${opts(stringOptions)}</select></div>
+                    <div class="detail-card"><div class="detail-label">Eyelet</div><select class="form-select jd-eyelet" style="margin-top:0.25rem;">${opts(eyeletOptions)}</select></div>
+                    <div class="detail-card"><div class="detail-label">Embossing</div><input type="text" class="form-input jd-embossing" placeholder="Optional embossing text" style="margin-top:0.25rem;"></div>
+                    <div class="detail-card"><div class="detail-label">Custom Notes</div><textarea class="form-input jd-custom-desc" placeholder="Any additional notes..." style="margin-top:0.25rem;"></textarea></div>
+                </div>
             </div>`;
 
             // Insert before the buttons div
@@ -1742,6 +1772,46 @@
         }
 
         // SHIPPING — maps Worker rate/label response fields
+        async function markLocalPickup() {
+            if (!confirm('Mark this order as Local Pickup?')) return;
+            try {
+                const token = localStorage.getItem('kass_token');
+                const response = await fetch(`${API_BASE}/api/orders/${currentOrderId}`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        status: 'local_pickup',
+                        status_note: 'Marked as local pickup — no shipping required'
+                    })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    document.getElementById('localPickupConfirm').style.display = 'block';
+                    document.getElementById('getRatesBtn').style.display = 'none';
+                    document.getElementById('localPickupBtn').style.display = 'none';
+                    document.getElementById('ratesContainer').style.display = 'none';
+
+                    // Update status badge
+                    const statusBadge = document.getElementById('orderStatusBadge');
+                    statusBadge.className = 'status-badge status-local_pickup';
+                    statusBadge.textContent = 'LOCAL PICKUP';
+
+                    // Refresh timeline
+                    if (data.fulfillment && data.fulfillment.history) {
+                        renderTimeline(data.fulfillment.history);
+                    }
+                } else {
+                    alert('Error: ' + (data.error || 'Unknown error'));
+                }
+            } catch (err) {
+                console.error('Error marking local pickup:', err);
+                alert('Failed to mark as local pickup');
+            }
+        }
+
         async function handleGetRates() {
             try {
                 const token = localStorage.getItem('kass_token');
