@@ -930,97 +930,108 @@
                     <h2>Create New Order</h2>
 
                     <form id="newOrderForm" onsubmit="handleCreateOrder(event)">
+                        <div id="journalItemsContainer">
+                            <div class="form-section journal-item" data-journal-index="0">
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <h3 class="journal-item-title">Journal 1</h3>
+                                </div>
+
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label class="form-label">Size</label>
+                                        <select class="form-select journal-size" onchange="updateOrderTotals()">
+                                            <option value="">Select Size</option>
+                                            <option value="A5">A5</option>
+                                            <option value="A6">A6</option>
+                                            <option value="Passport">Passport</option>
+                                            <option value="Custom A5">Custom A5</option>
+                                            <option value="Custom A6">Custom A6</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Order Type</label>
+                                        <select class="form-select journal-order-type">
+                                            <option value="Standard">Standard</option>
+                                            <option value="Pre-Order">Pre-Order</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label class="form-label">Leather Colour</label>
+                                        <select class="form-select journal-leather">
+                                            <option value="">Select Leather Colour</option>
+                                            <option value="Chocolate Brown">Chocolate Brown</option>
+                                            <option value="Forest Green">Forest Green</option>
+                                            <option value="Onyx Black">Onyx Black</option>
+                                            <option value="Ocean">Ocean</option>
+                                            <option value="Cognac">Cognac</option>
+                                            <option value="Burgundy">Burgundy</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">String Colour</label>
+                                        <select class="form-select journal-string">
+                                            <option value="">Select String Colour</option>
+                                            <option value="Baby Pink">Baby Pink</option>
+                                            <option value="White">White</option>
+                                            <option value="Black">Black</option>
+                                            <option value="Forest Green">Forest Green</option>
+                                            <option value="Dark Blue">Dark Blue</option>
+                                            <option value="Burgundy">Burgundy</option>
+                                            <option value="Red">Red</option>
+                                            <option value="Lilac">Lilac</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label class="form-label">Eyelet</label>
+                                        <select class="form-select journal-eyelet">
+                                            <option value="">Select Eyelet</option>
+                                            <option value="Gold">Gold</option>
+                                            <option value="Silver">Silver</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Embossing Text</label>
+                                        <input type="text" class="form-input journal-embossing" placeholder="Optional embossing text">
+                                    </div>
+                                </div>
+
+                                <div class="form-group form-row full">
+                                    <label class="form-label">Custom Description</label>
+                                    <textarea class="form-input journal-custom-desc" placeholder="Any additional notes or specifications..."></textarea>
+                                </div>
+
+                                <div class="price-display">
+                                    <div class="price-label">Journal Price</div>
+                                    <div class="price-value journal-price-display">$0</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style="text-align: center; margin: 1rem 0;">
+                            <button type="button" class="btn btn-secondary" onclick="addJournalItem()">+ Add Another Journal</button>
+                        </div>
+
                         <div class="form-section">
-                            <h3>Order Details</h3>
-
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label class="form-label">Size</label>
-                                    <select id="sizeSelect" class="form-select" onchange="updatePrice()">
-                                        <option value="">Select Size</option>
-                                        <option value="A5">A5</option>
-                                        <option value="A6">A6</option>
-                                        <option value="Passport">Passport</option>
-                                        <option value="Custom A5">Custom A5</option>
-                                        <option value="Custom A6">Custom A6</option>
-                                    </select>
-                                </div>
-                                <div class="form-group">
-                                    <label class="form-label">Order Type</label>
-                                    <select id="orderTypeSelect" class="form-select">
-                                        <option value="Standard">Standard</option>
-                                        <option value="Pre-Order">Pre-Order</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div class="price-display">
-                                <div class="price-label">Current Price</div>
-                                <div class="price-value" id="priceDisplay">$0</div>
-                            </div>
-
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label class="form-label">Leather Colour</label>
-                                    <select id="leatherColourSelect" class="form-select">
-                                        <option value="">Select Leather Colour</option>
-                                        <option value="Chocolate Brown">Chocolate Brown</option>
-                                        <option value="Forest Green">Forest Green</option>
-                                        <option value="Onyx Black">Onyx Black</option>
-                                        <option value="Ocean">Ocean</option>
-                                        <option value="Cognac">Cognac</option>
-                                        <option value="Burgundy">Burgundy</option>
-                                    </select>
-                                </div>
-                                <div class="form-group">
-                                    <label class="form-label">String Colour</label>
-                                    <select id="stringColourSelect" class="form-select">
-                                        <option value="">Select String Colour</option>
-                                        <option value="Baby Pink">Baby Pink</option>
-                                        <option value="White">White</option>
-                                        <option value="Black">Black</option>
-                                        <option value="Forest Green">Forest Green</option>
-                                        <option value="Dark Blue">Dark Blue</option>
-                                        <option value="Burgundy">Burgundy</option>
-                                        <option value="Red">Red</option>
-                                        <option value="Lilac">Lilac</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label class="form-label">Eyelet</label>
-                                    <select id="eyeletSelect" class="form-select">
-                                        <option value="">Select Eyelet</option>
-                                        <option value="Gold">Gold</option>
-                                        <option value="Silver">Silver</option>
-                                    </select>
-                                </div>
-                                <div class="form-group">
-                                    <label class="form-label">Embossing Text</label>
-                                    <input type="text" id="embossingInput" class="form-input" placeholder="Optional embossing text">
-                                </div>
-                            </div>
-
-                            <div class="form-group form-row full">
-                                <label class="form-label">Custom Description</label>
-                                <textarea id="customDescriptionInput" class="form-input" placeholder="Any additional notes or specifications..."></textarea>
-                            </div>
-
+                            <h3>Shipping & Duties</h3>
                             <div class="form-row">
                                 <div class="form-group">
                                     <label class="form-label">Shipping ($CAD)</label>
-                                    <input type="number" id="shippingInput" class="form-input" placeholder="0.00" min="0" step="0.01" value="" oninput="updateTotal()">
+                                    <input type="number" id="shippingInput" class="form-input" placeholder="0.00" min="0" step="0.01" value="" oninput="updateOrderTotals()">
                                 </div>
                                 <div class="form-group">
                                     <label class="form-label">Duties & Taxes ($CAD)</label>
-                                    <input type="number" id="dutiesInput" class="form-input" placeholder="0.00" min="0" step="0.01" value="" oninput="updateTotal()">
+                                    <input type="number" id="dutiesInput" class="form-input" placeholder="0.00" min="0" step="0.01" value="" oninput="updateOrderTotals()">
                                 </div>
                             </div>
 
                             <div class="price-display" style="margin-top: 1rem;">
-                                <div class="price-label">Total (Journal + Shipping + Duties)</div>
+                                <div class="price-label">Order Total (<span id="journalCountDisplay">1 Journal</span> + Shipping + Duties)</div>
                                 <div class="price-value" id="totalDisplay">$0</div>
                             </div>
                         </div>
@@ -1074,32 +1085,8 @@
                         </div>
                     </div>
 
-                    <div class="detail-grid">
-                        <div class="detail-card">
-                            <div class="detail-label">Size</div>
-                            <div class="detail-value" id="orderSize">—</div>
-                        </div>
-                        <div class="detail-card">
-                            <div class="detail-label">Leather Colour</div>
-                            <div class="detail-value" id="orderLeatherColour">—</div>
-                        </div>
-                        <div class="detail-card">
-                            <div class="detail-label">String Colour</div>
-                            <div class="detail-value" id="orderStringColour">—</div>
-                        </div>
-                        <div class="detail-card">
-                            <div class="detail-label">Eyelet</div>
-                            <div class="detail-value" id="orderEyelet">—</div>
-                        </div>
-                        <div class="detail-card">
-                            <div class="detail-label">Embossing</div>
-                            <div class="detail-value" id="orderEmbossing">—</div>
-                        </div>
-                        <div class="detail-card">
-                            <div class="detail-label">Custom Notes</div>
-                            <div class="detail-value" id="orderCustomNote">—</div>
-                        </div>
-                    </div>
+                    <!-- Journal specs — dynamically populated for single or multi-journal orders -->
+                    <div id="journalSpecsContainer"></div>
 
                     <div class="detail-grid">
                         <div class="detail-card">
@@ -1280,6 +1267,7 @@
                     customer_email: o.customer_email || '',
                     product_name: o.product_name || '',
                     metadata: o.metadata || {},
+                    journal_count: o.journal_count || 1,
                     status: (o.fulfillment && o.fulfillment.status) || 'paid',
                     fulfillment: o.fulfillment || {}
                 }));
@@ -1335,41 +1323,108 @@
         }
 
         // NEW ORDER — calls Worker API to create a Stripe payment link
-        function updatePrice() {
-            const size = document.getElementById('sizeSelect').value;
-            const price = PRICES[size] || 0;
-            document.getElementById('priceDisplay').textContent = price > 0 ? `$${price}` : '$0';
-            updateTotal();
+        // ---- Multi-journal order form helpers ----
+
+        function getJournalItems() {
+            return document.querySelectorAll('.journal-item');
         }
 
-        function updateTotal() {
-            const size = document.getElementById('sizeSelect').value;
-            const price = PRICES[size] || 0;
+        function getJournalData(itemEl) {
+            return {
+                size: itemEl.querySelector('.journal-size').value,
+                leather: itemEl.querySelector('.journal-leather').value,
+                string_colour: itemEl.querySelector('.journal-string').value,
+                eyelet: itemEl.querySelector('.journal-eyelet').value,
+                embossing: itemEl.querySelector('.journal-embossing').value,
+                custom_description: itemEl.querySelector('.journal-custom-desc').value,
+                order_type: itemEl.querySelector('.journal-order-type').value,
+                price: PRICES[itemEl.querySelector('.journal-size').value] || 0,
+            };
+        }
+
+        function addJournalItem() {
+            const container = document.getElementById('journalItemsContainer');
+            const items = getJournalItems();
+            const newIndex = items.length;
+            const template = items[0].cloneNode(true);
+
+            // Update index and title
+            template.setAttribute('data-journal-index', newIndex);
+            template.querySelector('.journal-item-title').textContent = `Journal ${newIndex + 1}`;
+
+            // Reset all field values
+            template.querySelectorAll('select').forEach(s => s.selectedIndex = 0);
+            template.querySelectorAll('input').forEach(i => i.value = '');
+            template.querySelectorAll('textarea').forEach(t => t.value = '');
+            template.querySelector('.journal-price-display').textContent = '$0';
+
+            // Add remove button (only if not the first journal)
+            const header = template.querySelector('div[style*="justify-content"]');
+            const existingRemoveBtn = header.querySelector('.btn-remove-journal');
+            if (!existingRemoveBtn) {
+                const removeBtn = document.createElement('button');
+                removeBtn.type = 'button';
+                removeBtn.className = 'btn btn-secondary btn-small btn-remove-journal';
+                removeBtn.textContent = 'Remove';
+                removeBtn.style.cssText = 'background: #e74c3c; color: white; border: none; padding: 0.3rem 0.8rem; font-size: 0.75rem;';
+                removeBtn.onclick = function() { removeJournalItem(this); };
+                header.appendChild(removeBtn);
+            }
+
+            container.appendChild(template);
+            updateOrderTotals();
+        }
+
+        function removeJournalItem(btn) {
+            const item = btn.closest('.journal-item');
+            item.remove();
+            // Re-number remaining journals
+            const items = getJournalItems();
+            items.forEach((el, i) => {
+                el.setAttribute('data-journal-index', i);
+                el.querySelector('.journal-item-title').textContent = `Journal ${i + 1}`;
+            });
+            updateOrderTotals();
+        }
+
+        function updateOrderTotals() {
+            let journalTotal = 0;
+            const items = getJournalItems();
+            items.forEach(item => {
+                const size = item.querySelector('.journal-size').value;
+                const price = PRICES[size] || 0;
+                item.querySelector('.journal-price-display').textContent = price > 0 ? `$${price}` : '$0';
+                journalTotal += price;
+            });
+
             const shipping = parseFloat(document.getElementById('shippingInput').value) || 0;
             const duties = parseFloat(document.getElementById('dutiesInput').value) || 0;
-            const total = price + shipping + duties;
+            const total = journalTotal + shipping + duties;
+
+            const count = items.length;
+            document.getElementById('journalCountDisplay').textContent = count === 1 ? '1 Journal' : `${count} Journals`;
             document.getElementById('totalDisplay').textContent = total > 0 ? `$${total.toFixed(2)}` : '$0';
         }
 
         async function handleCreateOrder(e) {
             e.preventDefault();
-            const size = document.getElementById('sizeSelect').value;
-            const leather = document.getElementById('leatherColourSelect').value;
-            const string_colour = document.getElementById('stringColourSelect').value;
-            const eyelet = document.getElementById('eyeletSelect').value;
-            const embossing = document.getElementById('embossingInput').value;
-            const custom_description = document.getElementById('customDescriptionInput').value;
-            const order_type = document.getElementById('orderTypeSelect').value;
+            const items = getJournalItems();
+            const journals = [];
+
+            for (const item of items) {
+                const data = getJournalData(item);
+                if (!data.size || !data.leather || !data.string_colour || !data.eyelet) {
+                    const idx = parseInt(item.getAttribute('data-journal-index')) + 1;
+                    alert(`Please fill in all required fields for Journal ${idx}`);
+                    return;
+                }
+                journals.push(data);
+            }
+
             const shipping = parseFloat(document.getElementById('shippingInput').value) || 0;
             const duties = parseFloat(document.getElementById('dutiesInput').value) || 0;
 
-            if (!size || !leather || !string_colour || !eyelet) {
-                alert('Please fill in all required fields');
-                return;
-            }
-
-            const price = PRICES[size];
-            const btn = e.target.querySelector('button[type="button"]') || e.target.querySelector('button');
+            const btn = document.querySelector('#newOrderForm .btn-primary');
             const originalText = btn ? btn.textContent : '';
             if (btn) { btn.textContent = 'CREATING...'; btn.disabled = true; }
 
@@ -1381,7 +1436,7 @@
                         'Authorization': `Bearer ${token}`,
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({ size, price, leather, string_colour, eyelet, embossing, custom_description, order_type, shipping, duties })
+                    body: JSON.stringify({ journals, shipping, duties })
                 });
                 const data = await response.json();
 
@@ -1462,13 +1517,78 @@
                     document.getElementById('shippingAddress').textContent = '\u2014';
                 }
 
-                // Order details from metadata
-                document.getElementById('orderSize').textContent = meta.size || '\u2014';
-                document.getElementById('orderLeatherColour').textContent = meta.leather || '\u2014';
-                document.getElementById('orderStringColour').textContent = meta.string_colour || '\u2014';
-                document.getElementById('orderEyelet').textContent = meta.eyelet || '\u2014';
-                document.getElementById('orderEmbossing').textContent = meta.embossing || '\u2014';
-                document.getElementById('orderCustomNote').textContent = meta.custom_description || '\u2014';
+                // Render editable journal specs — supports both single and multi-journal orders
+                // Merge: KV overrides (from manual edits) > Stripe product metadata > session metadata
+                const kvJournals = ff.journals_metadata || [];
+                const stripeJournals = order.journals && order.journals.length > 0
+                    ? order.journals
+                    : [{ size: meta.size, leather: meta.leather, string_colour: meta.string_colour, eyelet: meta.eyelet, embossing: meta.embossing, custom_description: meta.custom_description }];
+
+                // Merge KV overrides onto Stripe data (KV wins where present)
+                const journalsList = stripeJournals.map((sj, i) => {
+                    const kv = kvJournals[i] || {};
+                    return {
+                        size: kv.size || sj.size || '',
+                        leather: kv.leather || sj.leather || '',
+                        string_colour: kv.string_colour || sj.string_colour || '',
+                        eyelet: kv.eyelet || sj.eyelet || '',
+                        embossing: kv.embossing || sj.embossing || '',
+                        custom_description: kv.custom_description || sj.custom_description || '',
+                    };
+                });
+                // Also include any extra journals only in KV (e.g. manually added)
+                for (let i = stripeJournals.length; i < kvJournals.length; i++) {
+                    journalsList.push(kvJournals[i]);
+                }
+
+                const journalSpecs = document.getElementById('journalSpecsContainer');
+                const sizeOptions = ['', 'A5', 'A6', 'Passport', 'Custom A5', 'Custom A6'];
+                const leatherOptions = ['', 'Chocolate Brown', 'Forest Green', 'Onyx Black', 'Ocean', 'Cognac', 'Burgundy'];
+                const stringOptions = ['', 'Baby Pink', 'White', 'Black', 'Forest Green', 'Dark Blue', 'Burgundy', 'Red', 'Lilac'];
+                const eyeletOptions = ['', 'Gold', 'Silver'];
+
+                function makeSelect(cls, options, selected) {
+                    return `<select class="form-select ${cls}" style="margin-top:0.25rem;">${options.map(o =>
+                        `<option value="${o}"${o === selected ? ' selected' : ''}>${o || 'Select...'}</option>`
+                    ).join('')}</select>`;
+                }
+
+                journalSpecs.innerHTML = journalsList.map((j, i) => {
+                    const title = journalsList.length > 1 ? `<h3 style="margin-bottom: 0.75rem; color: var(--primary);">Journal ${i + 1}</h3>` : '';
+                    const wrapStyle = journalsList.length > 1 ? 'border: 1px solid var(--border); border-radius: 12px; padding: 1rem; margin-bottom: 1rem;' : '';
+                    return `
+                    <div class="detail-grid journal-detail-edit" data-journal-detail-index="${i}" style="${wrapStyle}">
+                        ${title}
+                        <div class="detail-card">
+                            <div class="detail-label">Size</div>
+                            ${makeSelect('jd-size', sizeOptions, j.size)}
+                        </div>
+                        <div class="detail-card">
+                            <div class="detail-label">Leather Colour</div>
+                            ${makeSelect('jd-leather', leatherOptions, j.leather)}
+                        </div>
+                        <div class="detail-card">
+                            <div class="detail-label">String Colour</div>
+                            ${makeSelect('jd-string', stringOptions, j.string_colour)}
+                        </div>
+                        <div class="detail-card">
+                            <div class="detail-label">Eyelet</div>
+                            ${makeSelect('jd-eyelet', eyeletOptions, j.eyelet)}
+                        </div>
+                        <div class="detail-card">
+                            <div class="detail-label">Embossing</div>
+                            <input type="text" class="form-input jd-embossing" value="${(j.embossing || '').replace(/"/g, '&quot;')}" placeholder="Optional embossing text" style="margin-top:0.25rem;">
+                        </div>
+                        <div class="detail-card">
+                            <div class="detail-label">Custom Notes</div>
+                            <textarea class="form-input jd-custom-desc" placeholder="Any additional notes..." style="margin-top:0.25rem;">${j.custom_description || ''}</textarea>
+                        </div>
+                    </div>`;
+                }).join('') + `
+                    <div style="display:flex; gap:0.75rem; margin: 0.5rem 0 1.5rem;">
+                        <button type="button" class="btn btn-primary btn-small" onclick="saveJournalDetails()">Save Journal Details</button>
+                        <button type="button" class="btn btn-secondary btn-small" onclick="addJournalDetailRow()">+ Add Journal</button>
+                    </div>`;
 
                 // Payment details
                 document.getElementById('orderAmount').textContent = `$${((order.amount || 0) / 100).toFixed(2)}`;
@@ -1497,6 +1617,78 @@
                 selectedRate = null;
             } catch (err) {
                 console.error('Error loading order:', err);
+            }
+        }
+
+        function addJournalDetailRow() {
+            const container = document.getElementById('journalSpecsContainer');
+            const existing = container.querySelectorAll('.journal-detail-edit');
+            const newIndex = existing.length;
+            const sizeOptions = ['', 'A5', 'A6', 'Passport', 'Custom A5', 'Custom A6'];
+            const leatherOptions = ['', 'Chocolate Brown', 'Forest Green', 'Onyx Black', 'Ocean', 'Cognac', 'Burgundy'];
+            const stringOptions = ['', 'Baby Pink', 'White', 'Black', 'Forest Green', 'Dark Blue', 'Burgundy', 'Red', 'Lilac'];
+            const eyeletOptions = ['', 'Gold', 'Silver'];
+
+            function opts(options) {
+                return options.map(o => `<option value="${o}">${o || 'Select...'}</option>`).join('');
+            }
+
+            const html = `
+            <div class="detail-grid journal-detail-edit" data-journal-detail-index="${newIndex}" style="border: 1px solid var(--border); border-radius: 12px; padding: 1rem; margin-bottom: 1rem;">
+                <h3 style="margin-bottom: 0.75rem; color: var(--primary);">Journal ${newIndex + 1}</h3>
+                <div class="detail-card"><div class="detail-label">Size</div><select class="form-select jd-size" style="margin-top:0.25rem;">${opts(sizeOptions)}</select></div>
+                <div class="detail-card"><div class="detail-label">Leather Colour</div><select class="form-select jd-leather" style="margin-top:0.25rem;">${opts(leatherOptions)}</select></div>
+                <div class="detail-card"><div class="detail-label">String Colour</div><select class="form-select jd-string" style="margin-top:0.25rem;">${opts(stringOptions)}</select></div>
+                <div class="detail-card"><div class="detail-label">Eyelet</div><select class="form-select jd-eyelet" style="margin-top:0.25rem;">${opts(eyeletOptions)}</select></div>
+                <div class="detail-card"><div class="detail-label">Embossing</div><input type="text" class="form-input jd-embossing" placeholder="Optional embossing text" style="margin-top:0.25rem;"></div>
+                <div class="detail-card"><div class="detail-label">Custom Notes</div><textarea class="form-input jd-custom-desc" placeholder="Any additional notes..." style="margin-top:0.25rem;"></textarea></div>
+            </div>`;
+
+            // Insert before the buttons div
+            const buttonsDiv = container.nextElementSibling;
+            container.insertAdjacentHTML('beforeend', html);
+
+            // Re-number all journal titles
+            container.querySelectorAll('.journal-detail-edit').forEach((el, i) => {
+                el.setAttribute('data-journal-detail-index', i);
+                const h3 = el.querySelector('h3');
+                if (h3) h3.textContent = `Journal ${i + 1}`;
+            });
+        }
+
+        async function saveJournalDetails() {
+            const rows = document.querySelectorAll('.journal-detail-edit');
+            const journals = [];
+            for (const row of rows) {
+                journals.push({
+                    size: row.querySelector('.jd-size').value,
+                    leather: row.querySelector('.jd-leather').value,
+                    string_colour: row.querySelector('.jd-string').value,
+                    eyelet: row.querySelector('.jd-eyelet').value,
+                    embossing: row.querySelector('.jd-embossing').value,
+                    custom_description: row.querySelector('.jd-custom-desc').value,
+                });
+            }
+
+            try {
+                const token = localStorage.getItem('kass_token');
+                const response = await fetch(`${API_BASE}/api/orders/${currentOrderId}/journals`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ journals })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    alert('Journal details saved!');
+                } else {
+                    alert('Error saving: ' + (data.error || 'Unknown error'));
+                }
+            } catch (err) {
+                console.error('Error saving journal details:', err);
+                alert('Failed to save journal details');
             }
         }
 
