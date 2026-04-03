@@ -1077,6 +1077,14 @@ document.querySelectorAll('.size-btn').forEach(btn => {
     document.getElementById('customDescWrap').style.display = state.isCustom ? 'block' : 'none';
     if (!state.isCustom) { state.customDesc = ''; document.getElementById('customDescInput').value = ''; }
     updatePreview();
+
+    // GA4: Track size selection
+    gtag('event', 'select_size', {
+      item_name: state.size + ' Journal',
+      price: state.price,
+      currency: 'CAD',
+      is_custom: state.isCustom
+    });
   });
 });
 
@@ -1096,6 +1104,12 @@ function setupSwatches(containerId, stateKey, hexKey) {
       state[stateKey] = sw.dataset.color;
       state[hexKey] = sw.dataset.hex;
       updatePreview();
+
+      // GA4: Track customization choices
+      gtag('event', 'configure_journal', {
+        customization_type: stateKey,
+        customization_value: sw.dataset.color
+      });
     });
   });
 }
@@ -1169,6 +1183,18 @@ function copyOrder() {
     btn.textContent = 'Copied!';
     btn.classList.add('copied');
     setTimeout(() => { btn.textContent = 'Copy to Clipboard'; btn.classList.remove('copied'); }, 2500);
+
+    // GA4: Track order copy — this is the primary conversion event
+    gtag('event', 'copy_order', {
+      item_name: state.size + ' Journal',
+      item_variant: state.leather,
+      price: state.price,
+      currency: 'CAD',
+      string_colour: state.string,
+      eyelet_colour: state.eyelet,
+      embossing: state.embossing || '(none)',
+      is_custom: state.isCustom
+    });
   });
 }
 
@@ -1193,6 +1219,20 @@ window.addEventListener('scroll', () => {
     nav.style.boxShadow = 'none';
   }
 });
+
+// GA4: Track when configurator section comes into view (purchase intent signal)
+const configSection = document.getElementById('customize');
+if (configSection) {
+  let configuratorViewed = false;
+  const observer = new IntersectionObserver((entries) => {
+    if (entries[0].isIntersecting && !configuratorViewed) {
+      configuratorViewed = true;
+      gtag('event', 'view_configurator');
+      observer.disconnect();
+    }
+  }, { threshold: 0.3 });
+  observer.observe(configSection);
+}
 
 // Gallery carousel
 const galleryTrack = document.getElementById('galleryTrack');
