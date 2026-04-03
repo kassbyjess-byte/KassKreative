@@ -1551,7 +1551,6 @@
 
         function getJournalData(itemEl) {
             const accessories = getAccessoriesFromItem(itemEl);
-            const accessoryTotal = accessories.reduce((sum, a) => sum + a.price, 0);
             return {
                 size: itemEl.querySelector('.journal-size').value,
                 leather: itemEl.querySelector('.journal-leather').value,
@@ -1560,7 +1559,7 @@
                 embossing: itemEl.querySelector('.journal-embossing').value,
                 custom_description: itemEl.querySelector('.journal-custom-desc').value,
                 order_type: itemEl.querySelector('.journal-order-type').value,
-                price: (PRICES[itemEl.querySelector('.journal-size').value] || 0) + accessoryTotal,
+                price: PRICES[itemEl.querySelector('.journal-size').value] || 0,
                 accessories: accessories,
             };
         }
