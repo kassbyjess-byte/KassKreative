@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kass Kreative | Analytics Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://accounts.google.com/gsi/client" async defer onload="window.__gsiLoaded=true"></script>
+<style>
+  :root {
+    --bg: #f8f6f3;
+    --card: #ffffff;
+    --primary: #3E2723;
+    --accent: #8B6914;
+    --text: #2c2c2c;
+    --text-light: #7a7a7a;
+    --border: #e8e4df;
+    --green: #16a34a;
+    --red: #dc2626;
+    --blue: #2563eb;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg); color: var(--text); }
+
+  /* Header */
+  .header { background: var(--primary); color: white; padding: 1.25rem 2rem; display: flex; justify-content: space-between; align-items: center; }
+  .header h1 { font-size: 1.25rem; font-weight: 600; letter-spacing: -0.02em; }
+  .header-right { display: flex; align-items: center; gap: 1rem; }
+  .header a { color: rgba(255,255,255,0.7); text-decoration: none; font-size: 0.85rem; }
+  .header a:hover { color: white; }
+  .period-selector { display: flex; gap: 0.5rem; }
+  .period-btn { padding: 0.35rem 0.75rem; border-radius: 6px; border: 1px solid rgba(255,255,255,0.25); background: transparent; color: white; font-size: 0.8rem; cursor: pointer; transition: all 0.2s; }
+  .period-btn.active { background: rgba(255,255,255,0.2); border-color: rgba(255,255,255,0.5); }
+
+  /* Container */
+  .container { max-width: 1400px; margin: 0 auto; padding: 1.5rem; }
+
+  /* Auth */
+  .auth-card { background: var(--card); border-radius: 16px; padding: 2.5rem; text-align: center; margin-bottom: 1.5rem; border: 1px solid var(--border); }
+  .auth-card h2 { margin-bottom: 0.75rem; color: var(--primary); }
+  .auth-card p { color: var(--text-light); margin-bottom: 1.5rem; font-size: 0.95rem; }
+  .setup-instructions { text-align: left; max-width: 600px; margin: 1.5rem auto 0; background: #f9f9f9; padding: 1.25rem; border-radius: 10px; font-size: 0.85rem; line-height: 1.7; }
+  .setup-instructions code { background: #eee; padding: 0.15rem 0.4rem; border-radius: 4px; font-size: 0.82rem; }
+  .client-id-form { display: flex; gap: 0.5rem; max-width: 500px; margin: 1rem auto; }
+  .client-id-form input { flex: 1; padding: 0.6rem 1rem; border: 1px solid var(--border); border-radius: 8px; font-size: 0.9rem; }
+  .btn { padding: 0.6rem 1.25rem; border-radius: 8px; border: none; cursor: pointer; font-size: 0.85rem; font-weight: 500; transition: all 0.2s; }
+  .btn-primary { background: var(--primary); color: white; }
+  .btn-primary:hover { opacity: 0.9; }
+
+  /* KPI Grid */
+  .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+  .kpi-card { background: var(--card); border-radius: 14px; padding: 1.25rem 1.5rem; border: 1px solid var(--border); }
+  .kpi-label { font-size: 0.78rem; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem; }
+  .kpi-value { font-size: 2rem; font-weight: 700; color: var(--primary); line-height: 1.1; }
+  .kpi-change { font-size: 0.82rem; margin-top: 0.35rem; font-weight: 500; }
+  .kpi-change.up { color: var(--green); }
+  .kpi-change.down { color: var(--red); }
+  .kpi-change.neutral { color: var(--text-light); }
+  .kpi-sparkline { height: 35px; margin-top: 0.5rem; }
+
+  /* Chart cards */
+  .chart-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem; }
+  .chart-card { background: var(--card); border-radius: 14px; padding: 1.5rem; border: 1px solid var(--border); }
+  .chart-card h3 { font-size: 0.95rem; font-weight: 600; color: var(--primary); margin-bottom: 1rem; }
+  .chart-container { position: relative; height: 280px; }
+
+  /* Table cards */
+  .table-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem; }
+  .table-card { background: var(--card); border-radius: 14px; padding: 1.5rem; border: 1px solid var(--border); }
+  .table-card h3 { font-size: 0.95rem; font-weight: 600; color: var(--primary); margin-bottom: 1rem; }
+  .data-table { width: 100%; border-collapse: collapse; }
+  .data-table th { text-align: left; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-light); padding: 0.5rem 0; border-bottom: 1px solid var(--border); }
+  .data-table td { padding: 0.6rem 0; font-size: 0.88rem; border-bottom: 1px solid #f3f3f3; }
+  .data-table td:last-child { text-align: right; font-weight: 600; }
+  .data-table .bar { height: 4px; background: var(--accent); border-radius: 2px; margin-top: 2px; opacity: 0.3; }
+
+  /* Loading */
+  .loading { text-align: center; padding: 4rem; color: var(--text-light); }
+  .loading .spinner { width: 32px; height: 32px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 1rem; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Timestamp */
+  .last-updated { text-align: center; font-size: 0.78rem; color: var(--text-light); padding: 1rem; }
+
+  /* Responsive */
+  @media (max-width: 900px) {
+    .chart-grid, .table-grid { grid-template-columns: 1fr; }
+    .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>Kass Kreative &mdash; Analytics</h1>
+  <div class="header-right">
+    <div class="period-selector">
+      <button class="period-btn active" onclick="changePeriod(7)">7 days</button>
+      <button class="period-btn" onclick="changePeriod(14)">14 days</button>
+      <button class="period-btn" onclick="changePeriod(28)">28 days</button>
+    </div>
+    <a href="admin.html">&larr; Admin Portal</a>
+    <button class="btn" onclick="refreshData()" style="background: rgba(255,255,255,0.15); color: white; font-size: 0.78rem;">Refresh</button>
+  </div>
+</div>
+
+<div class="container">
+  <!-- Auth Section -->
+  <div id="authSection" class="auth-card">
+    <h2>Connect Google Analytics</h2>
+    <p>Sign in with the Google account that has access to your GA4 property (kassbyjess@gmail.com)</p>
+    <div class="client-id-form">
+      <input type="text" id="clientIdInput" placeholder="Paste your OAuth Client ID here" />
+      <button class="btn btn-primary" onclick="saveClientId()">Save & Connect</button>
+    </div>
+    <div class="setup-instructions">
+      <strong>One-time setup (2 minutes):</strong><br>
+      1. Go to <a href="https://console.cloud.google.com" target="_blank">console.cloud.google.com</a> &mdash; sign in as kassbyjess@gmail.com<br>
+      2. Create a new project (or select existing) &rarr; name it "Kass Analytics"<br>
+      3. Go to <strong>APIs & Services &rarr; Library</strong> &rarr; search "Google Analytics Data API" &rarr; <strong>Enable</strong><br>
+      4. Go to <strong>APIs & Services &rarr; Credentials</strong> &rarr; <strong>Create Credentials &rarr; OAuth client ID</strong><br>
+      5. Application type: <strong>Web application</strong><br>
+      6. Add Authorized JavaScript origin: <code>https://kasskreative.com</code><br>
+      7. Also add <code>http://localhost</code> if testing locally<br>
+      8. Copy the <strong>Client ID</strong> (looks like <code>123456-xxx.apps.googleusercontent.com</code>) and paste it above<br>
+      <br>
+      <em>Note: If prompted to configure consent screen, choose "External", fill in app name "Kass Analytics", your email, and save. You only need to do this once.</em>
+    </div>
+  </div>
+
+  <!-- Dashboard (hidden until auth) -->
+  <div id="dashboard" style="display: none;">
+
+    <!-- KPI Cards -->
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-label">Users</div>
+        <div class="kpi-value" id="kpiUsers">--</div>
+        <div class="kpi-change neutral" id="kpiUsersChange">vs previous period</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Sessions</div>
+        <div class="kpi-value" id="kpiSessions">--</div>
+        <div class="kpi-change neutral" id="kpiSessionsChange">vs previous period</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Page Views</div>
+        <div class="kpi-value" id="kpiPageViews">--</div>
+        <div class="kpi-change neutral" id="kpiPageViewsChange">vs previous period</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Order Copies</div>
+        <div class="kpi-value" id="kpiConversions">--</div>
+        <div class="kpi-change neutral" id="kpiConversionsChange">vs previous period</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Avg Session Duration</div>
+        <div class="kpi-value" id="kpiDuration">--</div>
+        <div class="kpi-change neutral" id="kpiDurationChange">vs previous period</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">New vs Returning</div>
+        <div class="kpi-value" id="kpiNewUsers">--</div>
+        <div class="kpi-change neutral" id="kpiNewUsersChange">new users</div>
+      </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="chart-grid">
+      <div class="chart-card">
+        <h3>Daily Users &amp; Sessions</h3>
+        <div class="chart-container">
+          <canvas id="trendChart"></canvas>
+        </div>
+      </div>
+      <div class="chart-card">
+        <h3>Traffic Sources</h3>
+        <div class="chart-container">
+          <canvas id="sourcesChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tables Row -->
+    <div class="table-grid">
+      <div class="table-card">
+        <h3>Top Countries</h3>
+        <table class="data-table" id="countriesTable">
+          <thead><tr><th>Country</th><th>Users</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div class="table-card">
+        <h3>Top Pages</h3>
+        <table class="data-table" id="pagesTable">
+          <thead><tr><th>Page</th><th>Views</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div class="table-card">
+        <h3>Devices</h3>
+        <table class="data-table" id="devicesTable">
+          <thead><tr><th>Device</th><th>Users</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Events Table -->
+    <div class="chart-grid">
+      <div class="table-card">
+        <h3>Event Breakdown</h3>
+        <table class="data-table" id="eventsTable">
+          <thead><tr><th>Event</th><th>Count</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div class="chart-card">
+        <h3>Conversions (Order Copies) by Day</h3>
+        <div class="chart-container">
+          <canvas id="conversionsChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="last-updated" id="lastUpdated"></div>
+  </div>
+</div>
+
+<script>
+// ===================== CONFIG =====================
+const GA_PROPERTY_ID = '530092899';
+const API_BASE_URL = 'https://analyticsdata.googleapis.com/v1beta/properties';
+
+let accessToken = null;
+let currentPeriod = 7;
+let trendChart = null;
+let sourcesChart = null;
+let conversionsChart = null;
+
+// ===================== AUTH =====================
+function saveClientId() {
+  const clientId = document.getElementById('clientIdInput').value.trim();
+  if (!clientId || !clientId.includes('.apps.googleusercontent.com')) {
+    alert('Please enter a valid OAuth Client ID (ends with .apps.googleusercontent.com)');
+    return;
+  }
+  localStorage.setItem('kass_ga_client_id', clientId);
+  initGoogleAuth(clientId);
+}
+
+function initGoogleAuth(clientId) {
+  const tokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: clientId,
+    scope: 'https://www.googleapis.com/auth/analytics.readonly',
+    callback: (response) => {
+      if (response.access_token) {
+        accessToken = response.access_token;
+        document.getElementById('authSection').style.display = 'none';
+        document.getElementById('dashboard').style.display = 'block';
+        refreshData();
+      }
+    },
+  });
+  tokenClient.requestAccessToken();
+}
+
+// Auto-init with hardcoded client ID
+const KASS_CLIENT_ID = '1077848446277-56dg3qh2uoga8a69j51hmmfn0t4usjav.apps.googleusercontent.com';
+
+function waitForGoogle(callback, maxWait) {
+  maxWait = maxWait || 10000;
+  var start = Date.now();
+  function check() {
+    if (typeof google !== 'undefined' && google.accounts && google.accounts.oauth2) {
+      callback();
+    } else if (Date.now() - start < maxWait) {
+      setTimeout(check, 200);
+    } else {
+      console.error('Google Identity Services failed to load. Check your internet connection.');
+    }
+  }
+  check();
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('clientIdInput').value = KASS_CLIENT_ID;
+  waitForGoogle(() => initGoogleAuth(KASS_CLIENT_ID));
+});
+
+// ===================== DATA FETCHING =====================
+async function gaReport(body) {
+  const res = await fetch(`${API_BASE_URL}/${GA_PROPERTY_ID}:runReport`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${accessToken}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(body)
+  });
+  if (!res.ok) {
+    const err = await res.json();
+    console.error('GA API error:', err);
+    throw new Error(err.error?.message || 'API Error');
+  }
+  return res.json();
+}
+
+function dateStr(daysAgo) {
+  const d = new Date();
+  d.setDate(d.getDate() - daysAgo);
+  return d.toISOString().split('T')[0];
+}
+
+function formatNum(n) {
+  if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M';
+  if (n >= 1000) return (n / 1000).toFixed(1) + 'K';
+  return n.toLocaleString();
+}
+
+function formatDuration(seconds) {
+  const m = Math.floor(seconds / 60);
+  const s = Math.round(seconds % 60);
+  return m > 0 ? `${m}m ${s}s` : `${s}s`;
+}
+
+function changeText(current, previous) {
+  if (previous === 0 && current === 0) return { text: 'No change', cls: 'neutral' };
+  if (previous === 0) return { text: `+${current} new`, cls: 'up' };
+  const pct = ((current - previous) / previous * 100).toFixed(1);
+  if (pct > 0) return { text: `+${pct}% vs prev`, cls: 'up' };
+  if (pct < 0) return { text: `${pct}% vs prev`, cls: 'down' };
+  return { text: 'No change', cls: 'neutral' };
+}
+
+// ===================== DASHBOARD REFRESH =====================
+async function refreshData() {
+  try {
+    await Promise.all([
+      fetchKPIs(),
+      fetchDailyTrend(),
+      fetchTrafficSources(),
+      fetchCountries(),
+      fetchPages(),
+      fetchDevices(),
+      fetchEvents(),
+      fetchConversions()
+    ]);
+    document.getElementById('lastUpdated').textContent =
+      `Last updated: ${new Date().toLocaleString()} | Showing last ${currentPeriod} days vs previous ${currentPeriod} days`;
+  } catch (err) {
+    console.error('Error refreshing data:', err);
+    alert('Error loading data. Your token may have expired — click Refresh to re-authenticate.');
+  }
+}
+
+// ===================== KPIs =====================
+async function fetchKPIs() {
+  const data = await gaReport({
+    dateRanges: [
+      { startDate: dateStr(currentPeriod), endDate: dateStr(1) },
+      { startDate: dateStr(currentPeriod * 2), endDate: dateStr(currentPeriod + 1) }
+    ],
+    metrics: [
+      { name: 'activeUsers' },
+      { name: 'sessions' },
+      { name: 'screenPageViews' },
+      { name: 'averageSessionDuration' },
+      { name: 'newUsers' },
+      { name: 'eventCount' }
+    ]
+  });
+
+  const current = data.rows?.[0]?.metricValues || [];
+  const previous = data.rows?.[1]?.metricValues || [];
+
+  const metrics = [
+    { id: 'Users', idx: 0, format: formatNum },
+    { id: 'Sessions', idx: 1, format: formatNum },
+    { id: 'PageViews', idx: 2, format: formatNum },
+  ];
+
+  metrics.forEach(m => {
+    const cur = parseInt(current[m.idx]?.value || 0);
+    const prev = parseInt(previous[m.idx]?.value || 0);
+    document.getElementById(`kpi${m.id}`).textContent = m.format(cur);
+    const chg = changeText(cur, prev);
+    const el = document.getElementById(`kpi${m.id}Change`);
+    el.textContent = chg.text;
+    el.className = `kpi-change ${chg.cls}`;
+  });
+
+  // Duration
+  const curDur = parseFloat(current[3]?.value || 0);
+  const prevDur = parseFloat(previous[3]?.value || 0);
+  document.getElementById('kpiDuration').textContent = formatDuration(curDur);
+  const durChg = changeText(Math.round(curDur), Math.round(prevDur));
+  const durEl = document.getElementById('kpiDurationChange');
+  durEl.textContent = durChg.text;
+  durEl.className = `kpi-change ${durChg.cls}`;
+
+  // New Users
+  const curNew = parseInt(current[4]?.value || 0);
+  const curTotal = parseInt(current[0]?.value || 1);
+  const newPct = Math.round(curNew / curTotal * 100);
+  document.getElementById('kpiNewUsers').textContent = `${newPct}%`;
+  document.getElementById('kpiNewUsersChange').textContent = `${curNew} new of ${curTotal} total`;
+
+  // Conversions fetched separately
+}
+
+// ===================== DAILY TREND =====================
+async function fetchDailyTrend() {
+  const data = await gaReport({
+    dateRanges: [{ startDate: dateStr(currentPeriod), endDate: dateStr(1) }],
+    dimensions: [{ name: 'date' }],
+    metrics: [
+      { name: 'activeUsers' },
+      { name: 'sessions' }
+    ],
+    orderBys: [{ dimension: { dimensionName: 'date' } }]
+  });
+
+  const labels = [];
+  const users = [];
+  const sessions = [];
+
+  (data.rows || []).forEach(row => {
+    const d = row.dimensionValues[0].value;
+    labels.push(`${d.slice(4,6)}/${d.slice(6,8)}`);
+    users.push(parseInt(row.metricValues[0].value));
+    sessions.push(parseInt(row.metricValues[1].value));
+  });
+
+  if (trendChart) trendChart.destroy();
+  trendChart = new Chart(document.getElementById('trendChart'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'Users',
+          data: users,
+          borderColor: '#3E2723',
+          backgroundColor: 'rgba(62,39,35,0.08)',
+          fill: true,
+          tension: 0.3,
+          borderWidth: 2,
+          pointRadius: 3
+        },
+        {
+          label: 'Sessions',
+          data: sessions,
+          borderColor: '#8B6914',
+          backgroundColor: 'rgba(139,105,20,0.05)',
+          fill: true,
+          tension: 0.3,
+          borderWidth: 2,
+          pointRadius: 3
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, padding: 20 } } },
+      scales: {
+        y: { beginAtZero: true, grid: { color: '#f0f0f0' } },
+        x: { grid: { display: false } }
+      }
+    }
+  });
+}
+
+// ===================== TRAFFIC SOURCES =====================
+async function fetchTrafficSources() {
+  const data = await gaReport({
+    dateRanges: [{ startDate: dateStr(currentPeriod), endDate: dateStr(1) }],
+    dimensions: [{ name: 'sessionDefaultChannelGroup' }],
+    metrics: [{ name: 'sessions' }],
+    orderBys: [{ metric: { metricName: 'sessions' }, desc: true }],
+    limit: 8
+  });
+
+  const labels = [];
+  const values = [];
+  const colors = ['#3E2723', '#8B6914', '#5C6BC0', '#26A69A', '#EF5350', '#AB47BC', '#FFA726', '#78909C'];
+
+  (data.rows || []).forEach((row, i) => {
+    labels.push(row.dimensionValues[0].value);
+    values.push(parseInt(row.metricValues[0].value));
+  });
+
+  if (sourcesChart) sourcesChart.destroy();
+  sourcesChart = new Chart(document.getElementById('sourcesChart'), {
+    type: 'doughnut',
+    data: {
+      labels,
+      datasets: [{
+        data: values,
+        backgroundColor: colors.slice(0, values.length),
+        borderWidth: 0,
+        hoverOffset: 6
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'bottom', labels: { usePointStyle: true, padding: 12, font: { size: 11 } } }
+      },
+      cutout: '60%'
+    }
+  });
+}
+
+// ===================== COUNTRIES =====================
+async function fetchCountries() {
+  const data = await gaReport({
+    dateRanges: [{ startDate: dateStr(currentPeriod), endDate: dateStr(1) }],
+    dimensions: [{ name: 'country' }],
+    metrics: [{ name: 'activeUsers' }],
+    orderBys: [{ metric: { metricName: 'activeUsers' }, desc: true }],
+    limit: 8
+  });
+
+  const tbody = document.querySelector('#countriesTable tbody');
+  const maxVal = parseInt(data.rows?.[0]?.metricValues[0].value || 1);
+  tbody.innerHTML = (data.rows || []).map(row => {
+    const country = row.dimensionValues[0].value;
+    const users = parseInt(row.metricValues[0].value);
+    const pct = Math.round(users / maxVal * 100);
+    return `<tr><td>${country}<div class="bar" style="width:${pct}%"></div></td><td>${users}</td></tr>`;
+  }).join('');
+}
+
+// ===================== PAGES =====================
+async function fetchPages() {
+  const data = await gaReport({
+    dateRanges: [{ startDate: dateStr(currentPeriod), endDate: dateStr(1) }],
+    dimensions: [{ name: 'pageTitle' }],
+    metrics: [{ name: 'screenPageViews' }],
+    orderBys: [{ metric: { metricName: 'screenPageViews' }, desc: true }],
+    limit: 8
+  });
+
+  const tbody = document.querySelector('#pagesTable tbody');
+  const maxVal = parseInt(data.rows?.[0]?.metricValues[0].value || 1);
+  tbody.innerHTML = (data.rows || []).map(row => {
+    const page = row.dimensionValues[0].value;
+    const views = parseInt(row.metricValues[0].value);
+    const pct = Math.round(views / maxVal * 100);
+    const shortTitle = page.length > 35 ? page.slice(0, 35) + '...' : page;
+    return `<tr><td title="${page}">${shortTitle}<div class="bar" style="width:${pct}%"></div></td><td>${views}</td></tr>`;
+  }).join('');
+}
+
+// ===================== DEVICES =====================
+async function fetchDevices() {
+  const data = await gaReport({
+    dateRanges: [{ startDate: dateStr(currentPeriod), endDate: dateStr(1) }],
+    dimensions: [{ name: 'deviceCategory' }],
+    metrics: [{ name: 'activeUsers' }],
+    orderBys: [{ metric: { metricName: 'activeUsers' }, desc: true }]
+  });
+
+  const tbody = document.querySelector('#devicesTable tbody');
+  const total = (data.rows || []).reduce((sum, r) => sum + parseInt(r.metricValues[0].value), 0);
+  tbody.innerHTML = (data.rows || []).map(row => {
+    const device = row.dimensionValues[0].value;
+    const users = parseInt(row.metricValues[0].value);
+    const pct = Math.round(users / total * 100);
+    const icon = device === 'mobile' ? '📱' : device === 'desktop' ? '💻' : '📟';
+    return `<tr><td>${icon} ${device.charAt(0).toUpperCase() + device.slice(1)} (${pct}%)<div class="bar" style="width:${pct}%"></div></td><td>${users}</td></tr>`;
+  }).join('');
+}
+
+// ===================== EVENTS =====================
+async function fetchEvents() {
+  const data = await gaReport({
+    dateRanges: [{ startDate: dateStr(currentPeriod), endDate: dateStr(1) }],
+    dimensions: [{ name: 'eventName' }],
+    metrics: [{ name: 'eventCount' }],
+    orderBys: [{ metric: { metricName: 'eventCount' }, desc: true }],
+    limit: 12
+  });
+
+  const tbody = document.querySelector('#eventsTable tbody');
+  const maxVal = parseInt(data.rows?.[0]?.metricValues[0].value || 1);
+
+  // Highlight our custom events
+  const customEvents = ['copy_order', 'configure_journal', 'select_size', 'view_configurator'];
+
+  tbody.innerHTML = (data.rows || []).map(row => {
+    const event = row.dimensionValues[0].value;
+    const count = parseInt(row.metricValues[0].value);
+    const pct = Math.round(count / maxVal * 100);
+    const isCustom = customEvents.includes(event);
+    const style = isCustom ? 'font-weight:600; color: var(--accent);' : '';
+    const badge = isCustom ? ' <span style="background:var(--accent);color:white;padding:1px 6px;border-radius:4px;font-size:0.7rem;">custom</span>' : '';
+    return `<tr><td style="${style}">${event}${badge}<div class="bar" style="width:${pct}%"></div></td><td>${count}</td></tr>`;
+  }).join('');
+
+  // Update conversions KPI
+  const copyOrderRow = (data.rows || []).find(r => r.dimensionValues[0].value === 'copy_order');
+  const conversions = copyOrderRow ? parseInt(copyOrderRow.metricValues[0].value) : 0;
+  document.getElementById('kpiConversions').textContent = conversions;
+
+  // Fetch previous period for comparison
+  try {
+    const prevData = await gaReport({
+      dateRanges: [{ startDate: dateStr(currentPeriod * 2), endDate: dateStr(currentPeriod + 1) }],
+      dimensions: [{ name: 'eventName' }],
+      metrics: [{ name: 'eventCount' }],
+      dimensionFilter: {
+        filter: { fieldName: 'eventName', stringFilter: { value: 'copy_order' } }
+      }
+    });
+    const prevConversions = prevData.rows?.[0] ? parseInt(prevData.rows[0].metricValues[0].value) : 0;
+    const chg = changeText(conversions, prevConversions);
+    const el = document.getElementById('kpiConversionsChange');
+    el.textContent = chg.text;
+    el.className = `kpi-change ${chg.cls}`;
+  } catch (e) {
+    // Ignore — conversion comparison not critical
+  }
+}
+
+// ===================== CONVERSIONS CHART =====================
+async function fetchConversions() {
+  const data = await gaReport({
+    dateRanges: [{ startDate: dateStr(currentPeriod), endDate: dateStr(1) }],
+    dimensions: [{ name: 'date' }],
+    metrics: [{ name: 'eventCount' }],
+    dimensionFilter: {
+      filter: { fieldName: 'eventName', stringFilter: { value: 'copy_order' } }
+    },
+    orderBys: [{ dimension: { dimensionName: 'date' } }]
+  });
+
+  const labels = [];
+  const values = [];
+
+  // Fill in all days (some may have 0 conversions)
+  for (let i = currentPeriod; i >= 1; i--) {
+    const d = dateStr(i).replace(/-/g, '');
+    labels.push(`${d.slice(4,6)}/${d.slice(6,8)}`);
+    const row = (data.rows || []).find(r => r.dimensionValues[0].value === d);
+    values.push(row ? parseInt(row.metricValues[0].value) : 0);
+  }
+
+  if (conversionsChart) conversionsChart.destroy();
+  conversionsChart = new Chart(document.getElementById('conversionsChart'), {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Order Copies',
+        data: values,
+        backgroundColor: '#8B6914',
+        borderRadius: 4,
+        barPercentage: 0.6
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: { beginAtZero: true, ticks: { stepSize: 1 }, grid: { color: '#f0f0f0' } },
+        x: { grid: { display: false } }
+      }
+    }
+  });
+}
+
+// ===================== PERIOD CHANGE =====================
+function changePeriod(days) {
+  currentPeriod = days;
+  document.querySelectorAll('.period-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.textContent.includes(days));
+  });
+  if (accessToken) refreshData();
+}
+</script>
+</body>
+</html>
