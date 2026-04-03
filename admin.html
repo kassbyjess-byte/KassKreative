@@ -1796,13 +1796,11 @@
                         : orderAccessories.filter(a => a.journal_size === j.size && a.journal_leather === j.leather);
 
                     const accHtml = journalAcc.length > 0
-                        ? `<div style="margin-top:0.75rem; padding-top:0.75rem; border-top:1px dashed var(--border);">
-                            <div class="detail-label" style="margin-bottom:0.4rem;">Charms & Accessories</div>
-                            ${journalAcc.map(a => `<div style="display:flex; justify-content:space-between; align-items:center; padding:0.35rem 0.5rem; background:var(--orange-light); border-radius:6px; margin-bottom:0.3rem; font-size:0.88rem;">
-                                <span>${a.accessory_name || a.name}</span>
-                                <span style="font-weight:500; color:var(--cognac);">$${(a.amount / 100).toFixed(2)}</span>
-                            </div>`).join('')}
-                           </div>`
+                        ? journalAcc.map(a => `
+                            <div class="detail-card">
+                                <div class="detail-label">Charm / Accessory</div>
+                                <div class="detail-value" style="margin-top:0.25rem;">${a.accessory_name || a.name} — <span style="color:var(--cognac); font-weight:500;">$${(a.amount / 100).toFixed(2)}</span></div>
+                            </div>`).join('')
                         : '';
 
                     return `
@@ -1833,8 +1831,8 @@
                                 <div class="detail-label">Custom Notes</div>
                                 <textarea class="form-input jd-custom-desc" placeholder="Any additional notes..." style="margin-top:0.25rem;">${j.custom_description || ''}</textarea>
                             </div>
+                            ${accHtml}
                         </div>
-                        ${accHtml}
                     </div>`;
                 }).join('') + `
                     <div style="display:flex; gap:0.75rem; margin: 0.5rem 0 1.5rem;">
