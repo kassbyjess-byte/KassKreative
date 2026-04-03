@@ -1267,6 +1267,12 @@
                     <!-- Journal specs — dynamically populated for single or multi-journal orders -->
                     <div id="journalSpecsContainer"></div>
 
+                    <!-- Accessories -->
+                    <div id="orderAccessories" style="display:none; margin-bottom:1.5rem;">
+                        <h4 style="margin-bottom:0.5rem;">Charms & Accessories</h4>
+                        <div class="accessories-list" style="background:var(--card); border:1px solid var(--border); border-radius:10px; padding:0.75rem 1rem;"></div>
+                    </div>
+
                     <div class="detail-grid">
                         <div class="detail-card">
                             <div class="detail-label">Amount</div>
@@ -1821,6 +1827,21 @@
                         <button type="button" class="btn btn-primary btn-small" onclick="saveJournalDetails()">Save Journal Details</button>
                         <button type="button" class="btn btn-secondary btn-small" onclick="addJournalDetailRow()">+ Add Journal</button>
                     </div>`;
+
+                // Accessories
+                const accContainer = document.getElementById('orderAccessories');
+                if (order.accessories && order.accessories.length > 0) {
+                    accContainer.style.display = 'block';
+                    accContainer.querySelector('.accessories-list').innerHTML = order.accessories.map(a => {
+                        const price = (a.amount / 100).toFixed(2);
+                        return `<div style="display:flex; justify-content:space-between; align-items:center; padding:0.6rem 0; border-bottom:1px solid var(--border);">
+                            <span>${a.name}</span>
+                            <span style="font-weight:500; color:var(--cognac);">$${price}</span>
+                        </div>`;
+                    }).join('');
+                } else {
+                    accContainer.style.display = 'none';
+                }
 
                 // Payment details
                 document.getElementById('orderAmount').textContent = `$${((order.amount || 0) / 100).toFixed(2)}`;
