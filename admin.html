@@ -994,6 +994,80 @@
                     <h2>Create New Order</h2>
 
                     <form id="newOrderForm" onsubmit="handleCreateOrder(event)">
+                        <!-- Order Mode Toggle -->
+                        <div class="form-section">
+                            <h3>Order Type</h3>
+                            <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+                                <button type="button" id="modeStripeBtn" class="btn btn-primary" onclick="setOrderMode('stripe')" style="flex:1; min-width:180px;">Stripe Payment Link</button>
+                                <button type="button" id="modeManualBtn" class="btn btn-secondary" onclick="setOrderMode('manual')" style="flex:1; min-width:180px;">Manual / E-Transfer</button>
+                            </div>
+                            <p id="modeDescription" style="margin-top:1rem; color:var(--text-medium); font-size:0.9rem;">Generate a Stripe payment link for the customer to pay by card.</p>
+                        </div>
+
+                        <!-- Manual Customer Info (only shown for manual orders) -->
+                        <div id="manualCustomerSection" class="form-section" style="display:none;">
+                            <h3>Customer Information</h3>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">Customer Name *</label>
+                                    <input type="text" id="manualCustName" class="form-input" placeholder="Full name">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Email</label>
+                                    <input type="email" id="manualCustEmail" class="form-input" placeholder="customer@example.com">
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">Phone</label>
+                                    <input type="tel" id="manualCustPhone" class="form-input" placeholder="Optional">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Payment Method</label>
+                                    <select id="manualPaymentMethod" class="form-select">
+                                        <option value="e-transfer">Interac E-Transfer</option>
+                                        <option value="cash">Cash</option>
+                                        <option value="local_pickup">Local Pickup (Paid)</option>
+                                        <option value="other">Other</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">Address Line 1</label>
+                                    <input type="text" id="manualAddr1" class="form-input" placeholder="Street address (or leave blank for local pickup)">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Address Line 2</label>
+                                    <input type="text" id="manualAddr2" class="form-input" placeholder="Apt, suite, etc.">
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">City</label>
+                                    <input type="text" id="manualCity" class="form-input">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Province / State</label>
+                                    <input type="text" id="manualState" class="form-input" placeholder="QC, ON, etc.">
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">Postal Code</label>
+                                    <input type="text" id="manualPostal" class="form-input" placeholder="J9A 0B9">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Country</label>
+                                    <input type="text" id="manualCountry" class="form-input" value="CA">
+                                </div>
+                            </div>
+                            <div class="form-group form-row full">
+                                <label class="form-label">Notes (internal)</label>
+                                <textarea id="manualNotes" class="form-input" placeholder="E-transfer reference, payment date, etc."></textarea>
+                            </div>
+                        </div>
+
                         <div id="journalItemsContainer">
                             <div class="form-section journal-item" data-journal-index="0">
                                 <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -1008,6 +1082,7 @@
                                             <option value="A5">A5</option>
                                             <option value="A6">A6</option>
                                             <option value="Passport">Passport</option>
+                                            <option value="Custom Passport">Custom Passport</option>
                                             <option value="Custom A5">Custom A5</option>
                                             <option value="Custom A6">Custom A6</option>
                                         </select>
@@ -1108,10 +1183,10 @@
                             </div>
                         </div>
 
-                        <div class="form-section">
-                            <h3>Payment Link</h3>
-                            <p style="margin-bottom: 1.5rem; color: var(--text-medium);">Generate a payment link for the customer to complete checkout.</p>
-                            <button type="button" class="btn btn-primary" onclick="createPaymentLink()">Create Payment Link</button>
+                        <div class="form-section" id="submitSection">
+                            <h3 id="submitSectionTitle">Payment Link</h3>
+                            <p id="submitSectionDesc" style="margin-bottom: 1.5rem; color: var(--text-medium);">Generate a payment link for the customer to complete checkout.</p>
+                            <button type="button" id="submitOrderBtn" class="btn btn-primary" onclick="createPaymentLink()">Create Payment Link</button>
 
                             <div id="paymentLinkResult" style="display:none; margin-top: 1.5rem;">
                                 <div class="form-section">
@@ -1120,6 +1195,12 @@
                                         <input type="text" id="paymentLinkDisplay" class="form-input" readonly>
                                         <button type="button" class="btn btn-secondary btn-small copy-btn" onclick="copyPaymentLink()">COPY</button>
                                     </div>
+                                </div>
+                            </div>
+
+                            <div id="manualOrderResult" style="display:none; margin-top: 1.5rem;">
+                                <div class="form-section" style="background: #e8f5e9; border-left: 4px solid #2e7d32;">
+                                    <p style="margin:0; color:#1b5e20; font-weight:500;">Manual order saved to dashboard.</p>
                                 </div>
                             </div>
                         </div>
@@ -1345,6 +1426,7 @@
             'A5': 148,
             'A6': 118,
             'Passport': 58,
+            'Custom Passport': 88,
             'Custom A5': 198,
             'Custom A6': 168
         };
@@ -1458,7 +1540,9 @@
                     metadata: o.metadata || {},
                     journal_count: o.journal_count || 1,
                     status: (o.fulfillment && o.fulfillment.status) || 'paid',
-                    fulfillment: o.fulfillment || {}
+                    fulfillment: o.fulfillment || {},
+                    is_manual: !!o.is_manual,
+                    payment_method: o.payment_method || ''
                 }));
                 renderOrders();
                 updateStats();
@@ -1481,10 +1565,13 @@
                 const date = new Date(order.created * 1000).toLocaleDateString();
                 const product = order.product_name || [order.metadata.size, order.metadata.leather].filter(Boolean).join(' \u2022 ') || 'Journal';
                 const statusLabel = order.status.replace(/_/g, ' ').toUpperCase();
+                const manualBadge = order.is_manual
+                    ? `<span style="display:inline-block; margin-left:0.4rem; padding:0.15rem 0.5rem; background:#5C3A21; color:#fff; border-radius:3px; font-size:0.65rem; font-weight:500; letter-spacing:0.05em;">E-TRANSFER</span>`
+                    : '';
                 return `
                 <tr onclick="viewOrder('${order.id}')">
                     <td>${date}</td>
-                    <td>${order.customer_name}<br><small style="color:var(--text-light);">${order.customer_email}</small></td>
+                    <td>${order.customer_name}${manualBadge}<br><small style="color:var(--text-light);">${order.customer_email || (order.is_manual ? '(manual order)' : '')}</small></td>
                     <td>${product}</td>
                     <td>$${order.amount.toFixed(2)}</td>
                     <td><span class="status-badge status-${order.status}">${statusLabel}</span></td>
@@ -1513,6 +1600,40 @@
 
         // NEW ORDER — calls Worker API to create a Stripe payment link
         // ---- Multi-journal order form helpers ----
+
+        let orderMode = 'stripe'; // 'stripe' or 'manual'
+
+        function setOrderMode(mode) {
+            orderMode = mode;
+            const stripeBtn = document.getElementById('modeStripeBtn');
+            const manualBtn = document.getElementById('modeManualBtn');
+            const manualSection = document.getElementById('manualCustomerSection');
+            const desc = document.getElementById('modeDescription');
+            const title = document.getElementById('submitSectionTitle');
+            const descSec = document.getElementById('submitSectionDesc');
+            const btn = document.getElementById('submitOrderBtn');
+            // Hide any previous results
+            document.getElementById('paymentLinkResult').style.display = 'none';
+            document.getElementById('manualOrderResult').style.display = 'none';
+
+            if (mode === 'manual') {
+                stripeBtn.className = 'btn btn-secondary';
+                manualBtn.className = 'btn btn-primary';
+                manualSection.style.display = '';
+                desc.textContent = 'Record a local order paid by Interac e-transfer, cash, or other. Order will appear in the dashboard alongside Stripe orders.';
+                title.textContent = 'Save Manual Order';
+                descSec.textContent = 'Save this order to the dashboard. No payment link will be generated.';
+                btn.textContent = 'Save Manual Order';
+            } else {
+                stripeBtn.className = 'btn btn-primary';
+                manualBtn.className = 'btn btn-secondary';
+                manualSection.style.display = 'none';
+                desc.textContent = 'Generate a Stripe payment link for the customer to pay by card.';
+                title.textContent = 'Payment Link';
+                descSec.textContent = 'Generate a payment link for the customer to complete checkout.';
+                btn.textContent = 'Create Payment Link';
+            }
+        }
 
         function addAccessoryRow(btn) {
             const section = btn.closest('.accessories-section');
@@ -1660,25 +1781,81 @@
 
             try {
                 const token = localStorage.getItem('kass_token');
-                const response = await fetch(`${API_BASE}/api/orders`, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ journals, shipping, duties })
-                });
-                const data = await response.json();
 
-                if (data.url) {
-                    document.getElementById('paymentLinkDisplay').value = data.url;
-                    document.getElementById('paymentLinkResult').style.display = 'block';
+                if (orderMode === 'manual') {
+                    // Collect customer info from manual fields
+                    const customerName = document.getElementById('manualCustName').value.trim();
+                    if (!customerName) {
+                        alert('Please enter a customer name for the manual order.');
+                        if (btn) { btn.textContent = originalText; btn.disabled = false; }
+                        return;
+                    }
+                    const manualOrder = {
+                        journals,
+                        shipping,
+                        duties,
+                        customer: {
+                            name: customerName,
+                            email: document.getElementById('manualCustEmail').value.trim(),
+                            phone: document.getElementById('manualCustPhone').value.trim(),
+                        },
+                        payment_method: document.getElementById('manualPaymentMethod').value,
+                        shipping_address: {
+                            line1: document.getElementById('manualAddr1').value.trim(),
+                            line2: document.getElementById('manualAddr2').value.trim(),
+                            city: document.getElementById('manualCity').value.trim(),
+                            state: document.getElementById('manualState').value.trim(),
+                            postal_code: document.getElementById('manualPostal').value.trim(),
+                            country: document.getElementById('manualCountry').value.trim() || 'CA',
+                        },
+                        notes: document.getElementById('manualNotes').value.trim(),
+                    };
+                    const response = await fetch(`${API_BASE}/api/manual-orders`, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(manualOrder)
+                    });
+                    const data = await response.json();
+                    if (data.id) {
+                        document.getElementById('manualOrderResult').style.display = 'block';
+                        // Reload orders so new manual order shows in dashboard
+                        loadOrders();
+                        // Reset form
+                        document.getElementById('newOrderForm').reset();
+                        // Remove extra journal items (keep first)
+                        const items = getJournalItems();
+                        for (let i = items.length - 1; i > 0; i--) items[i].remove();
+                        // Clear accessories
+                        document.querySelectorAll('.accessory-rows').forEach(c => c.innerHTML = '');
+                        document.getElementById('manualCountry').value = 'CA';
+                        updateOrderTotals();
+                    } else {
+                        alert('Error saving manual order: ' + (data.error || 'Unknown error'));
+                    }
                 } else {
-                    alert('Error creating payment link: ' + (data.error || 'Unknown error'));
+                    const response = await fetch(`${API_BASE}/api/orders`, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ journals, shipping, duties })
+                    });
+                    const data = await response.json();
+
+                    if (data.url) {
+                        document.getElementById('paymentLinkDisplay').value = data.url;
+                        document.getElementById('paymentLinkResult').style.display = 'block';
+                    } else {
+                        alert('Error creating payment link: ' + (data.error || 'Unknown error'));
+                    }
                 }
             } catch (err) {
                 console.error('Error creating order:', err);
-                alert('Failed to create payment link');
+                alert('Failed to create order');
             } finally {
                 if (btn) { btn.textContent = originalText; btn.disabled = false; }
             }
@@ -1772,7 +1949,7 @@
                 }
 
                 const journalSpecs = document.getElementById('journalSpecsContainer');
-                const sizeOptions = ['', 'A5', 'A6', 'Passport', 'Custom A5', 'Custom A6'];
+                const sizeOptions = ['', 'A5', 'A6', 'Passport', 'Custom Passport', 'Custom A5', 'Custom A6'];
                 const leatherOptions = ['', 'Chocolate Brown', 'Forest Green', 'Onyx Black', 'Ocean', 'Cognac', 'Burgundy'];
                 const stringOptions = ['', 'Baby Pink', 'White', 'Black', 'Forest Green', 'Dark Blue', 'Burgundy', 'Red', 'Lilac'];
                 const eyeletOptions = ['', 'Gold', 'Silver'];
@@ -1885,7 +2062,7 @@
             const container = document.getElementById('journalSpecsContainer');
             const existing = container.querySelectorAll('.journal-detail-edit');
             const newIndex = existing.length;
-            const sizeOptions = ['', 'A5', 'A6', 'Passport', 'Custom A5', 'Custom A6'];
+            const sizeOptions = ['', 'A5', 'A6', 'Passport', 'Custom Passport', 'Custom A5', 'Custom A6'];
             const leatherOptions = ['', 'Chocolate Brown', 'Forest Green', 'Onyx Black', 'Ocean', 'Cognac', 'Burgundy'];
             const stringOptions = ['', 'Baby Pink', 'White', 'Black', 'Forest Green', 'Dark Blue', 'Burgundy', 'Red', 'Lilac'];
             const eyeletOptions = ['', 'Gold', 'Silver'];
