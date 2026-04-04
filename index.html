@@ -623,24 +623,6 @@ footer a { color: var(--cream); text-decoration: none; }
         <p class="size-detail" style="margin-top:0.8rem; font-size:0.78rem; color: var(--text-medium);">Includes: 2 notebooks, 1 charm, Kass dust bag</p>
         <p class="size-detail" style="margin-top:0.3rem; font-size:0.72rem;">Shipping &amp; duties not included</p>
       </div>
-      <!-- Custom Passport -->
-      <div class="journal-card">
-        <div class="journal-icon">
-          <svg viewBox="0 0 80 110" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <rect x="8" y="6" width="65" height="98" rx="3" fill="rgba(0,0,0,0.06)"/>
-            <rect x="6" y="4" width="65" height="98" rx="3" fill="#8B6F4E"/>
-            <rect x="6" y="4" width="15" height="98" rx="3" fill="rgba(0,0,0,0.12)"/>
-            <line x1="19" y1="6" x2="19" y2="100" stroke="rgba(0,0,0,0.1)" stroke-width="0.8"/>
-            <line x1="2" y1="53" x2="75" y2="53" stroke="#6B5238" stroke-width="1.5" stroke-linecap="round"/>
-            <text x="40" y="36" font-family="serif" font-size="22" fill="rgba(255,255,255,0.2)" text-anchor="middle">?</text>
-          </svg>
-        </div>
-        <h3>Custom Passport</h3>
-        <p class="size-detail">Something Unique &mdash; Made for You</p>
-        <p class="price">$88 <span>CAD</span></p>
-        <p class="size-detail" style="margin-top:0.8rem; font-size:0.78rem; color: var(--text-medium);">Special requests or designs welcome</p>
-        <p class="size-detail" style="margin-top:0.3rem; font-size:0.72rem;">Shipping &amp; duties not included</p>
-      </div>
       <!-- Passport -->
       <div class="journal-card">
         <div class="journal-icon">
@@ -694,6 +676,24 @@ footer a { color: var(--cream); text-decoration: none; }
         <p class="size-detail" style="margin-top:0.8rem; font-size:0.78rem; color: var(--text-medium);">Special requests or designs welcome</p>
         <p class="size-detail" style="margin-top:0.3rem; font-size:0.72rem;">Shipping &amp; duties not included</p>
       </div>
+      <!-- Custom Passport -->
+      <div class="journal-card">
+        <div class="journal-icon">
+          <svg viewBox="0 0 80 110" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="8" y="6" width="65" height="98" rx="3" fill="rgba(0,0,0,0.06)"/>
+            <rect x="6" y="4" width="65" height="98" rx="3" fill="#8B6F4E"/>
+            <rect x="6" y="4" width="15" height="98" rx="3" fill="rgba(0,0,0,0.12)"/>
+            <line x1="19" y1="6" x2="19" y2="100" stroke="rgba(0,0,0,0.1)" stroke-width="0.8"/>
+            <line x1="2" y1="53" x2="75" y2="53" stroke="#6B5238" stroke-width="1.5" stroke-linecap="round"/>
+            <text x="40" y="36" font-family="serif" font-size="22" fill="rgba(255,255,255,0.2)" text-anchor="middle">?</text>
+          </svg>
+        </div>
+        <h3>Custom Passport</h3>
+        <p class="size-detail">Something Unique &mdash; Made for You</p>
+        <p class="price">$88 <span>CAD</span></p>
+        <p class="size-detail" style="margin-top:0.8rem; font-size:0.78rem; color: var(--text-medium);">Special requests or designs welcome</p>
+        <p class="size-detail" style="margin-top:0.3rem; font-size:0.72rem;">Shipping &amp; duties not included</p>
+      </div>
     </div>
   </div>
 </section>
@@ -715,10 +715,10 @@ footer a { color: var(--cream); text-decoration: none; }
           <div class="size-options">
             <button class="size-btn active" data-size="A5" data-price="148" data-custom="false">A5 &mdash; $148</button>
             <button class="size-btn" data-size="A6" data-price="118" data-custom="false">A6 &mdash; $118</button>
-            <button class="size-btn" data-size="Custom Passport" data-price="88" data-custom="true">Custom Passport &mdash; $88</button>
             <button class="size-btn" data-size="Passport Cover" data-price="58" data-custom="false">Passport &mdash; $58</button>
             <button class="size-btn" data-size="Custom A5" data-price="198" data-custom="true">Custom A5 &mdash; $198</button>
             <button class="size-btn" data-size="Custom A6" data-price="168" data-custom="true">Custom A6 &mdash; $168</button>
+            <button class="size-btn" data-size="Custom Passport" data-price="88" data-custom="true">Custom Passport &mdash; $88</button>
           </div>
           <!-- Custom description (shown only for Custom A5/A6) -->
           <div id="customDescWrap" style="display:none; margin-top:1rem;">
@@ -819,16 +819,15 @@ footer a { color: var(--cream); text-decoration: none; }
         <div class="config-group">
           <h4>Shipping Address <span style="font-weight:300; font-size:0.8rem; color:var(--text-light);">(for accurate shipping quote)</span></h4>
           <div style="display:grid; grid-template-columns:1fr; gap:0.6rem;">
-            <input type="text" id="shipName" placeholder="Full name" oninput="updateShipping()" style="width:100%; padding:0.7rem 1rem; border:1px solid var(--border); background:transparent; font-family:'Inter',sans-serif; font-size:16px; color:var(--text-dark); outline:none; transition:border-color 0.3s;" onfocus="this.style.borderColor='var(--cognac)'" onblur="this.style.borderColor='var(--border)'">
             <input type="text" id="shipAddr1" placeholder="Address line 1" oninput="updateShipping()" style="width:100%; padding:0.7rem 1rem; border:1px solid var(--border); background:transparent; font-family:'Inter',sans-serif; font-size:16px; color:var(--text-dark); outline:none; transition:border-color 0.3s;" onfocus="this.style.borderColor='var(--cognac)'" onblur="this.style.borderColor='var(--border)'">
             <input type="text" id="shipAddr2" placeholder="Address line 2 (optional)" oninput="updateShipping()" style="width:100%; padding:0.7rem 1rem; border:1px solid var(--border); background:transparent; font-family:'Inter',sans-serif; font-size:16px; color:var(--text-dark); outline:none; transition:border-color 0.3s;" onfocus="this.style.borderColor='var(--cognac)'" onblur="this.style.borderColor='var(--border)'">
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.6rem;">
               <input type="text" id="shipCity" placeholder="City" oninput="updateShipping()" style="width:100%; padding:0.7rem 1rem; border:1px solid var(--border); background:transparent; font-family:'Inter',sans-serif; font-size:16px; color:var(--text-dark); outline:none; transition:border-color 0.3s;" onfocus="this.style.borderColor='var(--cognac)'" onblur="this.style.borderColor='var(--border)'">
-              <input type="text" id="shipState" placeholder="Province / State" oninput="updateShipping()" style="width:100%; padding:0.7rem 1rem; border:1px solid var(--border); background:transparent; font-family:'Inter',sans-serif; font-size:16px; color:var(--text-dark); outline:none; transition:border-color 0.3s;" onfocus="this.style.borderColor='var(--cognac)'" onblur="this.style.borderColor='var(--border)'">
+              <input type="text" id="shipState" placeholder="State / Province / Region" oninput="updateShipping()" style="width:100%; padding:0.7rem 1rem; border:1px solid var(--border); background:transparent; font-family:'Inter',sans-serif; font-size:16px; color:var(--text-dark); outline:none; transition:border-color 0.3s;" onfocus="this.style.borderColor='var(--cognac)'" onblur="this.style.borderColor='var(--border)'">
             </div>
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.6rem;">
-              <input type="text" id="shipPostal" placeholder="Postal / ZIP code" oninput="updateShipping()" style="width:100%; padding:0.7rem 1rem; border:1px solid var(--border); background:transparent; font-family:'Inter',sans-serif; font-size:16px; color:var(--text-dark); outline:none; transition:border-color 0.3s;" onfocus="this.style.borderColor='var(--cognac)'" onblur="this.style.borderColor='var(--border)'">
-              <input type="text" id="shipCountry" placeholder="Country" value="Canada" oninput="updateShipping()" style="width:100%; padding:0.7rem 1rem; border:1px solid var(--border); background:transparent; font-family:'Inter',sans-serif; font-size:16px; color:var(--text-dark); outline:none; transition:border-color 0.3s;" onfocus="this.style.borderColor='var(--cognac)'" onblur="this.style.borderColor='var(--border)'">
+              <input type="text" id="shipPostal" placeholder="Postal / ZIP / Postcode" oninput="updateShipping()" style="width:100%; padding:0.7rem 1rem; border:1px solid var(--border); background:transparent; font-family:'Inter',sans-serif; font-size:16px; color:var(--text-dark); outline:none; transition:border-color 0.3s;" onfocus="this.style.borderColor='var(--cognac)'" onblur="this.style.borderColor='var(--border)'">
+              <input type="text" id="shipCountry" placeholder="Country" oninput="updateShipping()" style="width:100%; padding:0.7rem 1rem; border:1px solid var(--border); background:transparent; font-family:'Inter',sans-serif; font-size:16px; color:var(--text-dark); outline:none; transition:border-color 0.3s;" onfocus="this.style.borderColor='var(--cognac)'" onblur="this.style.borderColor='var(--border)'">
             </div>
           </div>
         </div>
@@ -1095,12 +1094,11 @@ const state = {
   embossing: '',
   isCustom: false,
   customDesc: '',
-  ship: { name: '', addr1: '', addr2: '', city: '', state: '', postal: '', country: 'Canada' }
+  ship: { addr1: '', addr2: '', city: '', state: '', postal: '', country: '' }
 };
 
 // Shipping address handler
 function updateShipping() {
-  state.ship.name = document.getElementById('shipName').value;
   state.ship.addr1 = document.getElementById('shipAddr1').value;
   state.ship.addr2 = document.getElementById('shipAddr2').value;
   state.ship.city = document.getElementById('shipCity').value;
@@ -1212,7 +1210,7 @@ function updatePreview() {
 
   // Shipping address (only include filled portion)
   const s = state.ship;
-  const shipParts = [s.name, s.addr1, s.addr2, [s.city, s.state, s.postal].filter(Boolean).join(', '), s.country].filter(v => v && v.trim());
+  const shipParts = [s.addr1, s.addr2, [s.city, s.state, s.postal].filter(Boolean).join(', '), s.country].filter(v => v && v.trim());
   if (shipParts.length > 0) {
     orderLines += `\n\nShipping to:\n${shipParts.join('\n')}`;
   }
