@@ -305,6 +305,8 @@ section { padding: 6rem 2rem; }
   display: flex; align-items: center; justify-content: center;
 }
 .journal-svg-preview { width: 100%; height: 100%; }
+#journalPreview { transition: transform 0.3s ease; transform-origin: center center; }
+#journalPreview.four-eye .eye-col-r { display: none; }
 .preview-price {
   font-family: 'Cormorant Garamond', serif;
   font-size: 2.2rem; font-weight: 600; color: var(--cognac);
@@ -898,19 +900,19 @@ footer a { color: var(--cream); text-decoration: none; }
 
               <!-- === TOP EYELETS: 2 rows of 3 === -->
               <!-- Row 1 (top) -->
-              <circle id="prevSpEye1" cx="14" cy="30" r="3.5" fill="#D4AF37" stroke="rgba(0,0,0,0.25)" stroke-width="0.8"/>
-              <circle cx="14" cy="30" r="1.6" fill="rgba(0,0,0,0.3)"/>
-              <circle id="prevSpEye2" cx="28" cy="30" r="3.5" fill="#D4AF37" stroke="rgba(0,0,0,0.25)" stroke-width="0.8"/>
-              <circle cx="28" cy="30" r="1.6" fill="rgba(0,0,0,0.3)"/>
-              <circle id="prevSpEye3" cx="42" cy="30" r="3.5" fill="#D4AF37" stroke="rgba(0,0,0,0.25)" stroke-width="0.8"/>
-              <circle cx="42" cy="30" r="1.6" fill="rgba(0,0,0,0.3)"/>
+              <circle id="prevSpEye1" class="eye-col-1" cx="14" cy="30" r="3.5" fill="#D4AF37" stroke="rgba(0,0,0,0.25)" stroke-width="0.8"/>
+              <circle class="eye-col-1" cx="14" cy="30" r="1.6" fill="rgba(0,0,0,0.3)"/>
+              <circle id="prevSpEye2" class="eye-col-2" cx="28" cy="30" r="3.5" fill="#D4AF37" stroke="rgba(0,0,0,0.25)" stroke-width="0.8"/>
+              <circle class="eye-col-2" cx="28" cy="30" r="1.6" fill="rgba(0,0,0,0.3)"/>
+              <circle id="prevSpEye3" class="eye-col-r" cx="42" cy="30" r="3.5" fill="#D4AF37" stroke="rgba(0,0,0,0.25)" stroke-width="0.8"/>
+              <circle class="eye-col-r" cx="42" cy="30" r="1.6" fill="rgba(0,0,0,0.3)"/>
               <!-- Row 2 -->
-              <circle id="prevSpEye4" cx="14" cy="52" r="3.5" fill="#D4AF37" stroke="rgba(0,0,0,0.25)" stroke-width="0.8"/>
-              <circle cx="14" cy="52" r="1.6" fill="rgba(0,0,0,0.3)"/>
-              <circle id="prevSpEye5" cx="28" cy="52" r="3.5" fill="#D4AF37" stroke="rgba(0,0,0,0.25)" stroke-width="0.8"/>
-              <circle cx="28" cy="52" r="1.6" fill="rgba(0,0,0,0.3)"/>
-              <circle id="prevSpEye6" cx="42" cy="52" r="3.5" fill="#D4AF37" stroke="rgba(0,0,0,0.25)" stroke-width="0.8"/>
-              <circle cx="42" cy="52" r="1.6" fill="rgba(0,0,0,0.3)"/>
+              <circle id="prevSpEye4" class="eye-col-1" cx="14" cy="52" r="3.5" fill="#D4AF37" stroke="rgba(0,0,0,0.25)" stroke-width="0.8"/>
+              <circle class="eye-col-1" cx="14" cy="52" r="1.6" fill="rgba(0,0,0,0.3)"/>
+              <circle id="prevSpEye5" class="eye-col-2" cx="28" cy="52" r="3.5" fill="#D4AF37" stroke="rgba(0,0,0,0.25)" stroke-width="0.8"/>
+              <circle class="eye-col-2" cx="28" cy="52" r="1.6" fill="rgba(0,0,0,0.3)"/>
+              <circle id="prevSpEye6" class="eye-col-r" cx="42" cy="52" r="3.5" fill="#D4AF37" stroke="rgba(0,0,0,0.25)" stroke-width="0.8"/>
+              <circle class="eye-col-r" cx="42" cy="52" r="1.6" fill="rgba(0,0,0,0.3)"/>
 
               <!-- Vertical string through top eyelets (3 columns) -->
               <path id="prevSpStringTop" d="M14 30 L14 52 M28 30 L28 52 M42 30 L42 52" stroke="#F4C2C2" stroke-width="2" fill="none" stroke-linecap="round"/>
@@ -923,19 +925,19 @@ footer a { color: var(--cream); text-decoration: none; }
 
               <!-- === BOTTOM EYELETS: 2 rows of 3 === -->
               <!-- Row 1 -->
-              <circle id="prevSpEye7" cx="14" cy="188" r="3.5" fill="#D4AF37" stroke="rgba(0,0,0,0.25)" stroke-width="0.8"/>
-              <circle cx="14" cy="188" r="1.6" fill="rgba(0,0,0,0.3)"/>
-              <circle id="prevSpEye8" cx="28" cy="188" r="3.5" fill="#D4AF37" stroke="rgba(0,0,0,0.25)" stroke-width="0.8"/>
-              <circle cx="28" cy="188" r="1.6" fill="rgba(0,0,0,0.3)"/>
-              <circle id="prevSpEye9" cx="42" cy="188" r="3.5" fill="#D4AF37" stroke="rgba(0,0,0,0.25)" stroke-width="0.8"/>
-              <circle cx="42" cy="188" r="1.6" fill="rgba(0,0,0,0.3)"/>
+              <circle id="prevSpEye7" class="eye-col-1" cx="14" cy="188" r="3.5" fill="#D4AF37" stroke="rgba(0,0,0,0.25)" stroke-width="0.8"/>
+              <circle class="eye-col-1" cx="14" cy="188" r="1.6" fill="rgba(0,0,0,0.3)"/>
+              <circle id="prevSpEye8" class="eye-col-2" cx="28" cy="188" r="3.5" fill="#D4AF37" stroke="rgba(0,0,0,0.25)" stroke-width="0.8"/>
+              <circle class="eye-col-2" cx="28" cy="188" r="1.6" fill="rgba(0,0,0,0.3)"/>
+              <circle id="prevSpEye9" class="eye-col-r" cx="42" cy="188" r="3.5" fill="#D4AF37" stroke="rgba(0,0,0,0.25)" stroke-width="0.8"/>
+              <circle class="eye-col-r" cx="42" cy="188" r="1.6" fill="rgba(0,0,0,0.3)"/>
               <!-- Row 2 (bottom) -->
-              <circle id="prevSpEye10" cx="14" cy="210" r="3.5" fill="#D4AF37" stroke="rgba(0,0,0,0.25)" stroke-width="0.8"/>
-              <circle cx="14" cy="210" r="1.6" fill="rgba(0,0,0,0.3)"/>
-              <circle id="prevSpEye11" cx="28" cy="210" r="3.5" fill="#D4AF37" stroke="rgba(0,0,0,0.25)" stroke-width="0.8"/>
-              <circle cx="28" cy="210" r="1.6" fill="rgba(0,0,0,0.3)"/>
-              <circle id="prevSpEye12" cx="42" cy="210" r="3.5" fill="#D4AF37" stroke="rgba(0,0,0,0.25)" stroke-width="0.8"/>
-              <circle cx="42" cy="210" r="1.6" fill="rgba(0,0,0,0.3)"/>
+              <circle id="prevSpEye10" class="eye-col-1" cx="14" cy="210" r="3.5" fill="#D4AF37" stroke="rgba(0,0,0,0.25)" stroke-width="0.8"/>
+              <circle class="eye-col-1" cx="14" cy="210" r="1.6" fill="rgba(0,0,0,0.3)"/>
+              <circle id="prevSpEye11" class="eye-col-2" cx="28" cy="210" r="3.5" fill="#D4AF37" stroke="rgba(0,0,0,0.25)" stroke-width="0.8"/>
+              <circle class="eye-col-2" cx="28" cy="210" r="1.6" fill="rgba(0,0,0,0.3)"/>
+              <circle id="prevSpEye12" class="eye-col-r" cx="42" cy="210" r="3.5" fill="#D4AF37" stroke="rgba(0,0,0,0.25)" stroke-width="0.8"/>
+              <circle class="eye-col-r" cx="42" cy="210" r="1.6" fill="rgba(0,0,0,0.3)"/>
 
               <!-- Vertical string through bottom eyelets (3 columns) -->
               <path id="prevSpStringBot" d="M14 188 L14 210 M28 188 L28 210 M42 188 L42 210" stroke="#F4C2C2" stroke-width="2" fill="none" stroke-linecap="round"/>
@@ -1194,6 +1196,34 @@ function updatePreview() {
     const el = document.getElementById(id);
     if (el) el.setAttribute('fill', state.eyeletHex);
   });
+
+  // Size-based preview adjustments: eyelet count (4 vs 6) and scale
+  const svg = document.getElementById('journalPreview');
+  const isSmall = /Passport|A6/i.test(state.size); // A6, Passport, Custom A6, Custom Passport
+  if (svg) {
+    const topStr = document.getElementById('prevSpStringTop');
+    const botStr = document.getElementById('prevSpStringBot');
+    if (isSmall) {
+      svg.classList.add('four-eye');
+      // Center 2 columns on spine (spine center ~27.5, cols at 20 and 35)
+      document.querySelectorAll('#journalPreview .eye-col-1').forEach(el => el.setAttribute('cx', '20'));
+      document.querySelectorAll('#journalPreview .eye-col-2').forEach(el => el.setAttribute('cx', '35'));
+      if (topStr) topStr.setAttribute('d', 'M20 30 L20 52 M35 30 L35 52');
+      if (botStr) botStr.setAttribute('d', 'M20 188 L20 210 M35 188 L35 210');
+    } else {
+      svg.classList.remove('four-eye');
+      // Restore original 3-column positions
+      document.querySelectorAll('#journalPreview .eye-col-1').forEach(el => el.setAttribute('cx', '14'));
+      document.querySelectorAll('#journalPreview .eye-col-2').forEach(el => el.setAttribute('cx', '28'));
+      if (topStr) topStr.setAttribute('d', 'M14 30 L14 52 M28 30 L28 52 M42 30 L42 52');
+      if (botStr) botStr.setAttribute('d', 'M14 188 L14 210 M28 188 L28 210 M42 188 L42 210');
+    }
+    // Scale preview: A5 = 1.0, A6 = 0.85 (15% smaller), Passport = 0.75 (25% smaller)
+    let scale = 1.0;
+    if (/Passport/i.test(state.size)) scale = 0.75;
+    else if (/A6/i.test(state.size)) scale = 0.85;
+    svg.style.transform = `scale(${scale})`;
+  }
   // Embossing on preview (bottom-right)
   const embossEl = document.getElementById('prevEmboss');
   if (embossEl) {
