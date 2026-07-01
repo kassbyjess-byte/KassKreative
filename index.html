@@ -680,8 +680,8 @@ footer a { color: var(--cream); text-decoration: none; }
         </div>
         <h3>Custom A5</h3>
         <p class="size-detail">Something Unique &mdash; Made for You</p>
-        <p class="price">$198 <span>CAD</span></p>
-        <p class="size-detail" style="margin-top:0.8rem; font-size:0.78rem; color: var(--text-medium);">Special requests or designs welcome</p>
+        <p class="price">$198+ <span>CAD</span></p>
+        <p class="size-detail" style="margin-top:0.8rem; font-size:0.78rem; color: var(--text-medium);">Custom orders are priced individually based on your design preferences and requested features. Final pricing will be confirmed after discussing your custom design.</p>
         <p class="size-detail" style="margin-top:0.3rem; font-size:0.72rem;">Shipping &amp; duties not included</p>
       </div>
       <!-- Custom A6 -->
@@ -698,8 +698,8 @@ footer a { color: var(--cream); text-decoration: none; }
         </div>
         <h3>Custom A6</h3>
         <p class="size-detail">Something Unique &mdash; Made for You</p>
-        <p class="price">$168 <span>CAD</span></p>
-        <p class="size-detail" style="margin-top:0.8rem; font-size:0.78rem; color: var(--text-medium);">Special requests or designs welcome</p>
+        <p class="price">$168+ <span>CAD</span></p>
+        <p class="size-detail" style="margin-top:0.8rem; font-size:0.78rem; color: var(--text-medium);">Custom orders are priced individually based on your design preferences and requested features. Final pricing will be confirmed after discussing your custom design.</p>
         <p class="size-detail" style="margin-top:0.3rem; font-size:0.72rem;">Shipping &amp; duties not included</p>
       </div>
       <!-- Custom Passport -->
@@ -716,8 +716,8 @@ footer a { color: var(--cream); text-decoration: none; }
         </div>
         <h3>Custom Passport</h3>
         <p class="size-detail">Something Unique &mdash; Made for You</p>
-        <p class="price">$88 <span>CAD</span></p>
-        <p class="size-detail" style="margin-top:0.8rem; font-size:0.78rem; color: var(--text-medium);">Special requests or designs welcome</p>
+        <p class="price">$88+ <span>CAD</span></p>
+        <p class="size-detail" style="margin-top:0.8rem; font-size:0.78rem; color: var(--text-medium);">Custom orders are priced individually based on your design preferences and requested features. Final pricing will be confirmed after discussing your custom design.</p>
         <p class="size-detail" style="margin-top:0.3rem; font-size:0.72rem;">Shipping &amp; duties not included</p>
       </div>
     </div>
@@ -742,9 +742,9 @@ footer a { color: var(--cream); text-decoration: none; }
             <button class="size-btn active" data-size="A5" data-price="148" data-custom="false">A5 &mdash; $148</button>
             <button class="size-btn" data-size="A6" data-price="118" data-custom="false">A6 &mdash; $118</button>
             <button class="size-btn" data-size="Passport Cover" data-price="58" data-custom="false">Passport &mdash; $58</button>
-            <button class="size-btn" data-size="Custom A5" data-price="198" data-custom="true">Custom A5 &mdash; $198</button>
-            <button class="size-btn" data-size="Custom A6" data-price="168" data-custom="true">Custom A6 &mdash; $168</button>
-            <button class="size-btn" data-size="Custom Passport" data-price="88" data-custom="true">Custom Passport &mdash; $88</button>
+            <button class="size-btn" data-size="Custom A5" data-price="198" data-custom="true">Custom A5 &mdash; $198+</button>
+            <button class="size-btn" data-size="Custom A6" data-price="168" data-custom="true">Custom A6 &mdash; $168+</button>
+            <button class="size-btn" data-size="Custom Passport" data-price="88" data-custom="true">Custom Passport &mdash; $88+</button>
           </div>
           <!-- Custom description (shown only for Custom A5/A6) -->
           <div id="customDescWrap" style="display:none; margin-top:1rem;">
@@ -1306,7 +1306,8 @@ function updatePreview() {
     embossEl.setAttribute('fill', state.embossing ? 'rgba(255,255,255,0.22)' : 'rgba(255,255,255,0)');
   }
   // Price
-  document.getElementById('previewPrice').innerHTML = `$${state.price} <span>CAD</span><br><span style="font-size:0.7rem; color:var(--text-light); font-family:Inter,sans-serif; font-weight:300;">+ shipping &amp; duties (if applicable)</span>`;
+  const pricePlus = state.isCustom ? '+' : '';
+  document.getElementById('previewPrice').innerHTML = `$${state.price}${pricePlus} <span>CAD</span><br><span style="font-size:0.7rem; color:var(--text-light); font-family:Inter,sans-serif; font-weight:300;">+ shipping &amp; duties (if applicable)</span>`;
   // Order text
   const orderType = state.isCustom ? 'custom tri-fold journal' : 'tri-fold journal';
   let orderLines = `Hi! I'd like to order a Kass Kreative ${orderType}:\n\nSize: ${state.size}\nLeather: ${state.leather}\nString: ${state.string}\nEyelet: ${state.eyelet}`;
