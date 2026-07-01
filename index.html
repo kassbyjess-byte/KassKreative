@@ -341,6 +341,30 @@ section { padding: 6rem 2rem; }
 }
 .copy-btn:hover { background: var(--cognac); }
 .copy-btn.copied { background: var(--forest); }
+.copy-btn:disabled { background: #999; cursor: not-allowed; opacity: 0.6; }
+.copy-btn:disabled:hover { background: #999; }
+.policy-check {
+  display: flex; align-items: flex-start; gap: 0.6rem;
+  margin-top: 1rem; font-size: 0.75rem; color: var(--text-medium);
+  line-height: 1.5; font-family: 'Inter', sans-serif;
+}
+.policy-check input[type="checkbox"] {
+  margin-top: 0.15rem; flex-shrink: 0; accent-color: var(--cognac);
+  width: 16px; height: 16px; cursor: pointer;
+}
+.dm-buttons {
+  display: flex; gap: 0.6rem; margin-top: 0.6rem;
+}
+.dm-btn {
+  flex: 1; padding: 0.7rem 1rem;
+  border: 1.5px solid var(--chocolate); background: transparent; color: var(--chocolate);
+  cursor: pointer; font-family: 'Inter', sans-serif; font-size: 0.7rem;
+  letter-spacing: 0.1em; text-transform: uppercase; font-weight: 500;
+  transition: background 0.3s, color 0.3s; text-decoration: none;
+  text-align: center; display: flex; align-items: center; justify-content: center; gap: 0.4rem;
+}
+.dm-btn:hover { background: var(--chocolate); color: var(--cream); }
+.dm-btn svg { width: 16px; height: 16px; fill: currentColor; }
 
 /* CUSTOM ORDER NOTE */
 .custom-note {
@@ -756,15 +780,23 @@ footer a { color: var(--cream); text-decoration: none; }
               <div class="swatch" data-color="Burgundy" data-hex="#722F37" style="background:#722F37;" tabindex="0"></div>
               <span class="swatch-label">Burgundy</span>
             </div>
+            <div>
+              <div class="swatch" data-color="Aubergine" data-hex="#4A2040" style="background:#4A2040;" tabindex="0"></div>
+              <span class="swatch-label">Aubergine</span>
+            </div>
           </div>
         </div>
         <!-- String -->
         <div class="config-group">
           <h4>String Colour</h4>
           <div class="config-swatches" id="stringSwatches">
-            <div>
+            <div data-passport="true">
               <div class="swatch active" data-color="Baby Pink" data-hex="#F4C2C2" style="background:#F4C2C2;" tabindex="0"></div>
               <span class="swatch-label">Baby Pink</span>
+            </div>
+            <div data-passport="true">
+              <div class="swatch" data-color="Baby Blue" data-hex="#89CFF0" style="background:#89CFF0;" tabindex="0"></div>
+              <span class="swatch-label">Baby Blue</span>
             </div>
             <div>
               <div class="swatch" data-color="White" data-hex="#F5F5F5" style="background:#F5F5F5; border: 2px solid #ccc;" tabindex="0"></div>
@@ -786,13 +818,17 @@ footer a { color: var(--cream); text-decoration: none; }
               <div class="swatch" data-color="Burgundy" data-hex="#722F37" style="background:#722F37;" tabindex="0"></div>
               <span class="swatch-label">Burgundy</span>
             </div>
-            <div>
+            <div data-passport="true">
               <div class="swatch" data-color="Red" data-hex="#B22222" style="background:#B22222;" tabindex="0"></div>
               <span class="swatch-label">Red</span>
             </div>
             <div>
               <div class="swatch" data-color="Lilac" data-hex="#C8A2C8" style="background:#C8A2C8;" tabindex="0"></div>
               <span class="swatch-label">Lilac</span>
+            </div>
+            <div data-passport="true">
+              <div class="swatch" data-color="Bright Yellow" data-hex="#FFD700" style="background:#FFD700;" tabindex="0"></div>
+              <span class="swatch-label">Bright Yellow</span>
             </div>
           </div>
         </div>
@@ -962,7 +998,21 @@ Eyelet: Gold
 Total: $148 CAD
 
 Thank you!</p>
-          <button class="copy-btn" id="copyBtn" onclick="copyOrder()">Copy to Clipboard</button>
+          <label class="policy-check">
+            <input type="checkbox" id="policyCheck" onchange="toggleCopyBtn()">
+            <span>I confirm that I have read and agree to Kass Kreative's Shipping, Payment, and Refund Policies, including that all handmade orders are final sale.</span>
+          </label>
+          <button class="copy-btn" id="copyBtn" onclick="copyOrder()" disabled>Copy to Clipboard</button>
+          <div class="dm-buttons">
+            <a href="https://instagram.com/kasskreative" target="_blank" class="dm-btn">
+              <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
+              Message on Instagram
+            </a>
+            <a href="https://tiktok.com/@kasskreative" target="_blank" class="dm-btn">
+              <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1v-3.5a6.37 6.37 0 00-.79-.05A6.34 6.34 0 003.15 15.2a6.34 6.34 0 0010.86 4.48V13a8.28 8.28 0 005.58 2.16v-3.45a4.85 4.85 0 01-2.64-.78V6.69h2.64z"/></svg>
+              Message on TikTok
+            </a>
+          </div>
         </div>
       </div>
     </div>
@@ -1126,6 +1176,8 @@ document.querySelectorAll('.size-btn').forEach(btn => {
     // Show/hide custom description box
     document.getElementById('customDescWrap').style.display = state.isCustom ? 'block' : 'none';
     if (!state.isCustom) { state.customDesc = ''; document.getElementById('customDescInput').value = ''; }
+    // Filter string colours for Passport sizes
+    filterStringSwatches();
     updatePreview();
 
     // GA4: Track size selection
@@ -1173,6 +1225,29 @@ function updateEmbossing() {
   state.embossing = input.value.toUpperCase().slice(0, 4);
   input.value = state.embossing;
   updatePreview();
+}
+
+// Filter string swatches for Passport sizes (only Baby Pink, Baby Blue, Red, Bright Yellow)
+function filterStringSwatches() {
+  const isPassport = /Passport/i.test(state.size);
+  const container = document.getElementById('stringSwatches');
+  const wrappers = container.querySelectorAll(':scope > div');
+  let activeVisible = false;
+  wrappers.forEach(wrap => {
+    const show = !isPassport || wrap.dataset.passport === 'true';
+    wrap.style.display = show ? '' : 'none';
+    if (show && wrap.querySelector('.swatch.active')) activeVisible = true;
+  });
+  // If active swatch was hidden, select first visible one
+  if (isPassport && !activeVisible) {
+    const firstVisible = container.querySelector(':scope > div[data-passport="true"] .swatch');
+    if (firstVisible) {
+      container.querySelectorAll('.swatch').forEach(s => s.classList.remove('active'));
+      firstVisible.classList.add('active');
+      state.string = firstVisible.dataset.color;
+      state.stringHex = firstVisible.dataset.hex;
+    }
+  }
 }
 
 // Update preview
@@ -1245,7 +1320,7 @@ function updatePreview() {
     orderLines += `\n\nShipping to:\n${shipParts.join('\n')}`;
   }
 
-  orderLines += `\n\nTotal: $${state.price} CAD + shipping & duties (if applicable)\n\nThank you!`;
+  orderLines += `\n\nTotal: $${state.price} CAD + shipping & duties (if applicable)\n\nThank you!\n\nI will review your order and send your secure Stripe payment link within 24 hours to confirm your order.`;
   document.getElementById('orderText').textContent = orderLines;
   // Reset copy button
   const btn = document.getElementById('copyBtn');
@@ -1259,6 +1334,12 @@ function darken(hex, amount) {
   let g = Math.max(0, parseInt(hex.substr(2,2),16) - amount);
   let b = Math.max(0, parseInt(hex.substr(4,2),16) - amount);
   return `rgb(${r},${g},${b})`;
+}
+
+// Policy checkbox toggle
+function toggleCopyBtn() {
+  const checked = document.getElementById('policyCheck').checked;
+  document.getElementById('copyBtn').disabled = !checked;
 }
 
 // Copy
