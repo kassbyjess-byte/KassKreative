@@ -858,9 +858,8 @@ footer a { color: var(--cream); text-decoration: none; }
           <h4>Charm Upgrade</h4>
           <label style="display:flex; align-items:flex-start; gap:0.6rem; cursor:pointer; font-family:'Inter',sans-serif; font-size:0.85rem; color:var(--text-dark); line-height:1.5;">
             <input type="checkbox" id="charmUpgrade" onchange="state.charmUpgrade=this.checked; updatePreview();" style="margin-top:0.2rem; flex-shrink:0; accent-color:var(--cognac); width:16px; height:16px; cursor:pointer;">
-            <span>I'm interested in 18k gold plated charms <span style="font-weight:600; color:var(--cognac);">(+$25)</span></span>
+            <span>I'm interested in 18k gold plated charms <span style="font-weight:600; color:var(--cognac);">(+$15+)</span></span>
           </label>
-          <p style="font-size:0.72rem; color:var(--text-light); margin-top:0.4rem;">Charm options will be shared after your order is confirmed</p>
         </div>
 
         <!-- Shipping Address -->
@@ -1324,7 +1323,7 @@ function updatePreview() {
   let orderLines = `Hi! I'd like to order a Kass Kreative ${orderType}:\n\nSize: ${state.size}\nLeather: ${state.leather}\nString: ${state.string}\nEyelet: ${state.eyelet}`;
   if (state.embossing) orderLines += `\nEmbossing: ${state.embossing}`;
   if (state.isCustom && state.customDesc) orderLines += `\nCustomization: ${state.customDesc}`;
-  if (state.charmUpgrade) orderLines += `\nCharm Upgrade: 18k Gold Plated (+$25)`;
+  if (state.charmUpgrade) orderLines += `\nCharm Upgrade: 18k Gold Plated (+$15+)`;
 
   // Shipping address (only include filled portion)
   const s = state.ship;
