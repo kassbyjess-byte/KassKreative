@@ -765,16 +765,16 @@ footer a { color: var(--cream); text-decoration: none; }
           <h4>Leather Colour</h4>
           <div class="config-swatches" id="leatherSwatches">
             <div>
-              <div class="swatch active" data-color="Chocolate Brown" data-hex="#3E2723" style="background:#3E2723;" tabindex="0"></div>
-              <span class="swatch-label">Chocolate Brown</span>
+              <div class="swatch active" data-color="Chocolate" data-hex="#3E2723" style="background:#3E2723;" tabindex="0"></div>
+              <span class="swatch-label">Chocolate</span>
             </div>
             <div>
-              <div class="swatch" data-color="Forest Green" data-hex="#2E4A3E" style="background:#2E4A3E;" tabindex="0"></div>
-              <span class="swatch-label">Forest Green</span>
+              <div class="swatch" data-color="Forest" data-hex="#2E4A3E" style="background:#2E4A3E;" tabindex="0"></div>
+              <span class="swatch-label">Forest</span>
             </div>
             <div>
-              <div class="swatch" data-color="Onyx Black" data-hex="#1A1A1A" style="background:#1A1A1A;" tabindex="0"></div>
-              <span class="swatch-label">Onyx Black</span>
+              <div class="swatch" data-color="Onyx" data-hex="#1A1A1A" style="background:#1A1A1A;" tabindex="0"></div>
+              <span class="swatch-label">Onyx</span>
             </div>
             <div>
               <div class="swatch" data-color="Ocean" data-hex="#2A6B8A" style="background:#2A6B8A;" tabindex="0"></div>
@@ -793,8 +793,8 @@ footer a { color: var(--cream); text-decoration: none; }
               <span class="swatch-label">Scarlet</span>
             </div>
             <div>
-              <div class="swatch" data-color="Olive Green" data-hex="#556B2F" style="background:#556B2F;" tabindex="0"></div>
-              <span class="swatch-label">Olive Green</span>
+              <div class="swatch" data-color="Olive" data-hex="#556B2F" style="background:#556B2F;" tabindex="0"></div>
+              <span class="swatch-label">Olive</span>
             </div>
             <div data-leather-sizes="A5,A6,Custom A5,Custom A6">
               <div class="swatch cowhide-swatch" data-color="Cowhide" data-hex="#E8E0D8" tabindex="0"></div>
@@ -822,13 +822,13 @@ footer a { color: var(--cream); text-decoration: none; }
               <div class="swatch" data-color="Black" data-hex="#1A1A1A" style="background:#1A1A1A;" tabindex="0"></div>
               <span class="swatch-label">Black</span>
             </div>
-            <div data-passport="true">
+            <div data-passport="true" data-passport-only="true">
               <div class="swatch" data-color="Gray" data-hex="#808080" style="background:#808080;" tabindex="0"></div>
               <span class="swatch-label">Gray</span>
             </div>
             <div>
-              <div class="swatch" data-color="Forest Green" data-hex="#2E4A3E" style="background:#2E4A3E;" tabindex="0"></div>
-              <span class="swatch-label">Forest Green</span>
+              <div class="swatch" data-color="Forest" data-hex="#2E4A3E" style="background:#2E4A3E;" tabindex="0"></div>
+              <span class="swatch-label">Forest</span>
             </div>
             <div>
               <div class="swatch" data-color="Dark Blue" data-hex="#1B3A5C" style="background:#1B3A5C;" tabindex="0"></div>
@@ -847,8 +847,8 @@ footer a { color: var(--cream); text-decoration: none; }
               <span class="swatch-label">Lilac</span>
             </div>
             <div data-passport="true">
-              <div class="swatch" data-color="Bright Yellow" data-hex="#FFD700" style="background:#FFD700;" tabindex="0"></div>
-              <span class="swatch-label">Bright Yellow</span>
+              <div class="swatch" data-color="Yellow" data-hex="#FFD700" style="background:#FFD700;" tabindex="0"></div>
+              <span class="swatch-label">Yellow</span>
             </div>
           </div>
         </div>
@@ -1079,7 +1079,7 @@ footer a { color: var(--cream); text-decoration: none; }
           <p class="order-text" id="orderText">Hi! I'd like to order a Kass Kreative tri-fold journal:
 
 Size: A5
-Leather: Chocolate Brown
+Leather: Chocolate
 String: Baby Pink
 Eyelet: Gold
 
@@ -1228,7 +1228,7 @@ Thank you!</p>
 // State
 const state = {
   size: 'A5', price: 148,
-  leather: 'Chocolate Brown', leatherHex: '#3E2723',
+  leather: 'Chocolate', leatherHex: '#3E2723',
   string: 'Baby Pink', stringHex: '#F4C2C2',
   eyelet: 'Gold', eyeletHex: '#D4AF37',
   embossing: '',
@@ -1340,20 +1340,20 @@ function filterLeatherSwatches() {
   }
 }
 
-// Filter string swatches for Passport sizes (only Baby Pink, Baby Blue, Red, Bright Yellow, White, Black, Gray)
+// Filter string swatches: Passport shows only passport strings; Gray is passport-only
 function filterStringSwatches() {
   const isPassport = /Passport/i.test(state.size);
   const container = document.getElementById('stringSwatches');
   const wrappers = container.querySelectorAll(':scope > div');
   let activeVisible = false;
   wrappers.forEach(wrap => {
-    const show = !isPassport || wrap.dataset.passport === 'true';
+    const show = isPassport ? wrap.dataset.passport === 'true' : wrap.dataset.passportOnly !== 'true';
     wrap.style.display = show ? '' : 'none';
     if (show && wrap.querySelector('.swatch.active')) activeVisible = true;
   });
   // If active swatch was hidden, select first visible one
-  if (isPassport && !activeVisible) {
-    const firstVisible = container.querySelector(':scope > div[data-passport="true"] .swatch');
+  if (!activeVisible) {
+    const firstVisible = container.querySelector(':scope > div:not([style*="display: none"]) .swatch');
     if (firstVisible) {
       container.querySelectorAll('.swatch').forEach(s => s.classList.remove('active'));
       firstVisible.classList.add('active');
