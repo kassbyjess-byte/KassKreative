@@ -784,6 +784,18 @@ footer a { color: var(--cream); text-decoration: none; }
               <div class="swatch" data-color="Aubergine" data-hex="#4A2040" style="background:#4A2040;" tabindex="0"></div>
               <span class="swatch-label">Aubergine</span>
             </div>
+            <div data-leather-sizes="A5,Custom A5">
+              <div class="swatch" data-color="Scarlet" data-hex="#B71C1C" style="background:#B71C1C;" tabindex="0"></div>
+              <span class="swatch-label">Scarlet</span>
+            </div>
+            <div>
+              <div class="swatch" data-color="Olive Green" data-hex="#556B2F" style="background:#556B2F;" tabindex="0"></div>
+              <span class="swatch-label">Olive Green</span>
+            </div>
+            <div data-leather-sizes="A5,A6,Custom A5,Custom A6">
+              <div class="swatch" data-color="Cowhide" data-hex="#E8E0D8" style="background:radial-gradient(ellipse at 30% 40%, #1A1A1A 0%, #1A1A1A 25%, #F0EBE3 26%, #F0EBE3 55%, #1A1A1A 56%, #1A1A1A 70%, #F0EBE3 71%);" tabindex="0"></div>
+              <span class="swatch-label">Cowhide</span>
+            </div>
           </div>
         </div>
         <!-- String -->
@@ -798,13 +810,17 @@ footer a { color: var(--cream); text-decoration: none; }
               <div class="swatch" data-color="Baby Blue" data-hex="#89CFF0" style="background:#89CFF0;" tabindex="0"></div>
               <span class="swatch-label">Baby Blue</span>
             </div>
-            <div>
+            <div data-passport="true">
               <div class="swatch" data-color="White" data-hex="#F5F5F5" style="background:#F5F5F5; border: 2px solid #ccc;" tabindex="0"></div>
               <span class="swatch-label">White</span>
             </div>
-            <div>
+            <div data-passport="true">
               <div class="swatch" data-color="Black" data-hex="#1A1A1A" style="background:#1A1A1A;" tabindex="0"></div>
               <span class="swatch-label">Black</span>
+            </div>
+            <div data-passport="true">
+              <div class="swatch" data-color="Gray" data-hex="#808080" style="background:#808080;" tabindex="0"></div>
+              <span class="swatch-label">Gray</span>
             </div>
             <div>
               <div class="swatch" data-color="Forest Green" data-hex="#2E4A3E" style="background:#2E4A3E;" tabindex="0"></div>
@@ -1186,7 +1202,8 @@ document.querySelectorAll('.size-btn').forEach(btn => {
     // Show/hide custom description box
     document.getElementById('customDescWrap').style.display = state.isCustom ? 'block' : 'none';
     if (!state.isCustom) { state.customDesc = ''; document.getElementById('customDescInput').value = ''; }
-    // Filter string colours for Passport sizes
+    // Filter leather and string colours based on selected size
+    filterLeatherSwatches();
     filterStringSwatches();
     updatePreview();
 
@@ -1237,7 +1254,30 @@ function updateEmbossing() {
   updatePreview();
 }
 
-// Filter string swatches for Passport sizes (only Baby Pink, Baby Blue, Red, Bright Yellow)
+// Filter leather swatches based on selected size (some colours are size-restricted)
+function filterLeatherSwatches() {
+  const container = document.getElementById('leatherSwatches');
+  const wrappers = container.querySelectorAll(':scope > div');
+  let activeVisible = false;
+  wrappers.forEach(wrap => {
+    const allowedSizes = wrap.dataset.leatherSizes;
+    const show = !allowedSizes || allowedSizes.split(',').some(s => s.trim() === state.size);
+    wrap.style.display = show ? '' : 'none';
+    if (show && wrap.querySelector('.swatch.active')) activeVisible = true;
+  });
+  // If active swatch was hidden, select first visible one
+  if (!activeVisible) {
+    const firstVisible = container.querySelector(':scope > div:not([style*="display: none"]) .swatch');
+    if (firstVisible) {
+      container.querySelectorAll('.swatch').forEach(s => s.classList.remove('active'));
+      firstVisible.classList.add('active');
+      state.leather = firstVisible.dataset.color;
+      state.leatherHex = firstVisible.dataset.hex;
+    }
+  }
+}
+
+// Filter string swatches for Passport sizes (only Baby Pink, Baby Blue, Red, Bright Yellow, White, Black, Gray)
 function filterStringSwatches() {
   const isPassport = /Passport/i.test(state.size);
   const container = document.getElementById('stringSwatches');
