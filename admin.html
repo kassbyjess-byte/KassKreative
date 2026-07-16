@@ -1106,7 +1106,10 @@
                                             <option value="Onyx Black">Onyx Black</option>
                                             <option value="Ocean">Ocean</option>
                                             <option value="Cognac">Cognac</option>
-                                            <option value="Burgundy">Burgundy</option>
+                                            <option value="Aubergine">Aubergine</option>
+                                            <option value="Scarlet">Scarlet</option>
+                                            <option value="Olive Green">Olive Green</option>
+                                            <option value="Cowhide">Cowhide</option>
                                         </select>
                                     </div>
                                     <div class="form-group">
@@ -1114,13 +1117,15 @@
                                         <select class="form-select journal-string">
                                             <option value="">Select String Colour</option>
                                             <option value="Baby Pink">Baby Pink</option>
+                                            <option value="Baby Blue">Baby Blue</option>
                                             <option value="White">White</option>
                                             <option value="Black">Black</option>
+                                            <option value="Gray">Gray</option>
                                             <option value="Forest Green">Forest Green</option>
                                             <option value="Dark Blue">Dark Blue</option>
-                                            <option value="Burgundy">Burgundy</option>
                                             <option value="Red">Red</option>
                                             <option value="Lilac">Lilac</option>
+                                            <option value="Bright Yellow">Bright Yellow</option>
                                         </select>
                                     </div>
                                 </div>
@@ -1950,8 +1955,8 @@
 
                 const journalSpecs = document.getElementById('journalSpecsContainer');
                 const sizeOptions = ['', 'A5', 'A6', 'Passport', 'Custom Passport', 'Custom A5', 'Custom A6'];
-                const leatherOptions = ['', 'Chocolate Brown', 'Forest Green', 'Onyx Black', 'Ocean', 'Cognac', 'Burgundy'];
-                const stringOptions = ['', 'Baby Pink', 'White', 'Black', 'Forest Green', 'Dark Blue', 'Burgundy', 'Red', 'Lilac'];
+                const leatherOptions = ['', 'Chocolate Brown', 'Forest Green', 'Onyx Black', 'Ocean', 'Cognac', 'Aubergine', 'Scarlet', 'Olive Green', 'Cowhide'];
+                const stringOptions = ['', 'Baby Pink', 'Baby Blue', 'White', 'Black', 'Gray', 'Forest Green', 'Dark Blue', 'Red', 'Lilac', 'Bright Yellow'];
                 const eyeletOptions = ['', 'Gold', 'Silver'];
 
                 function makeSelect(cls, options, selected) {
@@ -2063,8 +2068,8 @@
             const existing = container.querySelectorAll('.journal-detail-edit');
             const newIndex = existing.length;
             const sizeOptions = ['', 'A5', 'A6', 'Passport', 'Custom Passport', 'Custom A5', 'Custom A6'];
-            const leatherOptions = ['', 'Chocolate Brown', 'Forest Green', 'Onyx Black', 'Ocean', 'Cognac', 'Burgundy'];
-            const stringOptions = ['', 'Baby Pink', 'White', 'Black', 'Forest Green', 'Dark Blue', 'Burgundy', 'Red', 'Lilac'];
+            const leatherOptions = ['', 'Chocolate Brown', 'Forest Green', 'Onyx Black', 'Ocean', 'Cognac', 'Aubergine', 'Scarlet', 'Olive Green', 'Cowhide'];
+            const stringOptions = ['', 'Baby Pink', 'Baby Blue', 'White', 'Black', 'Gray', 'Forest Green', 'Dark Blue', 'Red', 'Lilac', 'Bright Yellow'];
             const eyeletOptions = ['', 'Gold', 'Silver'];
 
             function opts(options) {
