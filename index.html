@@ -784,7 +784,7 @@ footer a { color: var(--cream); text-decoration: none; }
               <div class="swatch" data-color="Cognac" data-hex="#A0522D" style="background:#A0522D;" tabindex="0"></div>
               <span class="swatch-label">Cognac</span>
             </div>
-            <div>
+            <div data-leather-sizes="A5,Custom A5">
               <div class="swatch" data-color="Aubergine" data-hex="#4A2040" style="background:#4A2040;" tabindex="0"></div>
               <span class="swatch-label">Aubergine</span>
             </div>
@@ -792,7 +792,7 @@ footer a { color: var(--cream); text-decoration: none; }
               <div class="swatch" data-color="Scarlett" data-hex="#B71C1C" style="background:#B71C1C;" tabindex="0"></div>
               <span class="swatch-label">Scarlett</span>
             </div>
-            <div>
+            <div data-leather-sizes="A5,Custom A5">
               <div class="swatch" data-color="Olive" data-hex="#556B2F" style="background:#556B2F;" tabindex="0"></div>
               <span class="swatch-label">Olive</span>
             </div>
@@ -846,7 +846,7 @@ footer a { color: var(--cream); text-decoration: none; }
               <div class="swatch" data-color="Lilac" data-hex="#C8A2C8" style="background:#C8A2C8;" tabindex="0"></div>
               <span class="swatch-label">Lilac</span>
             </div>
-            <div data-passport="true">
+            <div data-passport="true" data-passport-only="true">
               <div class="swatch" data-color="Yellow" data-hex="#FFD700" style="background:#FFD700;" tabindex="0"></div>
               <span class="swatch-label">Yellow</span>
             </div>
@@ -873,12 +873,12 @@ footer a { color: var(--cream); text-decoration: none; }
           <p style="font-size:0.72rem; color:var(--text-light); margin-top:0.4rem;">Letters will be embossed on the front cover</p>
         </div>
 
-        <!-- Charm Upgrade -->
+        <!-- Charm Add-on -->
         <div class="config-group">
-          <h4>Charm Upgrade</h4>
+          <h4>Charm Add-on</h4>
           <label style="display:flex; align-items:flex-start; gap:0.6rem; cursor:pointer; font-family:'Inter',sans-serif; font-size:0.85rem; color:var(--text-dark); line-height:1.5;">
             <input type="checkbox" id="charmUpgrade" onchange="state.charmUpgrade=this.checked; updatePreview();" style="margin-top:0.2rem; flex-shrink:0; accent-color:var(--cognac); width:16px; height:16px; cursor:pointer;">
-            <span>I'm interested in 18k gold plated charms <span style="font-weight:600; color:var(--cognac);">($15+)</span></span>
+            <span>I'm interested in 18k gold plated and/or stainless steel charms <span style="font-weight:600; color:var(--cognac);">($15+)</span></span>
           </label>
         </div>
 
@@ -1431,7 +1431,7 @@ function updatePreview() {
   let orderLines = `Hi! I'd like to order a Kass Kreative ${orderType}:\n\nSize: ${state.size}\nLeather: ${state.leather}\nString: ${state.string}\nEyelet: ${state.eyelet}`;
   if (state.embossing) orderLines += `\nEmbossing: ${state.embossing}`;
   if (state.isCustom && state.customDesc) orderLines += `\nCustomization: ${state.customDesc}`;
-  if (state.charmUpgrade) orderLines += `\nCharm Upgrade: 18k Gold Plated ($15+)`;
+  if (state.charmUpgrade) orderLines += `\nCharm Add-on: 18k Gold Plated and/or Stainless Steel ($15+)`;
 
   // Shipping address (only include filled portion)
   const s = state.ship;
