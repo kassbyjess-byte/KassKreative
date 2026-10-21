@@ -450,6 +450,20 @@
             color: var(--green);
         }
 
+        .status-new { background-color: var(--red-light); color: var(--red); }
+        .status-contacted { background-color: var(--blue-light); color: var(--blue); }
+        .status-payment_sent { background-color: var(--orange-light); color: var(--orange); }
+        .status-converted { background-color: var(--green-light); color: var(--green); }
+        .status-declined { background-color: #efefef; color: #6b6b6b; }
+        .nav-badge { display: inline-block; min-width: 1.2rem; padding: 0.05rem 0.4rem; margin-left: 0.3rem; border-radius: 999px; background: var(--cognac); color: #fff; font-size: 0.65rem; text-align: center; vertical-align: 1px; }
+        .page-intro { color: var(--text-medium); margin: -0.5rem 0 1.5rem; font-size: 0.9rem; }
+        .req-section { margin-bottom: 1.5rem; }
+        .req-section h3 { font-size: 0.8rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-light); margin: 0 0 0.75rem; }
+        .req-photo { max-width: 320px; width: 100%; border-radius: 8px; border: 1px solid var(--border); display: block; }
+        .req-actions { display: flex; gap: 0.75rem; flex-wrap: wrap; margin-top: 1rem; }
+        .btn-danger { background: none; border: 1px solid var(--red); color: var(--red); }
+        .btn-danger:hover { background: var(--red-light); }
+        #prefillNotice { background: var(--orange-light); border-left: 4px solid var(--orange); }
         .status-local_pickup {
             background-color: #fef3c7;
             color: #92400e;
@@ -926,7 +940,9 @@
                     </div>
                     <ul class="nav-tabs">
                         <li><a class="nav-link active" onclick="showPage('dashboard', this)">Orders</a></li>
-                        <li><a class="nav-link" onclick="showPage('newOrder', this)">+ New Order</a></li>
+                        <li><a class="nav-link" id="navRequests" onclick="showPage('requests', this)">Requests <span id="requestsBadge" class="nav-badge" style="display:none;"></span></a></li>
+                        <li><a class="nav-link" id="navNewOrder" onclick="showPage('newOrder', this)">+ New Order</a></li>
+                        <li><a class="nav-link" onclick="showPage('newsletter', this)">Newsletter</a></li>
                         <li><a class="nav-link" onclick="showPage('analytics', this); initAnalytics();">Analytics</a></li>
                     </ul>
                 </div>
@@ -994,6 +1010,7 @@
                     <h2>Create New Order</h2>
 
                     <form id="newOrderForm" onsubmit="handleCreateOrder(event)">
+                        <div id="prefillNotice" class="form-section" style="display:none;"></div>
                         <!-- Order Mode Toggle -->
                         <div class="form-section">
                             <h3>Order Type</h3>
@@ -1081,8 +1098,6 @@
                                             <option value="">Select Size</option>
                                             <option value="A5">A5</option>
                                             <option value="A6">A6</option>
-                                            <option value="Passport">Passport</option>
-                                            <option value="Custom Passport">Custom Passport</option>
                                             <option value="Custom A5">Custom A5</option>
                                             <option value="Custom A6">Custom A6</option>
                                         </select>
@@ -1101,19 +1116,23 @@
                                         <label class="form-label">Leather Colour</label>
                                         <select class="form-select journal-leather">
                                             <option value="">Select Leather Colour</option>
-                                            <option value="Chocolate">Chocolate</option>
-                                            <option value="Forest">Forest</option>
-                                            <option value="Onyx">Onyx</option>
-                                            <option value="Ocean">Ocean</option>
-                                            <option value="Cognac">Cognac</option>
-                                            <option value="Aubergine">Aubergine</option>
-                                            <option value="Scarlett">Scarlett</option>
-                                            <option value="Olive">Olive</option>
-                                            <option value="Cowhide">Cowhide</option>
-                                            <option value="Tiffany">Tiffany</option>
                                             <option value="Anthracite">Anthracite</option>
+                                            <option value="Aubergine">Aubergine</option>
                                             <option value="Burgundy">Burgundy</option>
+                                            <option value="Charcoal">Charcoal</option>
+                                            <option value="Chocolate">Chocolate</option>
+                                            <option value="Coffee">Coffee</option>
+                                            <option value="Cognac">Cognac</option>
+                                            <option value="Emerald">Emerald</option>
+                                            <option value="Forest">Forest</option>
+                                            <option value="Olive">Olive</option>
+                                            <option value="Onyx">Onyx</option>
+                                            <option value="Rust">Rust</option>
+                                            <option value="Scarlett">Scarlett</option>
                                             <option value="Sky">Sky</option>
+                                            <option value="Tiffany">Tiffany</option>
+                                            <option value="Ocean">Ocean</option>
+                                            <option value="Cowhide">Cowhide</option>
                                         </select>
                                     </div>
                                     <div class="form-group">
@@ -1124,11 +1143,12 @@
                                             <option value="Baby Blue">Baby Blue</option>
                                             <option value="White">White</option>
                                             <option value="Black">Black</option>
-                                            <option value="Gray">Gray</option>
-                                            <option value="Forest">Forest</option>
+                                            <option value="Burgundy">Burgundy</option>
                                             <option value="Dark Blue">Dark Blue</option>
+                                            <option value="Forest">Forest</option>
                                             <option value="Red">Red</option>
                                             <option value="Lilac">Lilac</option>
+                                            <option value="Gray">Gray</option>
                                             <option value="Yellow">Yellow</option>
                                         </select>
                                     </div>
@@ -1254,7 +1274,7 @@
                                 <div class="ga-kpi-change neutral" id="gaKpiPageViewsChange">vs previous period</div>
                             </div>
                             <div class="ga-kpi-card">
-                                <div class="ga-kpi-label">Order Copies</div>
+                                <div class="ga-kpi-label">Order Requests</div>
                                 <div class="ga-kpi-value" id="gaKpiConversions">--</div>
                                 <div class="ga-kpi-change neutral" id="gaKpiConversionsChange">vs previous period</div>
                             </div>
@@ -1314,12 +1334,93 @@
                                 </table>
                             </div>
                             <div class="ga-chart-card">
-                                <h4>Conversions (Order Copies) by Day</h4>
+                                <h4>Order Requests by Day</h4>
                                 <div class="ga-chart-container"><canvas id="gaConversionsChart"></canvas></div>
                             </div>
                         </div>
 
                         <div class="ga-last-updated" id="gaLastUpdated"></div>
+                    </div>
+                </div>
+
+                <!-- WEBSITE REQUESTS PAGE -->
+                <div id="requestsPage" class="page">
+                    <h2>Website Requests</h2>
+                    <p class="page-intro">Design requests sent from kasskreative.com. Confirm availability and the total with the customer, then create their payment link from the request.</p>
+                    <div class="stats-grid">
+                        <div class="stat-card"><div class="stat-label">New</div><div class="stat-value" id="reqCountNew">0</div></div>
+                        <div class="stat-card"><div class="stat-label">Contacted</div><div class="stat-value" id="reqCountContacted">0</div></div>
+                        <div class="stat-card"><div class="stat-label">Payment Sent</div><div class="stat-value" id="reqCountPayment">0</div></div>
+                        <div class="stat-card"><div class="stat-label">Converted</div><div class="stat-value" id="reqCountConverted">0</div></div>
+                    </div>
+                    <div class="filters" id="requestFilters">
+                        <button class="filter-btn active" onclick="filterRequests('all', this)">All</button>
+                        <button class="filter-btn" onclick="filterRequests('new', this)">New</button>
+                        <button class="filter-btn" onclick="filterRequests('contacted', this)">Contacted</button>
+                        <button class="filter-btn" onclick="filterRequests('payment_sent', this)">Payment Sent</button>
+                        <button class="filter-btn" onclick="filterRequests('converted', this)">Converted</button>
+                        <button class="filter-btn" onclick="filterRequests('declined', this)">Declined</button>
+                    </div>
+                    <div class="table-container">
+                        <table>
+                            <thead><tr><th>Date</th><th>Reference</th><th>Customer</th><th>Design</th><th>Estimate</th><th>Status</th></tr></thead>
+                            <tbody id="requestsTableBody"><tr><td colspan="6" class="loading">Loading requests...</td></tr></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- REQUEST DETAIL PAGE -->
+                <div id="requestDetailPage" class="page">
+                    <a class="back-link" onclick="showPage('requests', document.getElementById('navRequests'))">Back to Requests</a>
+                    <div class="order-header">
+                        <div class="order-title">
+                            <h2 id="reqTitle">Design request</h2>
+                            <div class="order-id" id="reqRef"></div>
+                        </div>
+                        <div id="reqStatusBadge" class="status-badge"></div>
+                    </div>
+                    <div id="reqDetailBody"></div>
+                    <div class="form-section">
+                        <h3>Next Steps</h3>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Status</label>
+                                <select id="reqStatusSelect" class="form-select">
+                                    <option value="new">New</option>
+                                    <option value="contacted">Contacted</option>
+                                    <option value="payment_sent">Payment sent</option>
+                                    <option value="converted">Converted (paid)</option>
+                                    <option value="declined">Declined</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Internal Notes</label>
+                                <textarea id="reqNotes" class="form-input" rows="3" placeholder="e.g. Confirmed Rust is in stock, quoted shipping $24"></textarea>
+                            </div>
+                        </div>
+                        <div class="req-actions">
+                            <button type="button" class="btn btn-primary" onclick="saveRequestUpdate()">Save</button>
+                            <button type="button" class="btn btn-secondary" onclick="createLinkFromRequest()">Create Payment Link</button>
+                            <a id="reqReplyLink" class="btn btn-secondary" href="#">Reply by Email</a>
+                            <button type="button" class="btn btn-danger" onclick="deleteCurrentRequest()">Delete</button>
+                        </div>
+                        <p id="reqSaveStatus" style="margin-top:0.75rem; color:var(--text-medium); font-size:0.85rem;"></p>
+                    </div>
+                </div>
+
+                <!-- NEWSLETTER PAGE -->
+                <div id="newsletterPage" class="page">
+                    <h2>Newsletter</h2>
+                    <p class="page-intro">People who signed up for little notes from KASS on the website. Export the list as a CSV to import it into your email tool.</p>
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; gap:1rem; flex-wrap:wrap;">
+                        <strong id="newsletterCount">0 subscribers</strong>
+                        <button type="button" class="btn btn-secondary" onclick="exportNewsletterCsv()">Export CSV</button>
+                    </div>
+                    <div class="table-container">
+                        <table>
+                            <thead><tr><th>Email</th><th>Signed Up</th><th>Where</th><th></th></tr></thead>
+                            <tbody id="newsletterTableBody"><tr><td colspan="4" class="loading">Loading...</td></tr></tbody>
+                        </table>
                     </div>
                 </div>
 
@@ -1432,12 +1533,10 @@
     <script>
         const API_BASE = 'https://kass-admin.kassbyjess.workers.dev';
         const PRICES = {
-            'A5': 148,
-            'A6': 118,
-            'Passport': 58,
-            'Custom Passport': 88,
-            'Custom A5': 198,
-            'Custom A6': 168
+            'A5': 158,
+            'A6': 128,
+            'Custom A5': 208,
+            'Custom A6': 178
         };
 
         let currentUser = null;
@@ -1497,6 +1596,7 @@
         function showAppUI() {
             document.getElementById('loginPage').classList.remove('active');
             document.getElementById('appContainer').style.display = 'block';
+            refreshRequestBadge();
         }
 
         // PAGE NAVIGATION
@@ -1511,6 +1611,13 @@
 
             if (pageName === 'orderDetail') {
                 loadOrderDetail();
+            }
+            if (pageName === 'requests') loadRequests();
+            if (pageName === 'newsletter') loadNewsletter();
+            if (pageName === 'newOrder') {
+                pendingRequestRef = null;
+                const notice = document.getElementById('prefillNotice');
+                if (notice) notice.style.display = 'none';
             }
         }
 
@@ -1602,7 +1709,7 @@
 
         function filterOrders(status, el) {
             currentFilter = status;
-            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('#dashboardPage .filter-btn').forEach(btn => btn.classList.remove('active'));
             if (el) el.classList.add('active');
             renderOrders();
         }
@@ -1651,7 +1758,7 @@
             row.className = 'accessory-row';
             row.innerHTML = `
                 <input type="text" class="form-input accessory-name" placeholder="e.g. Gold Charm, Tassel">
-                <input type="number" class="form-input accessory-price" placeholder="$" min="5" max="25" step="0.01" oninput="updateOrderTotals()">
+                <input type="number" class="form-input accessory-price" placeholder="$" min="0" max="1000" step="0.01" oninput="updateOrderTotals()">
                 <button type="button" class="btn-remove-accessory" onclick="removeAccessoryRow(this)" title="Remove">&times;</button>
             `;
             container.appendChild(row);
@@ -1858,6 +1965,10 @@
                     if (data.url) {
                         document.getElementById('paymentLinkDisplay').value = data.url;
                         document.getElementById('paymentLinkResult').style.display = 'block';
+                        if (pendingRequestRef) {
+                            markRequestPaymentSent(pendingRequestRef, data.url);
+                            pendingRequestRef = null;
+                        }
                     } else {
                         alert('Error creating payment link: ' + (data.error || 'Unknown error'));
                     }
@@ -1958,12 +2069,13 @@
                 }
 
                 const journalSpecs = document.getElementById('journalSpecsContainer');
-                const sizeOptions = ['', 'A5', 'A6', 'Passport', 'Custom Passport', 'Custom A5', 'Custom A6'];
-                const leatherOptions = ['', 'Chocolate', 'Forest', 'Onyx', 'Ocean', 'Cognac', 'Aubergine', 'Scarlett', 'Olive', 'Cowhide', 'Tiffany', 'Anthracite', 'Burgundy', 'Sky'];
-                const stringOptions = ['', 'Baby Pink', 'Baby Blue', 'White', 'Black', 'Gray', 'Forest', 'Dark Blue', 'Red', 'Lilac', 'Yellow'];
+                const sizeOptions = ['', 'A5', 'A6', 'Custom A5', 'Custom A6'];
+                const leatherOptions = ['', 'Anthracite', 'Aubergine', 'Burgundy', 'Charcoal', 'Chocolate', 'Coffee', 'Cognac', 'Emerald', 'Forest', 'Olive', 'Onyx', 'Rust', 'Scarlett', 'Sky', 'Tiffany', 'Ocean', 'Cowhide'];
+                const stringOptions = ['', 'Baby Pink', 'Baby Blue', 'White', 'Black', 'Burgundy', 'Dark Blue', 'Forest', 'Red', 'Lilac', 'Gray', 'Yellow'];
                 const eyeletOptions = ['', 'Gold', 'Silver'];
 
                 function makeSelect(cls, options, selected) {
+                    if (selected && !options.includes(selected)) options = [...options, selected];
                     return `<select class="form-select ${cls}" style="margin-top:0.25rem;">${options.map(o =>
                         `<option value="${o}"${o === selected ? ' selected' : ''}>${o || 'Select...'}</option>`
                     ).join('')}</select>`;
@@ -2071,9 +2183,9 @@
             const container = document.getElementById('journalSpecsContainer');
             const existing = container.querySelectorAll('.journal-detail-edit');
             const newIndex = existing.length;
-            const sizeOptions = ['', 'A5', 'A6', 'Passport', 'Custom Passport', 'Custom A5', 'Custom A6'];
-            const leatherOptions = ['', 'Chocolate', 'Forest', 'Onyx', 'Ocean', 'Cognac', 'Aubergine', 'Scarlett', 'Olive', 'Cowhide', 'Tiffany', 'Anthracite', 'Burgundy', 'Sky'];
-            const stringOptions = ['', 'Baby Pink', 'Baby Blue', 'White', 'Black', 'Gray', 'Forest', 'Dark Blue', 'Red', 'Lilac', 'Yellow'];
+            const sizeOptions = ['', 'A5', 'A6', 'Custom A5', 'Custom A6'];
+            const leatherOptions = ['', 'Anthracite', 'Aubergine', 'Burgundy', 'Charcoal', 'Chocolate', 'Coffee', 'Cognac', 'Emerald', 'Forest', 'Olive', 'Onyx', 'Rust', 'Scarlett', 'Sky', 'Tiffany', 'Ocean', 'Cowhide'];
+            const stringOptions = ['', 'Baby Pink', 'Baby Blue', 'White', 'Black', 'Burgundy', 'Dark Blue', 'Forest', 'Red', 'Lilac', 'Gray', 'Yellow'];
             const eyeletOptions = ['', 'Gold', 'Silver'];
 
             function opts(options) {
@@ -2820,7 +2932,7 @@
             });
             const tbody = document.querySelector('#gaEventsTable tbody');
             const maxVal = parseInt(data.rows?.[0]?.metricValues[0].value || 1);
-            const customEvents = ['copy_order', 'configure_journal', 'select_size', 'view_configurator'];
+            const customEvents = ['send_request', 'review_design', 'select_size', 'select_leather', 'view_configurator', 'newsletter_signup', 'copy_order', 'configure_journal'];
             tbody.innerHTML = (data.rows || []).map(row => {
                 const ev = row.dimensionValues[0].value, ct = parseInt(row.metricValues[0].value);
                 const isCustom = customEvents.includes(ev);
@@ -2828,14 +2940,14 @@
                 const badge = isCustom ? ' <span style="background:var(--cognac);color:white;padding:1px 5px;border-radius:3px;font-size:0.65rem;">custom</span>' : '';
                 return `<tr><td style="${style}">${ev}${badge}<div class="bar" style="width:${Math.round(ct/maxVal*100)}%"></div></td><td>${ct}</td></tr>`;
             }).join('');
-            const copyRow = (data.rows || []).find(r => r.dimensionValues[0].value === 'copy_order');
+            const copyRow = (data.rows || []).find(r => r.dimensionValues[0].value === GA_CONVERSION_EVENT);
             const conv = copyRow ? parseInt(copyRow.metricValues[0].value) : 0;
             document.getElementById('gaKpiConversions').textContent = conv;
             try {
                 const prevData = await gaReport({
                     dateRanges: [{ startDate: gaDateStr(gaCurrentPeriod * 2), endDate: gaDateStr(gaCurrentPeriod + 1) }],
                     dimensions: [{ name: 'eventName' }], metrics: [{ name: 'eventCount' }],
-                    dimensionFilter: { filter: { fieldName: 'eventName', stringFilter: { value: 'copy_order' } } }
+                    dimensionFilter: { filter: { fieldName: 'eventName', stringFilter: { value: GA_CONVERSION_EVENT } } }
                 });
                 const prevConv = prevData.rows?.[0] ? parseInt(prevData.rows[0].metricValues[0].value) : 0;
                 const chg = gaChangeText(conv, prevConv);
@@ -2848,7 +2960,7 @@
             const data = await gaReport({
                 dateRanges: [{ startDate: gaDateStr(gaCurrentPeriod), endDate: gaDateStr(1) }],
                 dimensions: [{ name: 'date' }], metrics: [{ name: 'eventCount' }],
-                dimensionFilter: { filter: { fieldName: 'eventName', stringFilter: { value: 'copy_order' } } },
+                dimensionFilter: { filter: { fieldName: 'eventName', stringFilter: { value: GA_CONVERSION_EVENT } } },
                 orderBys: [{ dimension: { dimensionName: 'date' } }]
             });
             const labels = [], values = [];
@@ -2861,7 +2973,7 @@
             if (gaConversionsChartObj) gaConversionsChartObj.destroy();
             gaConversionsChartObj = new Chart(document.getElementById('gaConversionsChart'), {
                 type: 'bar',
-                data: { labels, datasets: [{ label: 'Order Copies', data: values, backgroundColor: '#A0522D', borderRadius: 4, barPercentage: 0.6 }] },
+                data: { labels, datasets: [{ label: 'Order Requests', data: values, backgroundColor: '#A0522D', borderRadius: 4, barPercentage: 0.6 }] },
                 options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 }, grid: { color: '#f0f0f0' } }, x: { grid: { display: false } } } }
             });
         }
@@ -2871,6 +2983,314 @@
             document.querySelectorAll('.ga-period-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
             if (gaAccessToken) gaRefreshData();
+        }
+
+        // ============ WEBSITE REQUESTS & NEWSLETTER ============
+        const GA_CONVERSION_EVENT = 'send_request';
+        const REQUEST_STATUS_LABELS = { new: 'New', contacted: 'Contacted', payment_sent: 'Payment sent', converted: 'Converted', declined: 'Declined' };
+        const CUSTOM_TITLES = { embroidery: 'Embroidered initial', lace: 'Laced spine', stipple: 'Hand-stippled initial', grommet: 'Grommet design', wavy: 'The wave journal', other: 'Tell me your vision' };
+        const CUSTOM_FIELD_LABELS = { 'embroidery-initial': 'Initial', 'embroidery-placement': 'Placement', 'embroidery-colour': 'Stitch colour', 'lace-material': 'Material', 'lace-colour': 'Colour', 'stipple-initial': 'Initial', 'stipple-placement': 'Placement', 'other-notes': 'Idea' };
+        let allRequests = [];
+        let requestFilter = 'all';
+        let currentRequest = null;
+        let pendingRequestRef = null;
+        let allSubscribers = [];
+        let requestPhotoUrl = null;
+
+        function esc(value) {
+            return String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        }
+
+        async function apiFetch(path, options = {}) {
+            const token = localStorage.getItem('kass_token');
+            const response = await fetch(`${API_BASE}${path}`, { ...options, headers: { ...(options.headers || {}), 'Authorization': `Bearer ${token}` } });
+            if (response.status === 401) { handleLogout(); throw new Error('Signed out'); }
+            return response;
+        }
+
+        function requestDesignLabel(r) {
+            return `${esc(r.size || '')}${r.custom ? ' custom' : ''} · ${esc(r.leather || '')}`;
+        }
+
+        async function refreshRequestBadge() {
+            try {
+                const response = await apiFetch('/api/requests');
+                const data = await response.json();
+                allRequests = data.requests || [];
+                updateRequestBadge();
+            } catch (e) {}
+        }
+
+        function updateRequestBadge() {
+            const count = allRequests.filter(r => r.status === 'new').length;
+            const badge = document.getElementById('requestsBadge');
+            if (!badge) return;
+            badge.textContent = count;
+            badge.style.display = count ? 'inline-block' : 'none';
+        }
+
+        async function loadRequests() {
+            const tbody = document.getElementById('requestsTableBody');
+            try {
+                const response = await apiFetch('/api/requests');
+                const data = await response.json();
+                if (data.error) throw new Error(data.error);
+                allRequests = data.requests || [];
+                renderRequests();
+            } catch (err) {
+                if (err.message !== 'Signed out') tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:2rem; color:var(--red);">Could not load requests: ${esc(err.message)}</td></tr>`;
+            }
+        }
+
+        function renderRequests() {
+            const counts = { new: 0, contacted: 0, payment_sent: 0, converted: 0 };
+            allRequests.forEach(r => { if (r.status in counts) counts[r.status]++; });
+            document.getElementById('reqCountNew').textContent = counts.new;
+            document.getElementById('reqCountContacted').textContent = counts.contacted;
+            document.getElementById('reqCountPayment').textContent = counts.payment_sent;
+            document.getElementById('reqCountConverted').textContent = counts.converted;
+            updateRequestBadge();
+            const list = requestFilter === 'all' ? allRequests : allRequests.filter(r => r.status === requestFilter);
+            const tbody = document.getElementById('requestsTableBody');
+            if (!list.length) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:2rem;">No requests yet</td></tr>';
+                return;
+            }
+            tbody.innerHTML = list.map(r => `
+                <tr onclick="viewRequest('${esc(r.reference)}')">
+                    <td>${new Date(r.createdAt).toLocaleDateString()}</td>
+                    <td>${esc(r.reference)}${r.photo ? ' <small title="Inspiration photo">📎</small>' : ''}</td>
+                    <td>${esc(r.name)}<br><small style="color:var(--text-light);">${esc(r.email)}</small></td>
+                    <td>${requestDesignLabel(r)}</td>
+                    <td>${r.total == null ? 'To confirm' : '$' + Number(r.total).toFixed(2)}</td>
+                    <td><span class="status-badge status-${esc(r.status)}">${esc(REQUEST_STATUS_LABELS[r.status] || r.status)}</span></td>
+                </tr>`).join('');
+        }
+
+        function filterRequests(status, el) {
+            requestFilter = status;
+            document.querySelectorAll('#requestFilters .filter-btn').forEach(b => b.classList.remove('active'));
+            if (el) el.classList.add('active');
+            renderRequests();
+        }
+
+        function reqCard(label, value) {
+            return `<div class="detail-card"><div class="detail-label">${esc(label)}</div><div class="detail-value" style="white-space:pre-line;">${esc(value || '—')}</div></div>`;
+        }
+
+        async function viewRequest(ref) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.getElementById('requestDetailPage').classList.add('active');
+            document.getElementById('reqDetailBody').innerHTML = '<p class="loading">Loading request...</p>';
+            document.getElementById('reqSaveStatus').textContent = '';
+            try {
+                const response = await apiFetch(`/api/requests/${encodeURIComponent(ref)}`);
+                const data = await response.json();
+                if (data.error) throw new Error(data.error);
+                currentRequest = data.request;
+                renderRequestDetail();
+            } catch (err) {
+                if (err.message !== 'Signed out') document.getElementById('reqDetailBody').innerHTML = `<p style="color:var(--red);">Could not load request: ${esc(err.message)}</p>`;
+            }
+        }
+
+        function renderRequestDetail() {
+            const r = currentRequest, d = r.design, e = r.estimate, a = d.address || {};
+            document.getElementById('reqTitle').textContent = `${d.size}${d.custom ? ' custom' : ''} · ${d.leather}`;
+            document.getElementById('reqRef').textContent = `${r.reference} · received ${new Date(r.createdAt).toLocaleString()}`;
+            const badge = document.getElementById('reqStatusBadge');
+            badge.className = `status-badge status-${r.status}`;
+            badge.textContent = REQUEST_STATUS_LABELS[r.status] || r.status;
+            document.getElementById('reqStatusSelect').value = r.status;
+            document.getElementById('reqNotes').value = r.notes || '';
+            document.getElementById('reqReplyLink').href = `mailto:${encodeURIComponent(d.email)}?subject=${encodeURIComponent('Your KASS journal request ' + r.reference)}`;
+
+            const address = [a.address1, a.address2, a.city, a.region, a.postal, a.country].filter(Boolean).join('\n');
+            let html = `<div class="req-section"><h3>Customer</h3><div class="detail-grid">${reqCard('Name', d.name)}${reqCard('Email', d.email)}${reqCard('Phone', d.phone || 'Not provided')}${reqCard('Shipping address', address)}</div></div>`;
+            html += `<div class="req-section"><h3>Journal</h3><div class="detail-grid">${reqCard('Size', d.size + (d.custom ? ' custom' : ''))}${reqCard('Leather', d.leather)}${reqCard('Elastic', d.elastic)}${reqCard('Eyelets', d.eyelet)}${reqCard('Embossed initials', d.embossed || 'None')}</div></div>`;
+            if (d.customizations && d.customizations.length) {
+                html += `<div class="req-section"><h3>Customizations</h3><div class="detail-grid">` + d.customizations.map(c => reqCard(CUSTOM_TITLES[c.type] || c.type,
+                    Object.entries(c.details || {}).filter(([, v]) => v).map(([k, v]) => `${CUSTOM_FIELD_LABELS[k] || k}: ${v}`).join('\n') || 'Selected')).join('') + `</div></div>`;
+            }
+            const charms = (d.charms || []).length ? d.charms.map(c => `${c.id} · ${c.name} × ${c.quantity} · $${c.price * c.quantity}`).join('\n') : (d.charmInterested ? 'Interested; selection to be confirmed' : 'None');
+            html += `<div class="req-section"><h3>Charms & Price</h3><div class="detail-grid">${reqCard('Charms', charms)}${reqCard('Journal estimate', e.needsReview ? 'To confirm after reviewing their vision' : '$' + e.journal)}${reqCard('Charm subtotal', '$' + e.charms)}${reqCard('Estimate before shipping', e.needsReview ? 'To confirm' : '$' + e.total + ' CAD')}</div></div>`;
+            const emailNote = { sent: 'Emailed to the studio', failed: 'Email failed — check Resend settings', not_configured: 'Email not set up yet (saved here only)', pending: 'Email pending' }[r.notification] || '—';
+            html += `<div class="req-section"><h3>Other</h3><div class="detail-grid">${reqCard('Notification', emailNote)}${reqCard('Country (from connection)', r.source?.country || '—')}</div></div>`;
+            if (r.photo) html += `<div class="req-section"><h3>Inspiration Photo</h3><img id="reqPhoto" class="req-photo" alt="Customer inspiration photo"><p><a href="#" onclick="downloadRequestPhoto(); return false;">Download photo</a></p></div>`;
+            document.getElementById('reqDetailBody').innerHTML = html;
+            if (r.photo) loadRequestPhoto(r.reference);
+        }
+
+        async function loadRequestPhoto(ref) {
+            try {
+                const response = await apiFetch(`/api/requests/${encodeURIComponent(ref)}/photo`);
+                if (!response.ok) return;
+                if (requestPhotoUrl) URL.revokeObjectURL(requestPhotoUrl);
+                requestPhotoUrl = URL.createObjectURL(await response.blob());
+                const img = document.getElementById('reqPhoto');
+                if (img) img.src = requestPhotoUrl;
+            } catch (e) {}
+        }
+
+        function downloadRequestPhoto() {
+            if (!requestPhotoUrl || !currentRequest) return;
+            const link = document.createElement('a');
+            link.href = requestPhotoUrl;
+            link.download = currentRequest.photo?.name || `${currentRequest.reference}-inspiration`;
+            link.click();
+        }
+
+        async function updateRequest(ref, changes) {
+            const response = await apiFetch(`/api/requests/${encodeURIComponent(ref)}`, {
+                method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(changes)
+            });
+            const data = await response.json();
+            if (data.error) throw new Error(data.error);
+            const row = allRequests.find(x => x.reference === ref);
+            if (row) row.status = data.request.status;
+            updateRequestBadge();
+            return data.request;
+        }
+
+        async function saveRequestUpdate() {
+            const status = document.getElementById('reqSaveStatus');
+            status.textContent = 'Saving...';
+            try {
+                currentRequest = await updateRequest(currentRequest.reference, {
+                    status: document.getElementById('reqStatusSelect').value,
+                    notes: document.getElementById('reqNotes').value
+                });
+                renderRequestDetail();
+                document.getElementById('reqSaveStatus').textContent = 'Saved.';
+            } catch (err) {
+                status.textContent = 'Could not save: ' + err.message;
+            }
+        }
+
+        async function markRequestPaymentSent(ref, url) {
+            try {
+                const response = await apiFetch(`/api/requests/${encodeURIComponent(ref)}`);
+                const data = await response.json();
+                const notes = [data.request?.notes, `Payment link created ${new Date().toLocaleDateString()}: ${url}`].filter(Boolean).join('\n');
+                await updateRequest(ref, { status: 'payment_sent', notes });
+            } catch (e) {}
+        }
+
+        async function deleteCurrentRequest() {
+            if (!currentRequest || !confirm(`Delete request ${currentRequest.reference}? This also deletes any inspiration photo and can't be undone.`)) return;
+            try {
+                await apiFetch(`/api/requests/${encodeURIComponent(currentRequest.reference)}`, { method: 'DELETE' });
+                allRequests = allRequests.filter(r => r.reference !== currentRequest.reference);
+                currentRequest = null;
+                showPage('requests', document.getElementById('navRequests'));
+            } catch (err) {
+                document.getElementById('reqSaveStatus').textContent = 'Could not delete: ' + err.message;
+            }
+        }
+
+        function setSelectValue(select, value) {
+            if (!value) return;
+            if (![...select.options].some(o => o.value === value)) select.add(new Option(value, value));
+            select.value = value;
+        }
+
+        function createLinkFromRequest() {
+            if (!currentRequest) return;
+            const r = currentRequest, d = r.design, a = d.address || {};
+            showPage('newOrder', document.getElementById('navNewOrder'));
+            setOrderMode('stripe');
+            const form = document.getElementById('newOrderForm');
+            form.reset();
+            const items = getJournalItems();
+            for (let i = items.length - 1; i > 0; i--) items[i].remove();
+            document.querySelectorAll('.accessory-rows').forEach(c => c.innerHTML = '');
+            document.getElementById('paymentLinkResult').style.display = 'none';
+            const item = getJournalItems()[0];
+            setSelectValue(item.querySelector('.journal-size'), (d.custom ? 'Custom ' : '') + d.size);
+            setSelectValue(item.querySelector('.journal-leather'), d.leather);
+            setSelectValue(item.querySelector('.journal-string'), d.elastic);
+            setSelectValue(item.querySelector('.journal-eyelet'), d.eyelet);
+            item.querySelector('.journal-embossing').value = d.embossed || '';
+            const customLines = (d.customizations || []).map(c => {
+                const detail = Object.entries(c.details || {}).filter(([, v]) => v).map(([k, v]) => `${CUSTOM_FIELD_LABELS[k] || k}: ${v}`).join(', ');
+                return `${CUSTOM_TITLES[c.type] || c.type}${detail ? ' (' + detail + ')' : ''}`;
+            });
+            item.querySelector('.journal-custom-desc').value = [`Website request ${r.reference}`, ...customLines].join('\n');
+            const addOn = (name, price) => {
+                addAccessoryRow(item.querySelector('.btn-add-accessory'));
+                const row = item.querySelector('.accessory-rows').lastElementChild;
+                row.querySelector('.accessory-name').value = name;
+                row.querySelector('.accessory-price').value = price;
+            };
+            (d.customizations || []).slice(1).forEach(c => addOn(`Extra customization: ${CUSTOM_TITLES[c.type] || c.type}`, 40));
+            (d.charms || []).forEach(c => { for (let i = 0; i < (c.quantity || 1); i++) addOn(`Charm ${c.id} · ${c.name}`, c.price); });
+            // Customer details (used if you switch to a manual / e-transfer order)
+            document.getElementById('manualCustName').value = d.name || '';
+            document.getElementById('manualCustEmail').value = d.email || '';
+            document.getElementById('manualCustPhone').value = d.phone || '';
+            document.getElementById('manualAddr1').value = a.address1 || '';
+            document.getElementById('manualAddr2').value = a.address2 || '';
+            document.getElementById('manualCity').value = a.city || '';
+            document.getElementById('manualState').value = a.region || '';
+            document.getElementById('manualPostal').value = a.postal || '';
+            document.getElementById('manualCountry').value = a.country || 'CA';
+            updateOrderTotals();
+            pendingRequestRef = r.reference;
+            const notice = document.getElementById('prefillNotice');
+            notice.innerHTML = `<strong>Prefilled from website request ${esc(r.reference)}</strong> for ${esc(d.name)}. Check the details${r.estimate.needsReview ? ', set the price for their vision' : ''}, add shipping, then create the link. The request will be marked “Payment sent”.`;
+            notice.style.display = 'block';
+            window.scrollTo(0, 0);
+        }
+
+        async function loadNewsletter() {
+            const tbody = document.getElementById('newsletterTableBody');
+            try {
+                const response = await apiFetch('/api/newsletter');
+                const data = await response.json();
+                if (data.error) throw new Error(data.error);
+                allSubscribers = data.subscribers || [];
+                renderNewsletter();
+            } catch (err) {
+                if (err.message !== 'Signed out') tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:2rem; color:var(--red);">Could not load subscribers: ${esc(err.message)}</td></tr>`;
+            }
+        }
+
+        function renderNewsletter() {
+            const sourceLabels = { footer: 'Footer', 'welcome-popup': 'Pop-up' };
+            document.getElementById('newsletterCount').textContent = `${allSubscribers.length} subscriber${allSubscribers.length === 1 ? '' : 's'}`;
+            const tbody = document.getElementById('newsletterTableBody');
+            if (!allSubscribers.length) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:2rem;">No subscribers yet</td></tr>';
+                return;
+            }
+            tbody.innerHTML = allSubscribers.map((s, i) => `
+                <tr>
+                    <td>${esc(s.email)}</td>
+                    <td>${s.createdAt ? new Date(s.createdAt).toLocaleDateString() : '—'}</td>
+                    <td>${esc(sourceLabels[s.source] || s.source || 'Website')}</td>
+                    <td style="text-align:right;"><button type="button" class="btn btn-danger btn-small" onclick="removeSubscriber(${i})">Remove</button></td>
+                </tr>`).join('');
+        }
+
+        async function removeSubscriber(index) {
+            const email = allSubscribers[index]?.email;
+            if (!email || !confirm(`Remove ${email} from the newsletter list?`)) return;
+            try {
+                await apiFetch(`/api/newsletter/${encodeURIComponent(email)}`, { method: 'DELETE' });
+                allSubscribers = allSubscribers.filter(s => s.email !== email);
+                renderNewsletter();
+            } catch (e) {}
+        }
+
+        function exportNewsletterCsv() {
+            const quote = v => `"${String(v ?? '').replace(/"/g, '""')}"`;
+            const rows = [['email', 'signed_up', 'source', 'country', 'consent']].concat(allSubscribers.map(s =>
+                [s.email, s.createdAt ? new Date(s.createdAt).toISOString() : '', s.source || '', s.country || '', s.consent ? 'yes' : '']));
+            const blob = new Blob([rows.map(r => r.map(quote).join(',')).join('\n')], { type: 'text/csv' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `kass-newsletter-${new Date().toISOString().slice(0, 10)}.csv`;
+            link.click();
         }
 
         // CHECK AUTH ON LOAD — validate JWT structure
