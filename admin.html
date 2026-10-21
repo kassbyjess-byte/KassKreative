@@ -379,7 +379,7 @@
         .table-container {
             background: var(--card);
             border-radius: 8px;
-            overflow: hidden;
+            overflow-x: auto;
             box-shadow: var(--shadow);
         }
 
@@ -464,6 +464,17 @@
         .btn-danger { background: none; border: 1px solid var(--red); color: var(--red); }
         .btn-danger:hover { background: var(--red-light); }
         #prefillNotice { background: var(--orange-light); border-left: 4px solid var(--orange); }
+        .status-market { background-color: #fde7ef; color: #9d2f55; }
+        .cell-line { white-space: nowrap; line-height: 1.5; }
+        .cell-line + .cell-line { border-top: 1px dashed var(--border); margin-top: 0.25rem; padding-top: 0.25rem; }
+        .cell-sub { font-size: 0.75rem; color: var(--text-light); white-space: nowrap; }
+        #ordersTable td { font-size: 0.85rem; vertical-align: top; }
+        .journal-box-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; }
+        .journal-box-head h3 { margin: 0; }
+        .btn-remove-journal-detail { background: none; border: 1px solid var(--red); color: var(--red); border-radius: 4px; padding: 0.25rem 0.6rem; font-size: 0.75rem; cursor: pointer; }
+        .btn-remove-journal-detail:hover { background: var(--red-light); }
+        .kass-toast { position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%); background: var(--chocolate); color: #fff; padding: 0.7rem 1.2rem; border-radius: 6px; font-size: 0.9rem; box-shadow: var(--shadow); z-index: 9999; opacity: 0; transition: opacity 0.2s; pointer-events: none; }
+        .kass-toast.show { opacity: 1; }
         .status-local_pickup {
             background-color: #fef3c7;
             color: #92400e;
@@ -983,6 +994,7 @@
                         <button class="filter-btn" onclick="filterOrders('in_production', this)">In Production</button>
                         <button class="filter-btn" onclick="filterOrders('shipped', this)">Shipped</button>
                         <button class="filter-btn" onclick="filterOrders('delivered', this)">Delivered</button>
+                        <button class="filter-btn" onclick="filterOrders('market', this)">Market</button>
                     </div>
 
                     <div class="table-container">
@@ -991,14 +1003,19 @@
                                 <tr>
                                     <th>Date</th>
                                     <th>Customer</th>
-                                    <th>Product</th>
+                                    <th>Size</th>
+                                    <th>Leather</th>
+                                    <th>String</th>
+                                    <th>Eyelet</th>
+                                    <th>Embossing</th>
+                                    <th>Items</th>
                                     <th>Amount</th>
                                     <th>Status</th>
                                 </tr>
                             </thead>
                             <tbody id="ordersTableBody">
                                 <tr>
-                                    <td colspan="5" class="loading">Loading orders...</td>
+                                    <td colspan="10" class="loading">Loading orders...</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -1045,6 +1062,7 @@
                                         <option value="e-transfer">Interac E-Transfer</option>
                                         <option value="cash">Cash</option>
                                         <option value="local_pickup">Local Pickup (Paid)</option>
+                                        <option value="market">Market Sale</option>
                                         <option value="other">Other</option>
                                     </select>
                                 </div>
@@ -1484,6 +1502,7 @@
                                     <option value="shipped">Shipped</option>
                                     <option value="delivered">Delivered</option>
                                     <option value="local_pickup">Local Pickup</option>
+                                    <option value="market">Market</option>
                                 </select>
                             </div>
                             <div class="form-group">
@@ -1612,6 +1631,7 @@
             if (pageName === 'orderDetail') {
                 loadOrderDetail();
             }
+            if (pageName === 'dashboard') { renderOrders(); updateStats(); loadOrders(); }
             if (pageName === 'requests') loadRequests();
             if (pageName === 'newsletter') loadNewsletter();
             if (pageName === 'newOrder') {
@@ -1637,7 +1657,7 @@
                 const data = await response.json();
 
                 if (data.error) {
-                    document.getElementById('ordersTableBody').innerHTML = `<tr><td colspan="5" style="text-align:center; padding:2rem; color:var(--red);">API Error: ${data.error}${data.detail ? ' — ' + data.detail : ''}${data.message ? ' — ' + data.message : ''}</td></tr>`;
+                    document.getElementById('ordersTableBody').innerHTML = `<tr><td colspan="10" style="text-align:center; padding:2rem; color:var(--red);">API Error: ${data.error}${data.detail ? ' — ' + data.detail : ''}${data.message ? ' — ' + data.message : ''}</td></tr>`;
                     return;
                 }
 
@@ -1645,7 +1665,9 @@
                     console.log('Orders debug:', data.debug);
                 }
 
-                allOrders = (data.orders || []).map(o => ({
+                allOrders = (data.orders || []).map(o => {
+                    const ff = freshestFulfillment(o.id, o.fulfillment || {});
+                    return {
                     id: o.id,
                     amount: (o.amount || 0) / 100,
                     currency: o.currency,
@@ -1655,16 +1677,20 @@
                     product_name: o.product_name || '',
                     metadata: o.metadata || {},
                     journal_count: o.journal_count || 1,
-                    status: (o.fulfillment && o.fulfillment.status) || 'paid',
-                    fulfillment: o.fulfillment || {},
+                    journals: journalsFromFulfillment(ff) || o.journals || [],
+                    accessories: o.accessories || [],
+                    item_counts: o.item_counts || null,
+                    status: ff.status || 'paid',
+                    fulfillment: ff,
                     is_manual: !!o.is_manual,
                     payment_method: o.payment_method || ''
-                }));
+                };
+                });
                 renderOrders();
                 updateStats();
             } catch (err) {
                 console.error('Error loading orders:', err);
-                document.getElementById('ordersTableBody').innerHTML = '<tr><td colspan="5" style="text-align:center; padding:2rem; color:var(--red);">Failed to load orders. Check your connection.</td></tr>';
+                document.getElementById('ordersTableBody').innerHTML = '<tr><td colspan="10" style="text-align:center; padding:2rem; color:var(--red);">Failed to load orders. Check your connection.</td></tr>';
             }
         }
 
@@ -1673,22 +1699,37 @@
             const filtered = currentFilter === 'all' ? allOrders : allOrders.filter(o => o.status === currentFilter);
 
             if (filtered.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 2rem;">No orders found</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="10" style="text-align:center; padding: 2rem;">No orders found</td></tr>';
                 return;
             }
 
+            const manualLabels = { 'e-transfer': 'E-TRANSFER', cash: 'CASH', market: 'MARKET', local_pickup: 'PICKUP', other: 'MANUAL' };
             tbody.innerHTML = filtered.map(order => {
                 const date = new Date(order.created * 1000).toLocaleDateString();
-                const product = order.product_name || [order.metadata.size, order.metadata.leather].filter(Boolean).join(' \u2022 ') || 'Journal';
                 const statusLabel = order.status.replace(/_/g, ' ').toUpperCase();
                 const manualBadge = order.is_manual
-                    ? `<span style="display:inline-block; margin-left:0.4rem; padding:0.15rem 0.5rem; background:#5C3A21; color:#fff; border-radius:3px; font-size:0.65rem; font-weight:500; letter-spacing:0.05em;">E-TRANSFER</span>`
+                    ? `<span style="display:inline-block; margin-left:0.4rem; padding:0.15rem 0.5rem; background:#5C3A21; color:#fff; border-radius:3px; font-size:0.65rem; font-weight:500; letter-spacing:0.05em;">${manualLabels[order.payment_method] || 'MANUAL'}</span>`
                     : '';
+                const journals = order.journals && order.journals.length
+                    ? order.journals
+                    : [{ size: order.metadata.size, leather: order.metadata.leather }];
+                const col = field => journals.map(j => `<div class="cell-line">${esc(j[field] || '\u2014')}</div>`).join('');
+                const counts = order.item_counts || { journals: order.journal_count || journals.length, charms: 0, addons: 0 };
+                const total = (counts.journals || 0) + (counts.charms || 0) + (counts.addons || 0);
+                const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`;
+                const parts = [plural(counts.journals || 0, 'journal')];
+                if (counts.charms) parts.push(plural(counts.charms, 'charm'));
+                if (counts.addons) parts.push(plural(counts.addons, 'add-on'));
                 return `
                 <tr onclick="viewOrder('${order.id}')">
                     <td>${date}</td>
-                    <td>${order.customer_name}${manualBadge}<br><small style="color:var(--text-light);">${order.customer_email || (order.is_manual ? '(manual order)' : '')}</small></td>
-                    <td>${product}</td>
+                    <td>${esc(order.customer_name)}${manualBadge}<br><small style="color:var(--text-light);">${esc(order.customer_email || (order.is_manual ? '(manual order)' : ''))}</small></td>
+                    <td>${col('size')}</td>
+                    <td>${col('leather')}</td>
+                    <td>${col('string_colour')}</td>
+                    <td>${col('eyelet')}</td>
+                    <td>${col('embossing')}</td>
+                    <td><strong>${total}</strong><div class="cell-sub">${parts.join(' · ')}</div></td>
                     <td>$${order.amount.toFixed(2)}</td>
                     <td><span class="status-badge status-${order.status}">${statusLabel}</span></td>
                 </tr>`;
@@ -2010,6 +2051,17 @@
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 const order = await response.json();
+                if (order.error) throw new Error(order.error);
+                applyCachedFulfillment(order);
+                currentOrder = order;
+                renderOrderDetail(order);
+            } catch (err) {
+                console.error('Error loading order:', err);
+            }
+        }
+
+        function renderOrderDetail(order) {
+            try {
                 const meta = order.metadata || {};
                 const ff = order.fulfillment || {};
                 const status = ff.status || 'paid';
@@ -2044,29 +2096,10 @@
                     document.getElementById('shippingAddress').textContent = '\u2014';
                 }
 
-                // Render editable journal specs — supports both single and multi-journal orders
-                // Merge: KV overrides (from manual edits) > Stripe product metadata > session metadata
-                const kvJournals = ff.journals_metadata || [];
-                const stripeJournals = order.journals && order.journals.length > 0
-                    ? order.journals
-                    : [{ size: meta.size, leather: meta.leather, string_colour: meta.string_colour, eyelet: meta.eyelet, embossing: meta.embossing, custom_description: meta.custom_description }];
-
-                // Merge KV overrides onto Stripe data (KV wins where present)
-                const journalsList = stripeJournals.map((sj, i) => {
-                    const kv = kvJournals[i] || {};
-                    return {
-                        size: kv.size || sj.size || '',
-                        leather: kv.leather || sj.leather || '',
-                        string_colour: kv.string_colour || sj.string_colour || '',
-                        eyelet: kv.eyelet || sj.eyelet || '',
-                        embossing: kv.embossing || sj.embossing || '',
-                        custom_description: kv.custom_description || sj.custom_description || '',
-                    };
-                });
-                // Also include any extra journals only in KV (e.g. manually added)
-                for (let i = stripeJournals.length; i < kvJournals.length; i++) {
-                    journalsList.push(kvJournals[i]);
-                }
+                // Journals come from the Worker with portal edits already applied (charms are listed separately)
+                const journalsList = (order.journals && order.journals.length)
+                    ? order.journals.map(j => ({ ...j }))
+                    : (meta.size ? [{ size: meta.size, leather: meta.leather, string_colour: meta.string_colour, eyelet: meta.eyelet, embossing: meta.embossing, custom_description: meta.custom_description }] : []);
 
                 const journalSpecs = document.getElementById('journalSpecsContainer');
                 const sizeOptions = ['', 'A5', 'A6', 'Custom A5', 'Custom A6'];
@@ -2081,62 +2114,20 @@
                     ).join('')}</select>`;
                 }
 
-                // Match accessories to journals by size + leather
                 const orderAccessories = order.accessories || [];
-
-                journalSpecs.innerHTML = journalsList.map((j, i) => {
-                    const title = journalsList.length > 1 ? `<h3 style="margin: 0 0 0.75rem 0; color: var(--primary);">Journal ${i + 1}</h3>` : '';
-                    const wrapStyle = journalsList.length > 1 ? 'border: 1px solid var(--border); border-radius: 12px; padding: 1rem; margin-bottom: 1rem;' : '';
-
-                    // Find accessories matching this journal (by size + leather), or show all on single-journal orders
-                    const journalAcc = journalsList.length === 1
-                        ? orderAccessories
-                        : orderAccessories.filter(a => a.journal_size === j.size && a.journal_leather === j.leather);
-
-                    const accHtml = journalAcc.length > 0
-                        ? journalAcc.map(a => `
+                const boxes = journalsList.map((j, i) => journalBoxHtml(i, j)).join('');
+                const accRows = orderAccessories.map(a => `
                             <div class="detail-card">
-                                <div class="detail-label">Charm / Accessory</div>
-                                <div class="detail-value" style="margin-top:0.25rem;">${a.accessory_name || a.name} — <span style="color:var(--cognac); font-weight:500;">$${(a.amount / 100).toFixed(2)}</span></div>
-                            </div>`).join('')
-                        : '';
-
-                    return `
-                    <div class="journal-detail-edit" data-journal-detail-index="${i}" style="${wrapStyle}">
-                        ${title}
-                        <div class="detail-grid" style="margin-bottom: 0;">
-                            <div class="detail-card">
-                                <div class="detail-label">Size</div>
-                                ${makeSelect('jd-size', sizeOptions, j.size)}
-                            </div>
-                            <div class="detail-card">
-                                <div class="detail-label">Leather Colour</div>
-                                ${makeSelect('jd-leather', leatherOptions, j.leather)}
-                            </div>
-                            <div class="detail-card">
-                                <div class="detail-label">String Colour</div>
-                                ${makeSelect('jd-string', stringOptions, j.string_colour)}
-                            </div>
-                            <div class="detail-card">
-                                <div class="detail-label">Eyelet</div>
-                                ${makeSelect('jd-eyelet', eyeletOptions, j.eyelet)}
-                            </div>
-                            <div class="detail-card">
-                                <div class="detail-label">Embossing</div>
-                                <input type="text" class="form-input jd-embossing" value="${(j.embossing || '').replace(/"/g, '&quot;')}" placeholder="Optional embossing text" style="margin-top:0.25rem;">
-                            </div>
-                            <div class="detail-card">
-                                <div class="detail-label">Custom Notes</div>
-                                <textarea class="form-input jd-custom-desc" placeholder="Any additional notes..." style="margin-top:0.25rem;">${j.custom_description || ''}</textarea>
-                            </div>
-                            ${accHtml}
-                        </div>
-                    </div>`;
-                }).join('') + `
+                                <div class="detail-label">${a.kind === 'add-on' ? 'Add-on' : 'Charm'}</div>
+                                <div class="detail-value" style="margin-top:0.25rem;">${esc(a.accessory_name || a.name)}${(a.quantity || 1) > 1 ? ' × ' + a.quantity : ''} — <span style="color:var(--cognac); font-weight:500;">$${((a.amount || 0) / 100).toFixed(2)}</span></div>
+                            </div>`).join('');
+                journalSpecs.innerHTML = `
+                    <div id="journalBoxes">${boxes || '<p style="color:var(--text-light); margin:0 0 1rem;">No journals on this order.</p>'}</div>
                     <div style="display:flex; gap:0.75rem; margin: 0.5rem 0 1.5rem;">
                         <button type="button" class="btn btn-primary btn-small" onclick="saveJournalDetails()">Save Journal Details</button>
                         <button type="button" class="btn btn-secondary btn-small" onclick="addJournalDetailRow()">+ Add Journal</button>
-                    </div>`;
+                    </div>
+                    ${accRows ? `<h3 style="margin: 0 0 0.75rem;">Charms & Add-ons</h3><div class="detail-grid">${accRows}</div>` : ''}`;
 
                 // Payment details
                 document.getElementById('orderAmount').textContent = `$${((order.amount || 0) / 100).toFixed(2)}`;
@@ -2151,7 +2142,10 @@
                 renderTimeline(history);
 
                 // Shipping section — handle local pickup vs shipped
-                if (status === 'local_pickup') {
+                if (status === 'local_pickup' || status === 'market') {
+                    document.getElementById('localPickupConfirm').innerHTML = status === 'market'
+                        ? '<span style="font-weight: 600; color: #166534;">Market sale</span> — Sold in person. No shipping label needed.'
+                        : '<span style="font-weight: 600; color: #166534;">Local Pickup</span> — Order marked for customer pickup. No shipping label needed.';
                     document.getElementById('localPickupConfirm').style.display = 'block';
                     document.getElementById('getRatesBtn').style.display = 'none';
                     document.getElementById('localPickupBtn').style.display = 'none';
@@ -2179,46 +2173,65 @@
             }
         }
 
-        function addJournalDetailRow() {
-            const container = document.getElementById('journalSpecsContainer');
-            const existing = container.querySelectorAll('.journal-detail-edit');
-            const newIndex = existing.length;
-            const sizeOptions = ['', 'A5', 'A6', 'Custom A5', 'Custom A6'];
-            const leatherOptions = ['', 'Anthracite', 'Aubergine', 'Burgundy', 'Charcoal', 'Chocolate', 'Coffee', 'Cognac', 'Emerald', 'Forest', 'Olive', 'Onyx', 'Rust', 'Scarlett', 'Sky', 'Tiffany', 'Ocean', 'Cowhide'];
-            const stringOptions = ['', 'Baby Pink', 'Baby Blue', 'White', 'Black', 'Burgundy', 'Dark Blue', 'Forest', 'Red', 'Lilac', 'Gray', 'Yellow'];
-            const eyeletOptions = ['', 'Gold', 'Silver'];
+        const JOURNAL_OPTIONS = {
+            sizeOptions: ['', 'A5', 'A6', 'Custom A5', 'Custom A6'],
+            leatherOptions: ['', 'Anthracite', 'Aubergine', 'Burgundy', 'Charcoal', 'Chocolate', 'Coffee', 'Cognac', 'Emerald', 'Forest', 'Olive', 'Onyx', 'Rust', 'Scarlett', 'Sky', 'Tiffany', 'Ocean', 'Cowhide'],
+            stringOptions: ['', 'Baby Pink', 'Baby Blue', 'White', 'Black', 'Burgundy', 'Dark Blue', 'Forest', 'Red', 'Lilac', 'Gray', 'Yellow'],
+            eyeletOptions: ['', 'Gold', 'Silver'],
+        };
 
-            function opts(options) {
-                return options.map(o => `<option value="${o}">${o || 'Select...'}</option>`).join('');
-            }
+        function journalSelect(cls, options, selected) {
+            if (selected && !options.includes(selected)) options = [...options, selected];
+            return `<select class="form-select ${cls}" style="margin-top:0.25rem;">${options.map(o =>
+                `<option value="${esc(o)}"${o === selected ? ' selected' : ''}>${esc(o || 'Select...')}</option>`
+            ).join('')}</select>`;
+        }
 
-            const html = `
-            <div class="journal-detail-edit" data-journal-detail-index="${newIndex}" style="border: 1px solid var(--border); border-radius: 12px; padding: 1rem; margin-bottom: 1rem;">
-                <h3 style="margin: 0 0 0.75rem 0; color: var(--primary);">Journal ${newIndex + 1}</h3>
-                <div class="detail-grid" style="margin-bottom: 0;">
-                    <div class="detail-card"><div class="detail-label">Size</div><select class="form-select jd-size" style="margin-top:0.25rem;">${opts(sizeOptions)}</select></div>
-                    <div class="detail-card"><div class="detail-label">Leather Colour</div><select class="form-select jd-leather" style="margin-top:0.25rem;">${opts(leatherOptions)}</select></div>
-                    <div class="detail-card"><div class="detail-label">String Colour</div><select class="form-select jd-string" style="margin-top:0.25rem;">${opts(stringOptions)}</select></div>
-                    <div class="detail-card"><div class="detail-label">Eyelet</div><select class="form-select jd-eyelet" style="margin-top:0.25rem;">${opts(eyeletOptions)}</select></div>
-                    <div class="detail-card"><div class="detail-label">Embossing</div><input type="text" class="form-input jd-embossing" placeholder="Optional embossing text" style="margin-top:0.25rem;"></div>
-                    <div class="detail-card"><div class="detail-label">Custom Notes</div><textarea class="form-input jd-custom-desc" placeholder="Any additional notes..." style="margin-top:0.25rem;"></textarea></div>
-                </div>
-            </div>`;
+        function journalBoxHtml(i, j, makeSelectFn, opts) {
+            const sel = makeSelectFn || journalSelect;
+            const o = opts || JOURNAL_OPTIONS;
+            return `
+                    <div class="journal-detail-edit" data-journal-detail-index="${i}" style="border: 1px solid var(--border); border-radius: 12px; padding: 1rem; margin-bottom: 1rem;">
+                        <div class="journal-box-head">
+                            <h3 style="color: var(--primary);">Journal ${i + 1}</h3>
+                            <button type="button" class="btn-remove-journal-detail" onclick="removeJournalDetailRow(this)">Remove</button>
+                        </div>
+                        <div class="detail-grid" style="margin-bottom: 0;">
+                            <div class="detail-card"><div class="detail-label">Size</div>${sel('jd-size', o.sizeOptions, j.size || '')}</div>
+                            <div class="detail-card"><div class="detail-label">Leather Colour</div>${sel('jd-leather', o.leatherOptions, j.leather || '')}</div>
+                            <div class="detail-card"><div class="detail-label">String Colour</div>${sel('jd-string', o.stringOptions, j.string_colour || '')}</div>
+                            <div class="detail-card"><div class="detail-label">Eyelet</div>${sel('jd-eyelet', o.eyeletOptions, j.eyelet || '')}</div>
+                            <div class="detail-card"><div class="detail-label">Embossing</div><input type="text" class="form-input jd-embossing" value="${esc(j.embossing || '')}" placeholder="Optional embossing text" style="margin-top:0.25rem;"></div>
+                            <div class="detail-card"><div class="detail-label">Custom Notes</div><textarea class="form-input jd-custom-desc" placeholder="Any additional notes..." style="margin-top:0.25rem;">${esc(j.custom_description || '')}</textarea></div>
+                        </div>
+                    </div>`;
+        }
 
-            // Insert before the buttons div
-            const buttonsDiv = container.nextElementSibling;
-            container.insertAdjacentHTML('beforeend', html);
-
-            // Re-number all journal titles
-            container.querySelectorAll('.journal-detail-edit').forEach((el, i) => {
+        function renumberJournalBoxes() {
+            document.querySelectorAll('#journalBoxes .journal-detail-edit').forEach((el, i) => {
                 el.setAttribute('data-journal-detail-index', i);
                 const h3 = el.querySelector('h3');
                 if (h3) h3.textContent = `Journal ${i + 1}`;
             });
         }
 
+        function addJournalDetailRow() {
+            const boxes = document.getElementById('journalBoxes');
+            if (!boxes) return;
+            const empty = boxes.querySelector('p');
+            if (empty) empty.remove();
+            boxes.insertAdjacentHTML('beforeend', journalBoxHtml(boxes.querySelectorAll('.journal-detail-edit').length, {}));
+            renumberJournalBoxes();
+        }
+
+        function removeJournalDetailRow(btn) {
+            btn.closest('.journal-detail-edit').remove();
+            renumberJournalBoxes();
+            showToast('Journal removed — click Save Journal Details to keep this change');
+        }
+
         async function saveJournalDetails() {
-            const rows = document.querySelectorAll('.journal-detail-edit');
+            const rows = document.querySelectorAll('#journalBoxes .journal-detail-edit');
             const journals = [];
             for (const row of rows) {
                 journals.push({
@@ -2239,11 +2252,12 @@
                         'Authorization': `Bearer ${token}`,
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({ journals })
+                    body: JSON.stringify({ journals, base: currentOrder ? currentOrder.fulfillment : null })
                 });
                 const data = await response.json();
                 if (data.success) {
-                    alert('Journal details saved!');
+                    applyFulfillment(data.fulfillment);
+                    showToast('Journal details saved');
                 } else {
                     alert('Error saving: ' + (data.error || 'Unknown error'));
                 }
@@ -2286,12 +2300,13 @@
                         'Authorization': `Bearer ${token}`,
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({ status, tracking, status_note })
+                    body: JSON.stringify({ status, tracking, status_note, base: currentOrder ? currentOrder.fulfillment : null })
                 });
 
                 if (response.ok) {
-                    loadOrderDetail();
-                    alert('Order status updated successfully');
+                    const data = await response.json();
+                    applyFulfillment(data.fulfillment);
+                    showToast('Status updated');
                 } else {
                     const err = await response.json();
                     alert('Failed to update: ' + (err.error || 'Unknown error'));
@@ -2315,11 +2330,13 @@
                     },
                     body: JSON.stringify({
                         status: 'local_pickup',
-                        status_note: 'Marked as local pickup — no shipping required'
+                        status_note: 'Marked as local pickup — no shipping required',
+                        base: currentOrder ? currentOrder.fulfillment : null
                     })
                 });
                 const data = await response.json();
                 if (data.success) {
+                    applyFulfillment(data.fulfillment);
                     document.getElementById('localPickupConfirm').style.display = 'block';
                     document.getElementById('getRatesBtn').style.display = 'none';
                     document.getElementById('localPickupBtn').style.display = 'none';
@@ -2411,14 +2428,15 @@
                     },
                     body: JSON.stringify({
                         order_id: currentOrderId,
-                        rate_id: selectedRate
+                        rate_id: selectedRate,
+                        base: currentOrder ? currentOrder.fulfillment : null
                     })
                 });
                 const data = await response.json();
 
                 if (data.success) {
+                    if (data.fulfillment) applyFulfillment(data.fulfillment); else loadOrderDetail();
                     renderLabelResult(data);
-                    loadOrderDetail();
                 } else {
                     const details = data.details || '';
                     const xmlSent = data.xml_sent || '';
@@ -2983,6 +3001,76 @@
             document.querySelectorAll('.ga-period-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
             if (gaAccessToken) gaRefreshData();
+        }
+
+        // ============ SAVED CHANGES SHOW STRAIGHT AWAY ============
+        // Cloudflare's storage can take up to a minute to hand back a just-saved change.
+        // Keep the copy returned by each save for a while and use whichever is newer.
+        let currentOrder = null;
+        const FF_CACHE_KEY = 'kass_ff_cache';
+        const FF_CACHE_MS = 15 * 60 * 1000;
+
+        function ffCacheRead() {
+            try { return JSON.parse(localStorage.getItem(FF_CACHE_KEY)) || {}; } catch (e) { return {}; }
+        }
+
+        function rememberFulfillment(id, ff) {
+            if (!id || !ff) return;
+            const cache = ffCacheRead();
+            cache[id] = { ff, at: Date.now() };
+            for (const k of Object.keys(cache)) if (Date.now() - (cache[k].at || 0) > FF_CACHE_MS) delete cache[k];
+            try { localStorage.setItem(FF_CACHE_KEY, JSON.stringify(cache)); } catch (e) {}
+        }
+
+        function freshestFulfillment(id, serverFF) {
+            const cached = ffCacheRead()[id];
+            const server = serverFF || {};
+            if (cached && cached.ff && (cached.ff.updated_at || 0) > (server.updated_at || 0)) return cached.ff;
+            return server;
+        }
+
+        function journalsFromFulfillment(ff) {
+            return ff && ff.journals_schema === 2 && Array.isArray(ff.journals_metadata) ? ff.journals_metadata : null;
+        }
+
+        function applyCachedFulfillment(order) {
+            const ff = freshestFulfillment(order.id, order.fulfillment);
+            if (ff !== order.fulfillment) {
+                order.fulfillment = ff;
+                const j = journalsFromFulfillment(ff);
+                if (j) order.journals = j;
+            }
+        }
+
+        function applyFulfillment(ff) {
+            if (!ff || !currentOrder) return;
+            rememberFulfillment(currentOrder.id, ff);
+            currentOrder.fulfillment = ff;
+            const j = journalsFromFulfillment(ff);
+            if (j) currentOrder.journals = j;
+            const row = allOrders.find(o => o.id === currentOrder.id);
+            if (row) {
+                row.fulfillment = ff;
+                row.status = ff.status || row.status;
+                if (j) row.journals = j;
+            }
+            renderOrderDetail(currentOrder);
+            renderOrders();
+            updateStats();
+        }
+
+        function showToast(message) {
+            let toast = document.getElementById('kassToast');
+            if (!toast) {
+                toast = document.createElement('div');
+                toast.id = 'kassToast';
+                toast.className = 'kass-toast';
+                document.body.appendChild(toast);
+            }
+            toast.textContent = message;
+            toast.classList.add('show');
+            clearTimeout(showToast.timer);
+            showToast.timer = setTimeout(() => toast.classList.remove('show'), 2600);
         }
 
         // ============ WEBSITE REQUESTS & NEWSLETTER ============
