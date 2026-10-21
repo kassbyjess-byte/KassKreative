@@ -1,0 +1,12 @@
+/* Shared type scale for collection and care pages, matching the designer and leathers. */
+body[data-view=journals],body[data-view=care]{font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.6}
+body[data-view=journals] #journals .story-heading h1,body[data-view=care] #care .story-heading h1{font-family:Arial,Helvetica,sans-serif;font-size:48px;font-style:normal;font-weight:500;line-height:1.09;letter-spacing:-1.6px;margin:0 0 24px}
+body[data-view=care] #care .story-heading h1 span{font-family:inherit;font-size:inherit;font-style:normal;font-weight:inherit}
+body[data-view=care] #care .story-heading p{font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:1.6}
+body[data-view=journals] #journals .minimal-product h3{font-family:Arial,Helvetica,sans-serif;font-size:14px;font-weight:400;line-height:1.4;letter-spacing:0}
+body[data-view=journals] #journals .minimal-product p{font-family:Arial,Helvetica,sans-serif;font-size:13px;font-weight:400;line-height:1.5;letter-spacing:0}
+body[data-view=care] #care .faq-list summary{font-family:Arial,Helvetica,sans-serif;font-size:16px;font-weight:400;letter-spacing:0;line-height:1.6}
+body[data-view=care] #care .faq-list p{font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:1.8;letter-spacing:0}
+@media(max-width:700px){body[data-view=journals] #journals .story-heading h1,body[data-view=care] #care .story-heading h1{font-size:37px}}
+
+body[data-view=care] #care .story-heading h1{white-space:nowrap}
