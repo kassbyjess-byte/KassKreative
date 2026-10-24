@@ -464,6 +464,14 @@
         .btn-danger { background: none; border: 1px solid var(--red); color: var(--red); }
         .btn-danger:hover { background: var(--red-light); }
         #prefillNotice { background: var(--orange-light); border-left: 4px solid var(--orange); }
+        .bulk-bar { display: none; align-items: center; gap: 0.75rem; flex-wrap: wrap; background: var(--chocolate); color: #fff; padding: 0.75rem 1rem; border-radius: 8px; margin-bottom: 1rem; }
+        .bulk-bar.show { display: flex; }
+        .bulk-bar .form-select, .bulk-bar .form-input { width: auto; min-width: 150px; padding: 0.45rem 0.6rem; font-size: 0.85rem; }
+        .bulk-bar .btn { padding: 0.45rem 1rem; font-size: 0.8rem; }
+        .bulk-bar .btn-link { background: none; border: none; color: #fff; text-decoration: underline; cursor: pointer; font-size: 0.8rem; }
+        .select-cell { width: 2.2rem; text-align: center; }
+        .select-cell input { width: 1.05rem; height: 1.05rem; cursor: pointer; accent-color: var(--cognac); }
+        tr.is-selected { background-color: #fbf3ea; }
         .status-market { background-color: #fde7ef; color: #9d2f55; }
         .cell-line { white-space: nowrap; line-height: 1.5; }
         .cell-line + .cell-line { border-top: 1px dashed var(--border); margin-top: 0.25rem; padding-top: 0.25rem; }
@@ -997,10 +1005,20 @@
                         <button class="filter-btn" onclick="filterOrders('market', this)">Market</button>
                     </div>
 
+                    <div id="ordersBulkBar" class="bulk-bar">
+                        <strong id="ordersBulkCount">0 selected</strong>
+                        <span>Change status to</span>
+                        <select id="ordersBulkStatus" class="form-select"><option value="paid">Paid</option><option value="in_production">In Production</option><option value="shipped">Shipped</option><option value="delivered">Delivered</option><option value="local_pickup">Local Pickup</option><option value="market">Market</option></select>
+                        <input id="ordersBulkNote" class="form-input" placeholder="Note (optional)" maxlength="200">
+                        <button type="button" class="btn btn-primary" onclick="applyBulkOrderStatus()">Apply</button>
+                        <button type="button" class="btn-link" onclick="clearOrderSelection()">Clear selection</button>
+                    </div>
+
                     <div class="table-container">
                         <table id="ordersTable">
                             <thead>
                                 <tr>
+                                    <th class="select-cell"><input type="checkbox" id="ordersSelectAll" title="Select all shown" onclick="toggleAllOrders(this)"></th>
                                     <th>Date</th>
                                     <th>Customer</th>
                                     <th>Size</th>
@@ -1015,7 +1033,7 @@
                             </thead>
                             <tbody id="ordersTableBody">
                                 <tr>
-                                    <td colspan="10" class="loading">Loading orders...</td>
+                                    <td colspan="11" class="loading">Loading orders...</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -1379,10 +1397,17 @@
                         <button class="filter-btn" onclick="filterRequests('converted', this)">Converted</button>
                         <button class="filter-btn" onclick="filterRequests('declined', this)">Declined</button>
                     </div>
+                    <div id="requestsBulkBar" class="bulk-bar">
+                        <strong id="requestsBulkCount">0 selected</strong>
+                        <span>Change status to</span>
+                        <select id="requestsBulkStatus" class="form-select"><option value="new">New</option><option value="contacted">Contacted</option><option value="payment_sent">Payment sent</option><option value="converted">Converted (paid)</option><option value="declined">Declined</option></select>
+                        <button type="button" class="btn btn-primary" onclick="applyBulkRequestStatus()">Apply</button>
+                        <button type="button" class="btn-link" onclick="clearRequestSelection()">Clear selection</button>
+                    </div>
                     <div class="table-container">
                         <table>
-                            <thead><tr><th>Date</th><th>Reference</th><th>Customer</th><th>Design</th><th>Estimate</th><th>Status</th></tr></thead>
-                            <tbody id="requestsTableBody"><tr><td colspan="6" class="loading">Loading requests...</td></tr></tbody>
+                            <thead><tr><th class="select-cell"><input type="checkbox" id="requestsSelectAll" title="Select all shown" onclick="toggleAllRequests(this)"></th><th>Date</th><th>Reference</th><th>Customer</th><th>Design</th><th>Estimate</th><th>Status</th></tr></thead>
+                            <tbody id="requestsTableBody"><tr><td colspan="7" class="loading">Loading requests...</td></tr></tbody>
                         </table>
                     </div>
                 </div>
@@ -1657,7 +1682,7 @@
                 const data = await response.json();
 
                 if (data.error) {
-                    document.getElementById('ordersTableBody').innerHTML = `<tr><td colspan="10" style="text-align:center; padding:2rem; color:var(--red);">API Error: ${data.error}${data.detail ? ' — ' + data.detail : ''}${data.message ? ' — ' + data.message : ''}</td></tr>`;
+                    document.getElementById('ordersTableBody').innerHTML = `<tr><td colspan="11" style="text-align:center; padding:2rem; color:var(--red);">API Error: ${data.error}${data.detail ? ' — ' + data.detail : ''}${data.message ? ' — ' + data.message : ''}</td></tr>`;
                     return;
                 }
 
@@ -1690,7 +1715,7 @@
                 updateStats();
             } catch (err) {
                 console.error('Error loading orders:', err);
-                document.getElementById('ordersTableBody').innerHTML = '<tr><td colspan="10" style="text-align:center; padding:2rem; color:var(--red);">Failed to load orders. Check your connection.</td></tr>';
+                document.getElementById('ordersTableBody').innerHTML = '<tr><td colspan="11" style="text-align:center; padding:2rem; color:var(--red);">Failed to load orders. Check your connection.</td></tr>';
             }
         }
 
@@ -1699,7 +1724,7 @@
             const filtered = currentFilter === 'all' ? allOrders : allOrders.filter(o => o.status === currentFilter);
 
             if (filtered.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="10" style="text-align:center; padding: 2rem;">No orders found</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="11" style="text-align:center; padding: 2rem;">No orders found</td></tr>';
                 return;
             }
 
@@ -1721,7 +1746,8 @@
                 if (counts.charms) parts.push(plural(counts.charms, 'charm'));
                 if (counts.addons) parts.push(plural(counts.addons, 'add-on'));
                 return `
-                <tr onclick="viewOrder('${order.id}')">
+                <tr onclick="viewOrder('${order.id}')" class="${selectedOrderIds.has(order.id) ? 'is-selected' : ''}">
+                    <td class="select-cell" onclick="event.stopPropagation()"><input type="checkbox" ${selectedOrderIds.has(order.id) ? 'checked' : ''} onchange="toggleOrderSelect('${order.id}', this.checked)" aria-label="Select order"></td>
                     <td>${date}</td>
                     <td>${esc(order.customer_name)}${manualBadge}<br><small style="color:var(--text-light);">${esc(order.customer_email || (order.is_manual ? '(manual order)' : ''))}</small></td>
                     <td>${col('size')}</td>
@@ -1734,6 +1760,7 @@
                     <td><span class="status-badge status-${order.status}">${statusLabel}</span></td>
                 </tr>`;
             }).join('');
+            updateOrdersBulkBar();
         }
 
         function updateStats() {
@@ -3073,6 +3100,130 @@
             showToast.timer = setTimeout(() => toast.classList.remove('show'), 2600);
         }
 
+        // ============ CHANGE SEVERAL STATUSES AT ONCE ============
+        const selectedOrderIds = new Set();
+        const selectedRequestRefs = new Set();
+
+        function visibleOrders() {
+            return currentFilter === 'all' ? allOrders : allOrders.filter(o => o.status === currentFilter);
+        }
+
+        function toggleOrderSelect(id, on) {
+            if (on) selectedOrderIds.add(id); else selectedOrderIds.delete(id);
+            renderOrders();
+        }
+
+        function toggleAllOrders(box) {
+            visibleOrders().forEach(o => box.checked ? selectedOrderIds.add(o.id) : selectedOrderIds.delete(o.id));
+            renderOrders();
+        }
+
+        function clearOrderSelection() {
+            selectedOrderIds.clear();
+            renderOrders();
+        }
+
+        function updateOrdersBulkBar() {
+            for (const id of [...selectedOrderIds]) if (!allOrders.some(o => o.id === id)) selectedOrderIds.delete(id);
+            const n = selectedOrderIds.size;
+            const bar = document.getElementById('ordersBulkBar');
+            if (!bar) return;
+            bar.classList.toggle('show', n > 0);
+            document.getElementById('ordersBulkCount').textContent = `${n} order${n === 1 ? '' : 's'} selected`;
+            const all = document.getElementById('ordersSelectAll');
+            const shown = visibleOrders();
+            if (all) all.checked = shown.length > 0 && shown.every(o => selectedOrderIds.has(o.id));
+        }
+
+        async function applyBulkOrderStatus() {
+            const ids = [...selectedOrderIds];
+            const status = document.getElementById('ordersBulkStatus').value;
+            const label = document.getElementById('ordersBulkStatus').selectedOptions[0].textContent;
+            if (!ids.length || !confirm(`Change ${ids.length} order${ids.length === 1 ? '' : 's'} to ${label}?`)) return;
+            try {
+                const response = await apiFetch('/api/orders/bulk-status', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status, note: document.getElementById('ordersBulkNote').value.trim(),
+                        items: ids.map(id => ({ id, base: (allOrders.find(o => o.id === id) || {}).fulfillment || null })) })
+                });
+                const data = await response.json();
+                if (!data.success) throw new Error(data.error || 'Unknown error');
+                let done = 0;
+                for (const r of data.results) {
+                    if (!r.fulfillment) continue;
+                    done++;
+                    rememberFulfillment(r.id, r.fulfillment);
+                    const row = allOrders.find(o => o.id === r.id);
+                    if (row) { row.fulfillment = r.fulfillment; row.status = r.fulfillment.status; }
+                    if (currentOrder && currentOrder.id === r.id) currentOrder.fulfillment = r.fulfillment;
+                }
+                selectedOrderIds.clear();
+                document.getElementById('ordersBulkNote').value = '';
+                renderOrders();
+                updateStats();
+                showToast(`${done} order${done === 1 ? '' : 's'} changed to ${label}`);
+            } catch (err) {
+                if (err.message !== 'Signed out') alert('Could not update: ' + err.message);
+            }
+        }
+
+        function visibleRequests() {
+            return requestFilter === 'all' ? allRequests : allRequests.filter(r => r.status === requestFilter);
+        }
+
+        function toggleRequestSelect(ref, on) {
+            if (on) selectedRequestRefs.add(ref); else selectedRequestRefs.delete(ref);
+            renderRequests();
+        }
+
+        function toggleAllRequests(box) {
+            visibleRequests().forEach(r => box.checked ? selectedRequestRefs.add(r.reference) : selectedRequestRefs.delete(r.reference));
+            renderRequests();
+        }
+
+        function clearRequestSelection() {
+            selectedRequestRefs.clear();
+            renderRequests();
+        }
+
+        function updateRequestsBulkBar() {
+            for (const ref of [...selectedRequestRefs]) if (!allRequests.some(r => r.reference === ref)) selectedRequestRefs.delete(ref);
+            const n = selectedRequestRefs.size;
+            const bar = document.getElementById('requestsBulkBar');
+            if (!bar) return;
+            bar.classList.toggle('show', n > 0);
+            document.getElementById('requestsBulkCount').textContent = `${n} request${n === 1 ? '' : 's'} selected`;
+            const all = document.getElementById('requestsSelectAll');
+            const shown = visibleRequests();
+            if (all) all.checked = shown.length > 0 && shown.every(r => selectedRequestRefs.has(r.reference));
+        }
+
+        async function applyBulkRequestStatus() {
+            const refs = [...selectedRequestRefs];
+            const status = document.getElementById('requestsBulkStatus').value;
+            const label = document.getElementById('requestsBulkStatus').selectedOptions[0].textContent;
+            if (!refs.length || !confirm(`Change ${refs.length} request${refs.length === 1 ? '' : 's'} to ${label}?`)) return;
+            try {
+                const response = await apiFetch('/api/requests/bulk-status', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ refs, status })
+                });
+                const data = await response.json();
+                if (!data.success) throw new Error(data.error || 'Unknown error');
+                let done = 0;
+                for (const r of data.results) {
+                    if (r.error) continue;
+                    done++;
+                    const row = allRequests.find(x => x.reference === r.reference);
+                    if (row) row.status = r.status;
+                }
+                selectedRequestRefs.clear();
+                renderRequests();
+                showToast(`${done} request${done === 1 ? '' : 's'} changed to ${label}`);
+            } catch (err) {
+                if (err.message !== 'Signed out') alert('Could not update: ' + err.message);
+            }
+        }
+
         // ============ WEBSITE REQUESTS & NEWSLETTER ============
         const GA_CONVERSION_EVENT = 'send_request';
         const REQUEST_STATUS_LABELS = { new: 'New', contacted: 'Contacted', payment_sent: 'Payment sent', converted: 'Converted', declined: 'Declined' };
@@ -3126,7 +3277,7 @@
                 allRequests = data.requests || [];
                 renderRequests();
             } catch (err) {
-                if (err.message !== 'Signed out') tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:2rem; color:var(--red);">Could not load requests: ${esc(err.message)}</td></tr>`;
+                if (err.message !== 'Signed out') tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:2rem; color:var(--red);">Could not load requests: ${esc(err.message)}</td></tr>`;
             }
         }
 
@@ -3141,11 +3292,13 @@
             const list = requestFilter === 'all' ? allRequests : allRequests.filter(r => r.status === requestFilter);
             const tbody = document.getElementById('requestsTableBody');
             if (!list.length) {
-                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:2rem;">No requests yet</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:2rem;">No requests yet</td></tr>';
+                updateRequestsBulkBar();
                 return;
             }
             tbody.innerHTML = list.map(r => `
-                <tr onclick="viewRequest('${esc(r.reference)}')">
+                <tr onclick="viewRequest('${esc(r.reference)}')" class="${selectedRequestRefs.has(r.reference) ? 'is-selected' : ''}">
+                    <td class="select-cell" onclick="event.stopPropagation()"><input type="checkbox" ${selectedRequestRefs.has(r.reference) ? 'checked' : ''} onchange="toggleRequestSelect('${esc(r.reference)}', this.checked)" aria-label="Select request"></td>
                     <td>${new Date(r.createdAt).toLocaleDateString()}</td>
                     <td>${esc(r.reference)}${r.photo ? ' <small title="Inspiration photo">📎</small>' : ''}</td>
                     <td>${esc(r.name)}<br><small style="color:var(--text-light);">${esc(r.email)}</small></td>
@@ -3153,6 +3306,7 @@
                     <td>${r.total == null ? 'To confirm' : '$' + Number(r.total).toFixed(2)}</td>
                     <td><span class="status-badge status-${esc(r.status)}">${esc(REQUEST_STATUS_LABELS[r.status] || r.status)}</span></td>
                 </tr>`).join('');
+            updateRequestsBulkBar();
         }
 
         function filterRequests(status, el) {
@@ -3203,7 +3357,7 @@
             const charms = (d.charms || []).length ? d.charms.map(c => `${c.id} · ${c.name} × ${c.quantity} · $${c.price * c.quantity}`).join('\n') : (d.charmInterested ? 'Interested; selection to be confirmed' : 'None');
             html += `<div class="req-section"><h3>Charms & Price</h3><div class="detail-grid">${reqCard('Charms', charms)}${reqCard('Journal estimate', e.needsReview ? 'To confirm after reviewing their vision' : '$' + e.journal)}${reqCard('Charm subtotal', '$' + e.charms)}${reqCard('Estimate before shipping', e.needsReview ? 'To confirm' : '$' + e.total + ' CAD')}</div></div>`;
             const emailNote = { sent: 'Emailed to the studio', failed: 'Email failed — check Resend settings', not_configured: 'Email not set up yet (saved here only)', pending: 'Email pending' }[r.notification] || '—';
-            html += `<div class="req-section"><h3>Other</h3><div class="detail-grid">${reqCard('Notification', emailNote)}${reqCard('Country (from connection)', r.source?.country || '—')}</div></div>`;
+            html += `<div class="req-section"><h3>Other</h3><div class="detail-grid">${reqCard('Notification', emailNote)}${reqCard('Customer confirmation', { sent: 'Emailed to the customer', failed: 'Confirmation email failed', skipped: 'Not sent (daily limit for this address)', not_configured: 'Email not set up' }[r.confirmation] || 'Not sent (older request)')}${reqCard('Country (from connection)', r.source?.country || '—')}</div></div>`;
             if (r.photo) html += `<div class="req-section"><h3>Inspiration Photo</h3><img id="reqPhoto" class="req-photo" alt="Customer inspiration photo"><p><a href="#" onclick="downloadRequestPhoto(); return false;">Download photo</a></p></div>`;
             document.getElementById('reqDetailBody').innerHTML = html;
             if (r.photo) loadRequestPhoto(r.reference);
