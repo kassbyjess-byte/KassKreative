@@ -901,7 +901,26 @@
             .ga-chart-grid, .ga-table-grid { grid-template-columns: 1fr; }
             .ga-kpi-grid { grid-template-columns: repeat(2, 1fr); }
         }
-            /* LEATHER STOCK */
+            /* REVIEWS */
+        .status-review-pending { background-color: var(--orange-light); color: var(--orange); }
+        .status-review-published { background-color: var(--green-light); color: var(--green); }
+        .status-review-hidden { background-color: #efefef; color: #6b6b6b; }
+        .rv-publish { display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; background: var(--card); border-radius: 8px; padding: 1rem 1.25rem; box-shadow: var(--shadow); margin-bottom: 1rem; font-size: 0.9rem; }
+        .rv-publish-status { font-size: 0.82rem; color: var(--text-medium); margin-top: 0.2rem; }
+        .rv-warn { color: var(--orange); }
+        .rv-muted { color: var(--text-light); }
+        .rv-setting { display: flex; gap: 0.6rem; align-items: flex-start; font-size: 0.88rem; color: var(--text-medium); margin: 0 0 1.25rem; cursor: pointer; }
+        .rv-setting input { margin-top: 0.25rem; }
+        .rv-stars-cell { color: #b4893f; white-space: nowrap; letter-spacing: 1px; }
+        .rv-excerpt { max-width: 380px; font-size: 0.85rem; color: var(--text-medium); }
+        .rv-review-text { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 1rem 1.25rem; white-space: pre-line; line-height: 1.7; }
+        .rv-hint { display: block; color: var(--text-light); font-size: 0.78rem; margin-top: 0.3rem; }
+        .rv-save-status { font-size: 0.85rem; color: var(--text-medium); margin-top: 0.75rem; min-height: 1.1em; }
+        .rv-save-status.ok { color: var(--green); }
+        .rv-save-status.error { color: var(--red); }
+        .rv-order-info { font-size: 0.9rem; color: var(--text-medium); margin-bottom: 0.25rem; }
+        .rv-order-info a { color: var(--cognac); }
+        /* LEATHER STOCK */
         .stock-summary { position: sticky; top: 0; z-index: 5; background: var(--card); border-radius: 8px; padding: 1rem 1.25rem; box-shadow: var(--shadow); margin-bottom: 1.5rem; font-size: 0.9rem; color: var(--text-medium); }
         .stock-save-status { font-size: 0.82rem; color: var(--text-light); margin-top: 0.3rem; min-height: 1.1em; }
         .stock-save-status:empty { display: none; }
@@ -987,6 +1006,7 @@
                         <li><a class="nav-link active" onclick="showPage('dashboard', this)">Orders</a></li>
                         <li><a class="nav-link" id="navRequests" onclick="showPage('requests', this)">Requests <span id="requestsBadge" class="nav-badge" style="display:none;"></span></a></li>
                         <li><a class="nav-link" id="navNewOrder" onclick="showPage('newOrder', this)">+ New Order</a></li>
+                        <li><a class="nav-link" id="navReviews" onclick="showPage('reviews', this)">Reviews <span id="reviewsBadge" class="nav-badge" style="display:none;"></span></a></li>
                         <li><a class="nav-link" id="navStock" onclick="showPage('stock', this)">Leather Stock</a></li>
                         <li><a class="nav-link" onclick="showPage('newsletter', this)">Newsletter</a></li>
                         <li><a class="nav-link" onclick="showPage('analytics', this); initAnalytics();">Analytics</a></li>
@@ -1478,6 +1498,63 @@
                     </div>
                 </div>
 
+                <!-- REVIEWS PAGE -->
+                <div id="reviewsPage" class="page">
+                    <h2>Reviews</h2>
+                    <p class="page-intro">Only customers with a paid order can leave a review, through a private link. Publish honest reviews, including critical ones; hide only spam, rude content or personal details. Published reviews appear on the Reviews page, the product pages (with star ratings in Google) and the home page.</p>
+                    <div class="rv-publish">
+                        <div><strong>Website</strong><div id="rvPublishStatus" class="rv-publish-status">Checking…</div></div>
+                        <button type="button" class="btn btn-secondary btn-small" id="rvPublishBtn" onclick="republishReviews()">Publish to website</button>
+                    </div>
+                    <label class="rv-setting"><input type="checkbox" id="rvAutoInvite" onchange="saveReviewSettings()"> Email customers a review link automatically when their order is marked <strong>Delivered</strong> or <strong>Local Pickup</strong></label>
+                    <div class="filters" id="reviewFilters">
+                        <button class="filter-btn active" onclick="filterReviews('pending', this)">Waiting (<span id="rvCountPending">0</span>)</button>
+                        <button class="filter-btn" onclick="filterReviews('published', this)">Published (<span id="rvCountPublished">0</span>)</button>
+                        <button class="filter-btn" onclick="filterReviews('hidden', this)">Hidden (<span id="rvCountHidden">0</span>)</button>
+                        <button class="filter-btn" onclick="filterReviews('all', this)">All</button>
+                    </div>
+                    <div class="table-container">
+                        <table>
+                            <thead><tr><th>Date</th><th>Rating</th><th>Customer</th><th>Journal</th><th>Review</th><th>Status</th></tr></thead>
+                            <tbody id="reviewsTableBody"><tr><td colspan="6" class="loading">Loading reviews...</td></tr></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- REVIEW DETAIL PAGE -->
+                <div id="reviewDetailPage" class="page">
+                    <a class="back-link" onclick="showPage('reviews', document.getElementById('navReviews'))">Back to Reviews</a>
+                    <div class="order-header">
+                        <div class="order-title">
+                            <h2 id="rvTitle">Review</h2>
+                            <div class="order-id" id="rvSub"></div>
+                        </div>
+                        <div id="rvStatusBadge" class="status-badge"></div>
+                    </div>
+                    <div id="rvDetailBody"></div>
+                    <div class="form-section">
+                        <h3>Publish</h3>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label" for="rvName">Name shown on the website</label>
+                                <input id="rvName" class="form-input" maxlength="40">
+                                <small class="rv-hint">Change it only if the customer used their full name or something private.</small>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="rvReply">Your reply (optional, shown under the review as “Reply from Jessica”)</label>
+                            <textarea id="rvReply" class="form-input" rows="3" maxlength="1500" placeholder="e.g. Thank you so much! I’m so happy it found a good home ♡"></textarea>
+                        </div>
+                        <div class="req-actions">
+                            <button type="button" class="btn btn-primary" id="rvPublishOne" onclick="setReviewStatus('published')">Publish</button>
+                            <button type="button" class="btn btn-secondary" onclick="saveReviewEdits()">Save changes</button>
+                            <button type="button" class="btn btn-secondary" id="rvHideOne" onclick="setReviewStatus('hidden')">Hide</button>
+                            <button type="button" class="btn btn-danger" onclick="deleteCurrentReview()">Delete</button>
+                        </div>
+                        <p id="rvSaveStatus" class="rv-save-status" aria-live="polite"></p>
+                    </div>
+                </div>
+
                 <!-- LEATHER STOCK PAGE -->
                 <div id="stockPage" class="page">
                     <h2>Leather Stock</h2>
@@ -1580,6 +1657,16 @@
                         <button type="button" class="btn btn-primary" onclick="updateOrderStatus()">Update Status</button>
                     </div>
 
+                    <div class="form-section" id="orderReviewSection">
+                        <h3>Customer Review</h3>
+                        <p id="orderReviewInfo" class="rv-order-info">Loading…</p>
+                        <div class="req-actions">
+                            <button type="button" class="btn btn-secondary btn-small" id="orderReviewSend" onclick="sendOrderReviewRequest()">Email review request</button>
+                            <button type="button" class="btn btn-secondary btn-small" onclick="copyOrderReviewLink()">Copy review link</button>
+                        </div>
+                        <p id="orderReviewStatus" class="rv-save-status" aria-live="polite"></p>
+                    </div>
+
                     <div id="statusTimeline" class="form-section">
                         <h3>Status Timeline</h3>
                         <div class="timeline" id="timeline"></div>
@@ -1679,6 +1766,7 @@
             document.getElementById('loginPage').classList.remove('active');
             document.getElementById('appContainer').style.display = 'block';
             refreshRequestBadge();
+            refreshReviewBadge();
         }
 
         // PAGE NAVIGATION
@@ -1698,6 +1786,7 @@
             if (pageName === 'requests') loadRequests();
             if (pageName === 'newsletter') loadNewsletter();
             if (pageName === 'stock') loadStock();
+            if (pageName === 'reviews') loadReviews();
             if (pageName === 'newOrder') {
                 pendingRequestRef = null;
                 const notice = document.getElementById('prefillNotice');
@@ -2121,6 +2210,7 @@
                 applyCachedFulfillment(order);
                 currentOrder = order;
                 renderOrderDetail(order);
+                loadOrderReview(currentOrderId);
             } catch (err) {
                 console.error('Error loading order:', err);
             }
@@ -2373,6 +2463,7 @@
                     const data = await response.json();
                     applyFulfillment(data.fulfillment);
                     showToast('Status updated');
+                    if (['delivered', 'local_pickup'].includes(status)) setTimeout(() => loadOrderReview(currentOrderId, true), 3000);
                 } else {
                     const err = await response.json();
                     alert('Failed to update: ' + (err.error || 'Unknown error'));
@@ -3573,6 +3664,236 @@
             link.download = `kass-newsletter-${new Date().toISOString().slice(0, 10)}.csv`;
             link.click();
         }
+
+        // REVIEWS
+        const REVIEW_STATUS_LABELS = { pending: 'Waiting', published: 'Published', hidden: 'Hidden' };
+        let allReviews = [], reviewFilter = 'pending', currentReview = null, reviewPhotoUrl = null;
+        const starText = n => '★'.repeat(n) + '☆'.repeat(5 - n);
+        const shortDate = ms => new Date(ms).toLocaleDateString([], { year: 'numeric', month: 'short', day: 'numeric' });
+
+        function describePublish(p) {
+            if (!p) return '';
+            if (!p.ok) return `⚠ ${p.error}`;
+            const warn = (p.warnings || []).length ? ` Note: ${p.warnings.join('; ')}.` : '';
+            return (p.changed ? 'Website updated. It shows on kasskreative.com in about 1–2 minutes.' : 'The website is already up to date.') + warn;
+        }
+
+        async function refreshReviewBadge() {
+            try {
+                const data = await (await apiFetch('/api/reviews')).json();
+                allReviews = data.reviews || [];
+                updateReviewBadge();
+            } catch (e) {}
+        }
+
+        function updateReviewBadge() {
+            const count = allReviews.filter(r => r.status === 'pending').length;
+            const badge = document.getElementById('reviewsBadge');
+            if (!badge) return;
+            badge.textContent = count;
+            badge.style.display = count ? 'inline-block' : 'none';
+        }
+
+        async function loadReviews() {
+            const tbody = document.getElementById('reviewsTableBody');
+            try {
+                const data = await (await apiFetch('/api/reviews')).json();
+                if (data.error) throw new Error(data.error);
+                allReviews = data.reviews || [];
+                document.getElementById('rvAutoInvite').checked = data.settings?.autoInvite !== false;
+                const status = document.getElementById('rvPublishStatus');
+                if (!data.githubReady) status.innerHTML = '<span class="rv-warn">Not connected yet: add the GitHub key (GITHUB_TOKEN) in Cloudflare so approved reviews can go live.</span>';
+                else if (data.lastPublish) status.innerHTML = `${esc(describePublish(data.lastPublish))} <span class="rv-muted">(${esc(new Date(data.lastPublish.at).toLocaleString())})</span>`;
+                else status.textContent = 'Connected. Approved reviews go live when you click Publish on a review.';
+                renderReviews();
+            } catch (err) {
+                if (err.message !== 'Signed out') tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:2rem; color:var(--red);">Could not load reviews: ${esc(err.message)}</td></tr>`;
+            }
+        }
+
+        function renderReviews() {
+            for (const st of ['pending', 'published', 'hidden']) document.getElementById('rvCount' + st[0].toUpperCase() + st.slice(1)).textContent = allReviews.filter(r => r.status === st).length;
+            updateReviewBadge();
+            const list = reviewFilter === 'all' ? allReviews : allReviews.filter(r => r.status === reviewFilter);
+            const tbody = document.getElementById('reviewsTableBody');
+            if (!list.length) {
+                const empty = { pending: 'No reviews waiting for you', published: 'No published reviews yet', hidden: 'No hidden reviews', all: 'No reviews yet' }[reviewFilter];
+                tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:2rem;">${empty}</td></tr>`;
+                return;
+            }
+            tbody.innerHTML = list.map(r => `
+                <tr onclick="viewReview('${esc(r.id)}')">
+                    <td>${shortDate(r.createdAt)}</td>
+                    <td class="rv-stars-cell" title="${r.rating} out of 5">${starText(r.rating)}</td>
+                    <td>${esc(r.name)}</td>
+                    <td>${esc(r.label || '')}${r.leather ? `<br><small style="color:var(--text-light);">${esc(r.leather)}</small>` : ''}</td>
+                    <td class="rv-excerpt">${r.title ? `<strong>${esc(r.title)}</strong><br>` : ''}${esc(r.excerpt || '')}${(r.excerpt || '').length >= 140 ? '…' : ''}${r.photo ? ' <small title="Photo">📷</small>' : ''}</td>
+                    <td><span class="status-badge status-review-${esc(r.status)}">${esc(REVIEW_STATUS_LABELS[r.status] || r.status)}</span></td>
+                </tr>`).join('');
+        }
+
+        function filterReviews(status, el) {
+            reviewFilter = status;
+            document.querySelectorAll('#reviewFilters .filter-btn').forEach(b => b.classList.remove('active'));
+            if (el) el.classList.add('active');
+            renderReviews();
+        }
+
+        async function viewReview(id) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.getElementById('reviewDetailPage').classList.add('active');
+            document.getElementById('rvDetailBody').innerHTML = '<p class="loading">Loading review...</p>';
+            document.getElementById('rvSaveStatus').textContent = '';
+            try {
+                const data = await (await apiFetch(`/api/reviews/${encodeURIComponent(id)}`)).json();
+                if (data.error) throw new Error(data.error);
+                currentReview = data.review;
+                renderReviewDetail();
+            } catch (err) {
+                if (err.message !== 'Signed out') document.getElementById('rvDetailBody').innerHTML = `<p style="color:var(--red);">Could not load review: ${esc(err.message)}</p>`;
+            }
+        }
+
+        function renderReviewDetail() {
+            const r = currentReview, p = r.product || {};
+            document.getElementById('rvTitle').textContent = `${starText(r.rating)}  ${r.title || 'Review'}`;
+            document.getElementById('rvSub').textContent = `${r.id} · received ${new Date(r.createdAt).toLocaleString()}${r.publishedAt ? ' · first published ' + shortDate(r.publishedAt) : ''}`;
+            const badge = document.getElementById('rvStatusBadge');
+            badge.className = `status-badge status-review-${r.status}`;
+            badge.textContent = REVIEW_STATUS_LABELS[r.status] || r.status;
+            document.getElementById('rvName').value = r.name || '';
+            document.getElementById('rvReply').value = r.reply || '';
+            document.getElementById('rvPublishOne').textContent = r.status === 'published' ? 'Update on website' : 'Publish';
+            document.getElementById('rvHideOne').style.display = r.status === 'hidden' ? 'none' : '';
+            let html = `<div class="req-section"><h3>Review</h3><div class="rv-review-text">${esc(r.body)}</div></div>`;
+            if (r.photo) html += `<div class="req-section"><h3>Photo</h3><img id="rvPhoto" class="req-photo" alt="Customer photo"></div>`;
+            html += `<div class="req-section"><h3>Customer</h3><div class="detail-grid">${reqCard('Name shown', r.name)}${reqCard('Location', r.location || '—')}${reqCard('Email (private)', r.email || '—')}`
+                + `<div class="detail-card"><div class="detail-label">Order</div><div class="detail-value"><a href="#" onclick="viewOrder('${esc(r.orderId)}'); return false;">Open order</a></div></div></div></div>`;
+            html += `<div class="req-section"><h3>Journal</h3><div class="detail-grid">${reqCard('Journal', p.label || '—')}${reqCard('Leather', p.leather || '—')}${reqCard('Shown on', p.size ? `Reviews page, ${p.size} and ${p.size} custom pages, home page` : 'Reviews page and home page')}</div></div>`;
+            document.getElementById('rvDetailBody').innerHTML = html;
+            if (r.photo) loadReviewPhoto(r.id);
+        }
+
+        async function loadReviewPhoto(id) {
+            try {
+                const response = await apiFetch(`/api/reviews/${encodeURIComponent(id)}/photo`);
+                if (!response.ok) return;
+                if (reviewPhotoUrl) URL.revokeObjectURL(reviewPhotoUrl);
+                reviewPhotoUrl = URL.createObjectURL(await response.blob());
+                const img = document.getElementById('rvPhoto');
+                if (img) img.src = reviewPhotoUrl;
+            } catch (e) {}
+        }
+
+        async function patchReview(body, busyText) {
+            const status = document.getElementById('rvSaveStatus');
+            status.className = 'rv-save-status';
+            status.textContent = busyText;
+            document.querySelectorAll('#reviewDetailPage .req-actions button').forEach(b => b.disabled = true);
+            try {
+                const response = await apiFetch(`/api/reviews/${encodeURIComponent(currentReview.id)}`, {
+                    method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+                });
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.error || 'Could not save');
+                currentReview = data.review;
+                const i = allReviews.findIndex(x => x.id === currentReview.id);
+                const meta = { id: currentReview.id, status: currentReview.status, rating: currentReview.rating, name: currentReview.name, label: currentReview.product?.label, leather: currentReview.product?.leather, createdAt: currentReview.createdAt, photo: !!currentReview.photo, title: currentReview.title, excerpt: currentReview.body.slice(0, 140) };
+                if (i >= 0) allReviews[i] = meta; else allReviews.unshift(meta);
+                updateReviewBadge();
+                renderReviewDetail();
+                status.textContent = data.publish ? describePublish(data.publish) : 'Saved.';
+                status.className = 'rv-save-status ' + (data.publish && !data.publish.ok ? 'error' : 'ok');
+            } catch (err) {
+                if (err.message !== 'Signed out') { status.textContent = `Not saved: ${err.message}`; status.className = 'rv-save-status error'; }
+            } finally {
+                document.querySelectorAll('#reviewDetailPage .req-actions button').forEach(b => b.disabled = false);
+            }
+        }
+
+        function setReviewStatus(status) {
+            const edits = { name: document.getElementById('rvName').value.trim(), reply: document.getElementById('rvReply').value.trim() };
+            patchReview({ status, ...edits }, status === 'published' ? 'Publishing to the website…' : 'Hiding and updating the website…');
+        }
+
+        function saveReviewEdits() {
+            patchReview({ name: document.getElementById('rvName').value.trim(), reply: document.getElementById('rvReply').value.trim() },
+                currentReview.status === 'published' ? 'Saving and updating the website…' : 'Saving…');
+        }
+
+        async function deleteCurrentReview() {
+            if (!currentReview || !confirm('Delete this review for good? The customer will be able to write a new one with their link.')) return;
+            try {
+                const data = await (await apiFetch(`/api/reviews/${encodeURIComponent(currentReview.id)}`, { method: 'DELETE' })).json();
+                allReviews = allReviews.filter(r => r.id !== currentReview.id);
+                if (data.publish && !data.publish.ok) alert(describePublish(data.publish));
+                showPage('reviews', document.getElementById('navReviews'));
+            } catch (e) {}
+        }
+
+        async function republishReviews() {
+            const btn = document.getElementById('rvPublishBtn'), status = document.getElementById('rvPublishStatus');
+            btn.disabled = true;
+            status.textContent = 'Publishing…';
+            try {
+                const data = await (await apiFetch('/api/reviews/publish', { method: 'POST' })).json();
+                status.textContent = describePublish(data);
+            } catch (err) {
+                if (err.message !== 'Signed out') status.textContent = `Couldn’t publish: ${err.message}`;
+            } finally { btn.disabled = false; }
+        }
+
+        async function saveReviewSettings() {
+            const box = document.getElementById('rvAutoInvite');
+            try {
+                const res = await apiFetch('/api/reviews/settings', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ autoInvite: box.checked }) });
+                if (!res.ok) throw new Error();
+                showToast(box.checked ? 'Review emails will be sent automatically' : 'Automatic review emails turned off');
+            } catch (e) { box.checked = !box.checked; }
+        }
+
+        // Review box on each order
+        async function loadOrderReview(orderId, keepStatus) {
+            const info = document.getElementById('orderReviewInfo');
+            if (!info || !orderId) return;
+            if (!keepStatus) document.getElementById('orderReviewStatus').textContent = '';
+            try {
+                const data = await (await apiFetch(`/api/orders/${encodeURIComponent(orderId)}/review-invite`)).json();
+                if (orderId !== currentOrderId) return;
+                const parts = [];
+                if (data.reviews && data.reviews.length) parts.push('Reviewed: ' + data.reviews.map(r => `<a href="#" onclick="viewReview('${esc(r.id)}'); return false;">${starText(r.rating)} ${esc(r.label)}</a> (${esc(REVIEW_STATUS_LABELS[r.status] || r.status)})`).join(', ') + '.');
+                if (data.invite) parts.push(`Review request emailed ${esc(shortDate(data.invite.sentAt))}${data.invite.count > 1 ? ` (${data.invite.count} times)` : ''}.`);
+                else if (!data.reviews?.length) parts.push(data.autoInvite ? 'No review request yet. One is emailed automatically when you mark this order Delivered or Local Pickup.' : 'No review request yet. Automatic review emails are turned off (Reviews tab).');
+                info.innerHTML = parts.join(' ');
+                document.getElementById('orderReviewSend').textContent = data.invite ? 'Email it again' : 'Email review request';
+            } catch (e) { info.textContent = ''; }
+        }
+
+        async function orderReviewAction(send) {
+            const status = document.getElementById('orderReviewStatus');
+            status.className = 'rv-save-status';
+            status.textContent = send ? 'Sending…' : 'Getting the link…';
+            try {
+                const response = await apiFetch(`/api/orders/${encodeURIComponent(currentOrderId)}/review-invite`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ send }),
+                });
+                const data = await response.json();
+                if (!response.ok && !(data.link && !send)) {
+                    if (data.link) { try { await navigator.clipboard.writeText(data.link); } catch (e) {} }
+                    throw new Error((data.error || 'Something went wrong') + (data.link ? ' The link has been copied instead.' : ''));
+                }
+                if (send) { status.textContent = `Review request emailed to ${data.email}.`; loadOrderReview(currentOrderId, true); }
+                else {
+                    try { await navigator.clipboard.writeText(data.link); status.textContent = 'Link copied. Paste it in a DM or text to the customer.'; }
+                    catch (e) { status.innerHTML = `Copy this link: <input class="form-input" readonly value="${esc(data.link)}" onclick="this.select()">`; }
+                }
+                status.className = 'rv-save-status ok';
+            } catch (err) {
+                if (err.message !== 'Signed out') { status.textContent = err.message; status.className = 'rv-save-status error'; }
+            }
+        }
+        function sendOrderReviewRequest() { orderReviewAction(true); }
+        function copyOrderReviewLink() { orderReviewAction(false); }
 
         // LEATHER STOCK — sold-out leathers can't be chosen on the website
         const STOCK_GROUPS = [
