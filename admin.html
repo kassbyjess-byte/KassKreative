@@ -901,6 +901,31 @@
             .ga-chart-grid, .ga-table-grid { grid-template-columns: 1fr; }
             .ga-kpi-grid { grid-template-columns: repeat(2, 1fr); }
         }
+            /* LEATHER STOCK */
+        .stock-summary { position: sticky; top: 0; z-index: 5; background: var(--card); border-radius: 8px; padding: 1rem 1.25rem; box-shadow: var(--shadow); margin-bottom: 1.5rem; font-size: 0.9rem; color: var(--text-medium); }
+        .stock-save-status { font-size: 0.82rem; color: var(--text-light); margin-top: 0.3rem; min-height: 1.1em; }
+        .stock-save-status:empty { display: none; }
+        .stock-save-status.ok { color: var(--green); }
+        .stock-save-status.error { color: var(--red); }
+        .stock-group { margin-bottom: 1.75rem; }
+        .stock-group h3 { font-family: 'Cormorant Garamond', serif; font-size: 1.35rem; font-weight: 500; color: var(--chocolate); margin-bottom: 0.75rem; }
+        .stock-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 0.75rem; }
+        .stock-item { display: flex; align-items: center; gap: 0.85rem; background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 0.6rem 0.9rem 0.6rem 0.6rem; cursor: pointer; transition: background 0.15s, border-color 0.15s; }
+        .stock-item img { width: 52px; height: 52px; object-fit: cover; border-radius: 6px; flex: none; background: var(--cream); }
+        .stock-name { flex: 1; display: flex; flex-direction: column; font-weight: 500; color: var(--text-dark); }
+        .stock-name small { font-weight: 400; font-size: 0.75rem; color: var(--green); margin-top: 2px; }
+        .stock-item.is-out { background: var(--red-light); border-color: #e3c9c9; }
+        .stock-item.is-out img { filter: grayscale(0.7); opacity: 0.55; }
+        .stock-item.is-out .stock-name small { color: var(--red); }
+        .stock-switch { appearance: none; -webkit-appearance: none; position: relative; flex: none; width: 44px; height: 26px; margin: 0; border-radius: 13px; background: #cfc6bc; cursor: pointer; transition: background 0.15s; }
+        .stock-switch::after { content: ''; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.2); transition: transform 0.15s; }
+        .stock-switch:checked { background: var(--green); }
+        .stock-switch:checked::after { transform: translateX(18px); }
+        .stock-switch:focus-visible { outline: 2px solid var(--cognac); outline-offset: 2px; }
+        @media (max-width: 768px) {
+            .nav-tabs { flex-wrap: wrap; row-gap: 0.4rem; }
+            .stock-grid { grid-template-columns: 1fr; }
+        }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
@@ -962,6 +987,7 @@
                         <li><a class="nav-link active" onclick="showPage('dashboard', this)">Orders</a></li>
                         <li><a class="nav-link" id="navRequests" onclick="showPage('requests', this)">Requests <span id="requestsBadge" class="nav-badge" style="display:none;"></span></a></li>
                         <li><a class="nav-link" id="navNewOrder" onclick="showPage('newOrder', this)">+ New Order</a></li>
+                        <li><a class="nav-link" id="navStock" onclick="showPage('stock', this)">Leather Stock</a></li>
                         <li><a class="nav-link" onclick="showPage('newsletter', this)">Newsletter</a></li>
                         <li><a class="nav-link" onclick="showPage('analytics', this); initAnalytics();">Analytics</a></li>
                     </ul>
@@ -1452,6 +1478,17 @@
                     </div>
                 </div>
 
+                <!-- LEATHER STOCK PAGE -->
+                <div id="stockPage" class="page">
+                    <h2>Leather Stock</h2>
+                    <p class="page-intro">Switch a leather off when you run out. The website marks it “Sold out” and customers can’t choose it, usually within a minute. Switch it back on when you restock. Changes save automatically.</p>
+                    <div class="stock-summary">
+                        <div id="stockSummary">Loading…</div>
+                        <div id="stockSaveStatus" class="stock-save-status" aria-live="polite"></div>
+                    </div>
+                    <div id="stockGroups"></div>
+                </div>
+
                 <!-- NEWSLETTER PAGE -->
                 <div id="newsletterPage" class="page">
                     <h2>Newsletter</h2>
@@ -1660,6 +1697,7 @@
             if (pageName === 'dashboard') { renderOrders(); updateStats(); loadOrders(); }
             if (pageName === 'requests') loadRequests();
             if (pageName === 'newsletter') loadNewsletter();
+            if (pageName === 'stock') loadStock();
             if (pageName === 'newOrder') {
                 pendingRequestRef = null;
                 const notice = document.getElementById('prefillNotice');
@@ -3534,6 +3572,100 @@
             link.href = URL.createObjectURL(blob);
             link.download = `kass-newsletter-${new Date().toISOString().slice(0, 10)}.csv`;
             link.click();
+        }
+
+        // LEATHER STOCK — sold-out leathers can't be chosen on the website
+        const STOCK_GROUPS = [
+            { name: 'Textured', leathers: ['Anthracite', 'Burgundy', 'Emerald', 'Rust', 'Sky', 'Tiffany'] },
+            { name: 'Pull-up', leathers: ['Charcoal', 'Coffee', 'Olive'] },
+            { name: 'Smooth', leathers: ['Aubergine', 'Chocolate', 'Cognac', 'Forest', 'Onyx', 'Scarlett'] },
+        ];
+        const STOCK_PHOTO = { Cognac: 'tan' };
+        const STOCK_CACHE = 'kass_stock_cache';
+        let stockSoldOut = new Set(), stockSaving = false, stockDirty = false;
+
+        async function loadStock() {
+            const summary = document.getElementById('stockSummary');
+            try {
+                const res = await fetch(`${API_BASE}/api/stock`, { cache: 'no-store' });
+                const data = await res.json();
+                if (!res.ok || !Array.isArray(data.soldOut)) throw new Error(data.error || 'Please refresh the page');
+                let list = data.soldOut;
+                // A change saved from this browser in the last minute may not have reached every server yet
+                try {
+                    const cached = JSON.parse(localStorage.getItem(STOCK_CACHE));
+                    if (cached && Array.isArray(cached.soldOut) && cached.updatedAt > (data.updatedAt || 0)) list = cached.soldOut;
+                } catch (e) {}
+                if (!stockSaving && !stockDirty) stockSoldOut = new Set(list);
+                renderStock();
+            } catch (err) {
+                summary.innerHTML = `<span style="color:var(--red);">Could not load leather stock: ${esc(err.message)}</span>`;
+            }
+        }
+
+        function renderStock() {
+            const out = STOCK_GROUPS.flatMap(g => g.leathers).filter(n => stockSoldOut.has(n));
+            document.getElementById('stockSummary').innerHTML = out.length
+                ? `<strong>${out.length} sold out:</strong> ${out.map(esc).join(', ')}`
+                : '<strong>Every leather is in stock.</strong>';
+            document.getElementById('stockGroups').innerHTML = STOCK_GROUPS.map(g => `
+                <section class="stock-group">
+                    <h3>${g.name}</h3>
+                    <div class="stock-grid">
+                        ${g.leathers.map(name => {
+                            const inStock = !stockSoldOut.has(name);
+                            return `<label class="stock-item${inStock ? '' : ' is-out'}">
+                                <img src="assets/leathers/thumbs/${STOCK_PHOTO[name] || name.toLowerCase()}-surface.webp" alt="" loading="lazy">
+                                <span class="stock-name">${name}<small>${inStock ? 'In stock' : 'Sold out'}</small></span>
+                                <input type="checkbox" class="stock-switch" role="switch" data-stock="${name}" ${inStock ? 'checked' : ''} onchange="toggleStock('${name}', this.checked)" aria-label="${name} in stock">
+                            </label>`;
+                        }).join('')}
+                    </div>
+                </section>`).join('');
+        }
+
+        function toggleStock(name, inStock) {
+            if (inStock) stockSoldOut.delete(name); else stockSoldOut.add(name);
+            renderStock();
+            const focus = document.querySelector(`[data-stock="${name}"]`);
+            if (focus) focus.focus();
+            saveStock();
+        }
+
+        // One save at a time; quick taps are combined into the next save.
+        async function saveStock() {
+            stockDirty = true;
+            if (stockSaving) return;
+            stockSaving = true;
+            const status = document.getElementById('stockSaveStatus');
+            let failed = false;
+            try {
+                while (stockDirty) {
+                    stockDirty = false;
+                    status.textContent = 'Saving…';
+                    status.className = 'stock-save-status';
+                    const res = await apiFetch('/api/stock', {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ soldOut: [...stockSoldOut] }),
+                    });
+                    const data = await res.json();
+                    if (!res.ok) throw new Error(data.error || 'Could not save');
+                    try { localStorage.setItem(STOCK_CACHE, JSON.stringify({ soldOut: data.soldOut, updatedAt: data.updatedAt })); } catch (e) {}
+                }
+                status.textContent = `Saved at ${new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}. The website updates within about a minute.`;
+                status.className = 'stock-save-status ok';
+            } catch (err) {
+                failed = true;
+                stockDirty = false;
+                if (err.message !== 'Signed out') {
+                    status.textContent = `Not saved: ${err.message}. Please try again.`;
+                    status.className = 'stock-save-status error';
+                }
+            } finally {
+                stockSaving = false;
+            }
+            if (failed) loadStock(); // show what is really saved
         }
 
         // CHECK AUTH ON LOAD — validate JWT structure
