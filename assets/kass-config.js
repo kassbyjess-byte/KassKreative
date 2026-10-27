@@ -4,8 +4,9 @@
    If kasskreative.com/api/* is ever routed to the Worker, this can be set to ''. */
 window.KASS_API_BASE = 'https://kass-admin.kassbyjess.workers.dev';
 
-/* Leathers listed here still appear on The Leathers page, marked "Currently unavailable",
-   but can't be chosen in Design Your Journal. */
+/* Sold-out leathers are now switched on and off in the admin portal (Leather Stock tab), which
+   updates the website within about a minute. Leathers listed here are ALWAYS treated as sold out,
+   whatever the admin portal says, so leave this empty unless you're retiring a leather for good. */
 window.KASS_UNAVAILABLE_LEATHERS = [];  // e.g. ['Emerald', 'Charcoal']
 
 /* Leathers offered in some sizes only. Any leather not listed is offered in both A5 and A6. */
