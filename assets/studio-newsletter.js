@@ -38,8 +38,34 @@
  });
  const preview = new URLSearchParams(location.search).get('newsletter') === 'preview';
  const recentlyDismissed = Date.now() - Number(storage.get('kass-newsletter-original-letter-dismissed') || 0) < 7 * 24 * 60 * 60 * 1000;
- if (preview || (!storage.get('kass-newsletter-subscribed') && !recentlyDismissed)) {
-  const show = () => { if (!preview && (storage.get('kass-newsletter-subscribed') || Date.now() - Number(storage.get('kass-newsletter-original-letter-dismissed') || 0) < 7 * 24 * 60 * 60 * 1000)) { document.removeEventListener('visibilitychange', show); return; } if (document.visibilityState !== 'visible' || document.querySelector('dialog[open]')) return; dialog.showModal(); document.removeEventListener('visibilitychange', show); };
-  setTimeout(() => { document.addEventListener('visibilitychange', show); show(); }, 1200);
+ // When the pop-up appears is set in assets/kass-config.js (KASS_NEWSLETTER_POPUP).
+ const settings = Object.assign({ delaySeconds: 30, scrollPercent: 60, neverOn: ['design'] }, window.KASS_NEWSLETTER_POPUP || {});
+ const pageName = document.body.dataset.view || location.pathname.replace(/^\/|\.html$/g, '');
+ const blockedHere = settings.neverOn.includes(pageName);
+ const isMuted = () => storage.get('kass-newsletter-subscribed') || Date.now() - Number(storage.get('kass-newsletter-original-letter-dismissed') || 0) < 7 * 24 * 60 * 60 * 1000;
+ if (preview || (!blockedHere && !isMuted())) {
+  let done = false, timer = null;
+  const stop = () => { done = true; clearTimeout(timer); window.removeEventListener('scroll', onScroll); document.removeEventListener('visibilitychange', onVisible); };
+  const show = () => {
+   if (done) return;
+   if (!preview && isMuted()) { stop(); return; }
+   if (document.visibilityState !== 'visible' || document.querySelector('dialog[open]')) return; // try again later
+   const typing = document.activeElement && /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName);
+   if (typing) return;
+   stop();
+   dialog.showModal();
+  };
+  const onScroll = () => {
+   const page = document.documentElement.scrollHeight;
+   if (page <= window.innerHeight * 1.2) return; // short pages rely on the timer
+   if ((window.scrollY + window.innerHeight) / page * 100 >= settings.scrollPercent) show();
+  };
+  const onVisible = () => { if (document.visibilityState === 'visible' && timer === 'fired') show(); };
+  if (preview) { setTimeout(show, 300); }
+  else {
+   timer = setTimeout(() => { timer = 'fired'; show(); if (!done) { const retry = setInterval(() => { if (done) clearInterval(retry); else show(); }, 5000); } }, settings.delaySeconds * 1000);
+   window.addEventListener('scroll', onScroll, { passive: true });
+   document.addEventListener('visibilitychange', onVisible);
+  }
  }
 })();
