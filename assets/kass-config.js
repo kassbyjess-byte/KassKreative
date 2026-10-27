@@ -20,5 +20,5 @@ window.KASS_LEATHER_SIZES = {
 window.KASS_NEWSLETTER_POPUP = {
   delaySeconds: 30,
   scrollPercent: 60,
-  neverOn: ['design'],
+  neverOn: ['design', 'review'],
 };
