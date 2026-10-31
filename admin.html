@@ -910,6 +910,13 @@
         .rv-warn { color: var(--orange); }
         .rv-muted { color: var(--text-light); }
         .rv-campaign { background: var(--card); border-radius: 8px; padding: 1rem 1.25rem; box-shadow: var(--shadow); margin-bottom: 1rem; font-size: 0.9rem; }
+        .rv-preview { display: grid; grid-template-columns: 1.2fr 1fr; gap: 1rem; margin-top: 1rem; }
+        .rv-preview-head { font-size: 0.82rem; color: var(--text-medium); margin: 0 0 0.5rem; }
+        .rv-preview-list .table-container { max-height: 520px; overflow: auto; }
+        .rv-preview-list tr { cursor: pointer; }
+        .rv-preview-list tr.is-selected td { background: var(--cream); }
+        .rv-preview-email iframe { width: 100%; height: 520px; border: 1px solid var(--border); border-radius: 8px; background: #F6F0E3; }
+        @media (max-width: 900px) { .rv-preview { grid-template-columns: 1fr; } }
         .rv-campaign-info { color: var(--text-medium); font-size: 0.85rem; margin: 0.35rem 0 0; }
         .rv-setting { display: flex; gap: 0.6rem; align-items: flex-start; font-size: 0.88rem; color: var(--text-medium); margin: 0 0 1.25rem; cursor: pointer; }
         .rv-setting input { margin-top: 0.25rem; }
@@ -1513,9 +1520,14 @@
                         <p id="rvCampaignInfo" class="rv-campaign-info">Finds everyone who paid online in the last 2 years and hasn’t been asked yet, then emails them in daily batches of up to 80 (your email plan allows 100 a day). Orders from the last 3 weeks are left for the automatic email after delivery. Refunded orders and people you removed from the newsletter are skipped.</p>
                         <div class="req-actions">
                             <button type="button" class="btn btn-secondary btn-small" id="rvCampaignScan" onclick="scanPastCustomers()">Find past customers</button>
+                            <button type="button" class="btn btn-secondary btn-small" id="rvCampaignPreview" onclick="previewCampaign()" disabled>Preview</button>
                             <button type="button" class="btn btn-primary btn-small" id="rvCampaignSend" onclick="sendCampaignBatch()" disabled>Send today’s batch</button>
                         </div>
                         <p id="rvCampaignStatus" class="rv-save-status" aria-live="polite"></p>
+                        <div id="rvCampaignPreviewBox" class="rv-preview" hidden>
+                            <div class="rv-preview-list"><p class="rv-preview-head" id="rvPreviewHead"></p><div class="table-container"><table><thead><tr><th>Greeting</th><th>Name on the payment</th><th>Email</th><th>Orders</th></tr></thead><tbody id="rvPreviewRows"></tbody></table></div></div>
+                            <div class="rv-preview-email"><p class="rv-preview-head" id="rvPreviewSubject"></p><iframe id="rvPreviewFrame" title="Email preview" sandbox=""></iframe></div>
+                        </div>
                     </div>
                     <label class="rv-setting"><input type="checkbox" id="rvAutoInvite" onchange="saveReviewSettings()"> Email customers a review link automatically when their order is marked <strong>Delivered</strong> or <strong>Local Pickup</strong></label>
                     <div class="filters" id="reviewFilters">
@@ -3910,6 +3922,7 @@
             info.textContent = (message ? message + ' ' : '') + (parts.length ? parts.join(' · ') + '.' : 'Click “Find past customers” to start.')
                 + (c.queued && !left ? ' The next batch can go out tomorrow.' : '');
             send.disabled = !c.queued || !left;
+            document.getElementById('rvCampaignPreview').disabled = !c.queued;
             send.textContent = c.queued && left ? `Send today’s batch (${Math.min(left, c.queued)})` : 'Send today’s batch';
         }
 
@@ -3934,6 +3947,25 @@
             } catch (err) {
                 if (err.message !== 'Signed out') { status.textContent = `Stopped: ${err.message}. Click again to continue.`; status.className = 'rv-save-status error'; }
             } finally { btn.disabled = false; }
+        }
+
+        async function previewCampaign(email) {
+            const box = document.getElementById('rvCampaignPreviewBox');
+            try {
+                const data = await (await apiFetch('/api/reviews/campaign/preview' + (email ? '?email=' + encodeURIComponent(email) : ''))).json();
+                const monthYear = ms => new Date(ms).toLocaleDateString([], { month: 'short', year: 'numeric' });
+                document.getElementById('rvPreviewHead').textContent = `${data.room ? 'Next batch' : 'Tomorrow’s batch'}: ${data.people.length} of ${data.total} still to ask. Click a row to see their email.`;
+                document.getElementById('rvPreviewRows').innerHTML = data.people.map(p => `
+                    <tr onclick="previewCampaign('${esc(p.email)}')" class="${data.sample && data.sample.to === p.email ? 'is-selected' : ''}">
+                        <td>${p.greeting ? `Hi ${esc(p.greeting)},` : '<span style="color:var(--orange);">Hi, (no name)</span>'}</td>
+                        <td>${esc(p.name || '—')}</td><td>${esc(p.email)}</td><td>${p.orders.map(monthYear).join(', ')}</td>
+                    </tr>`).join('');
+                if (data.sample) {
+                    document.getElementById('rvPreviewSubject').innerHTML = `To: <strong>${esc(data.sample.to)}</strong><br>Subject: <strong>${esc(data.sample.subject)}</strong>`;
+                    document.getElementById('rvPreviewFrame').srcdoc = data.sample.html;
+                }
+                box.hidden = false;
+            } catch (e) {}
         }
 
         async function sendCampaignBatch() {
