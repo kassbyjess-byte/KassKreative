@@ -909,6 +909,8 @@
         .rv-publish-status { font-size: 0.82rem; color: var(--text-medium); margin-top: 0.2rem; }
         .rv-warn { color: var(--orange); }
         .rv-muted { color: var(--text-light); }
+        .rv-campaign { background: var(--card); border-radius: 8px; padding: 1rem 1.25rem; box-shadow: var(--shadow); margin-bottom: 1rem; font-size: 0.9rem; }
+        .rv-campaign-info { color: var(--text-medium); font-size: 0.85rem; margin: 0.35rem 0 0; }
         .rv-setting { display: flex; gap: 0.6rem; align-items: flex-start; font-size: 0.88rem; color: var(--text-medium); margin: 0 0 1.25rem; cursor: pointer; }
         .rv-setting input { margin-top: 0.25rem; }
         .rv-stars-cell { color: #b4893f; white-space: nowrap; letter-spacing: 1px; }
@@ -1506,6 +1508,15 @@
                         <div><strong>Website</strong><div id="rvPublishStatus" class="rv-publish-status">Checking…</div></div>
                         <button type="button" class="btn btn-secondary btn-small" id="rvPublishBtn" onclick="republishReviews()">Publish to website</button>
                     </div>
+                    <div class="rv-campaign">
+                        <strong>Ask past customers for a review</strong>
+                        <p id="rvCampaignInfo" class="rv-campaign-info">Finds everyone who paid online in the last 2 years and hasn’t been asked yet, then emails them in daily batches of up to 80 (your email plan allows 100 a day). Orders from the last 3 weeks are left for the automatic email after delivery. Refunded orders and people you removed from the newsletter are skipped.</p>
+                        <div class="req-actions">
+                            <button type="button" class="btn btn-secondary btn-small" id="rvCampaignScan" onclick="scanPastCustomers()">Find past customers</button>
+                            <button type="button" class="btn btn-primary btn-small" id="rvCampaignSend" onclick="sendCampaignBatch()" disabled>Send today’s batch</button>
+                        </div>
+                        <p id="rvCampaignStatus" class="rv-save-status" aria-live="polite"></p>
+                    </div>
                     <label class="rv-setting"><input type="checkbox" id="rvAutoInvite" onchange="saveReviewSettings()"> Email customers a review link automatically when their order is marked <strong>Delivered</strong> or <strong>Local Pickup</strong></label>
                     <div class="filters" id="reviewFilters">
                         <button class="filter-btn active" onclick="filterReviews('pending', this)">Waiting (<span id="rvCountPending">0</span>)</button>
@@ -1789,7 +1800,7 @@
             if (pageName === 'requests') loadRequests();
             if (pageName === 'newsletter') loadNewsletter();
             if (pageName === 'stock') loadStock();
-            if (pageName === 'reviews') loadReviews();
+            if (pageName === 'reviews') { loadReviews(); loadCampaign(); }
             if (pageName === 'newOrder') {
                 pendingRequestRef = null;
                 const notice = document.getElementById('prefillNotice');
@@ -3885,6 +3896,60 @@
                 if (!res.ok) throw new Error();
                 showToast(box.checked ? 'Review emails will be sent automatically' : 'Automatic review emails turned off');
             } catch (e) { box.checked = !box.checked; }
+        }
+
+        // Ask past customers for reviews (daily batches)
+        function showCampaign(c, message) {
+            const info = document.getElementById('rvCampaignStatus'), send = document.getElementById('rvCampaignSend');
+            const left = Math.max(0, c.dailyLimit - c.sentToday);
+            const parts = [];
+            if (c.lastScan) parts.push(`${c.queued} customer${c.queued === 1 ? '' : 's'} still to ask${c.queued ? ` (${c.queuedOrders} orders)` : ''}`);
+            if (c.asked) parts.push(`${c.asked} asked so far`);
+            if (c.sentToday) parts.push(`${c.sentToday} sent today`);
+            info.className = 'rv-save-status';
+            info.textContent = (message ? message + ' ' : '') + (parts.length ? parts.join(' · ') + '.' : 'Click “Find past customers” to start.')
+                + (c.queued && !left ? ' The next batch can go out tomorrow.' : '');
+            send.disabled = !c.queued || !left;
+            send.textContent = c.queued && left ? `Send today’s batch (${Math.min(left, c.queued)})` : 'Send today’s batch';
+        }
+
+        async function loadCampaign() {
+            try { showCampaign(await (await apiFetch('/api/reviews/campaign')).json()); } catch (e) {}
+        }
+
+        async function scanPastCustomers() {
+            const btn = document.getElementById('rvCampaignScan'), status = document.getElementById('rvCampaignStatus');
+            const monthYear = ms => new Date(ms).toLocaleDateString([], { month: 'short', year: 'numeric' });
+            btn.disabled = true;
+            let next = {}, scanned = 0, oldest = null, rounds = 0;
+            try {
+                while (next && rounds++ < 80) {
+                    status.textContent = scanned ? `Checking orders… ${scanned} payments (back to ${monthYear(oldest)})` : 'Checking orders…';
+                    const response = await apiFetch('/api/reviews/campaign/scan', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(next) });
+                    const data = await response.json();
+                    if (!response.ok) throw new Error(data.error || 'Something went wrong');
+                    scanned += data.scanned || 0; if (data.oldest) oldest = data.oldest; next = data.next;
+                }
+                showCampaign(await (await apiFetch('/api/reviews/campaign')).json(), `Checked ${scanned} payments${oldest ? ` back to ${monthYear(oldest)}` : ''}.`);
+            } catch (err) {
+                if (err.message !== 'Signed out') { status.textContent = `Stopped: ${err.message}. Click again to continue.`; status.className = 'rv-save-status error'; }
+            } finally { btn.disabled = false; }
+        }
+
+        async function sendCampaignBatch() {
+            const btn = document.getElementById('rvCampaignSend'), status = document.getElementById('rvCampaignStatus');
+            const count = (btn.textContent.match(/\d+/) || [''])[0];
+            if (!confirm(`Email ${count} past customers asking for a review?\n\nEach gets a private link for their order. Reviews arrive here for you to approve.`)) return;
+            btn.disabled = true; status.className = 'rv-save-status'; status.textContent = 'Sending…';
+            try {
+                const response = await apiFetch('/api/reviews/campaign/send', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.error || 'Something went wrong');
+                showCampaign(data, data.message || `Sent ${data.sent} review request${data.sent === 1 ? '' : 's'}.`);
+                status.className = 'rv-save-status ok';
+            } catch (err) {
+                if (err.message !== 'Signed out') { status.textContent = `Not sent: ${err.message}`; status.className = 'rv-save-status error'; btn.disabled = false; }
+            }
         }
 
         // Review box on each order
