@@ -458,6 +458,8 @@
         .status-declined { background-color: #efefef; color: #6b6b6b; }
         .nav-badge { display: inline-block; min-width: 1.2rem; padding: 0.05rem 0.4rem; margin-left: 0.3rem; border-radius: 999px; background: var(--cognac); color: #fff; font-size: 0.65rem; text-align: center; vertical-align: 1px; }
         .page-intro { color: var(--text-medium); margin: -0.5rem 0 1.5rem; font-size: 0.9rem; }
+        .linked-note { background: var(--green-light); color: #166534; padding: 0.75rem 1rem; border-radius: 8px; margin: 0 0 1.25rem; font-size: 0.9rem; }
+        .linked-note a { color: inherit; font-weight: 600; }
         .req-section { margin-bottom: 1.5rem; }
         .req-section h3 { font-size: 0.8rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-light); margin: 0 0 0.75rem; }
         .req-photo { max-width: 320px; width: 100%; border-radius: 8px; border: 1px solid var(--border); display: block; }
@@ -1438,25 +1440,23 @@
                 <!-- WEBSITE REQUESTS PAGE -->
                 <div id="requestsPage" class="page">
                     <h2>Website Requests</h2>
-                    <p class="page-intro">Design requests sent from kasskreative.com. Confirm availability and the total with the customer, then create their payment link from the request.</p>
+                    <p class="page-intro">Design requests sent from kasskreative.com. Confirm availability and the total with the customer, then create their payment link from the request. Once they pay, the request leaves this list and the order appears in Orders on its own. <span id="reqPaidNote"></span></p>
                     <div class="stats-grid">
                         <div class="stat-card"><div class="stat-label">New</div><div class="stat-value" id="reqCountNew">0</div></div>
                         <div class="stat-card"><div class="stat-label">Contacted</div><div class="stat-value" id="reqCountContacted">0</div></div>
                         <div class="stat-card"><div class="stat-label">Payment Sent</div><div class="stat-value" id="reqCountPayment">0</div></div>
-                        <div class="stat-card"><div class="stat-label">Converted</div><div class="stat-value" id="reqCountConverted">0</div></div>
                     </div>
                     <div class="filters" id="requestFilters">
                         <button class="filter-btn active" onclick="filterRequests('all', this)">All</button>
                         <button class="filter-btn" onclick="filterRequests('new', this)">New</button>
                         <button class="filter-btn" onclick="filterRequests('contacted', this)">Contacted</button>
                         <button class="filter-btn" onclick="filterRequests('payment_sent', this)">Payment Sent</button>
-                        <button class="filter-btn" onclick="filterRequests('converted', this)">Converted</button>
                         <button class="filter-btn" onclick="filterRequests('declined', this)">Declined</button>
                     </div>
                     <div id="requestsBulkBar" class="bulk-bar">
                         <strong id="requestsBulkCount">0 selected</strong>
                         <span>Change status to</span>
-                        <select id="requestsBulkStatus" class="form-select"><option value="new">New</option><option value="contacted">Contacted</option><option value="payment_sent">Payment sent</option><option value="converted">Converted (paid)</option><option value="declined">Declined</option></select>
+                        <select id="requestsBulkStatus" class="form-select"><option value="new">New</option><option value="contacted">Contacted</option><option value="payment_sent">Payment sent</option><option value="converted">Paid (move to Orders)</option><option value="declined">Declined</option></select>
                         <button type="button" class="btn btn-primary" onclick="applyBulkRequestStatus()">Apply</button>
                         <button type="button" class="btn-link" onclick="clearRequestSelection()">Clear selection</button>
                     </div>
@@ -1470,7 +1470,7 @@
 
                 <!-- REQUEST DETAIL PAGE -->
                 <div id="requestDetailPage" class="page">
-                    <a class="back-link" onclick="showPage('requests', document.getElementById('navRequests'))">Back to Requests</a>
+                    <a class="back-link" id="reqBackLink" onclick="requestGoBack()">Back to Requests</a>
                     <div class="order-header">
                         <div class="order-title">
                             <h2 id="reqTitle">Design request</h2>
@@ -1488,7 +1488,7 @@
                                     <option value="new">New</option>
                                     <option value="contacted">Contacted</option>
                                     <option value="payment_sent">Payment sent</option>
-                                    <option value="converted">Converted (paid)</option>
+                                    <option value="converted">Paid (move to Orders)</option>
                                     <option value="declined">Declined</option>
                                 </select>
                             </div>
@@ -1619,6 +1619,7 @@
                         </div>
                         <div id="orderStatusBadge" class="status-badge status-paid">PAID</div>
                     </div>
+                    <div id="orderRequestNote" class="linked-note" style="display:none;"></div>
 
                     <div class="detail-grid">
                         <div class="detail-card">
@@ -2147,6 +2148,7 @@
                             country: document.getElementById('manualCountry').value.trim() || 'CA',
                         },
                         notes: document.getElementById('manualNotes').value.trim(),
+                        request_ref: pendingRequestRef || undefined,
                     };
                     const response = await fetch(`${API_BASE}/api/manual-orders`, {
                         method: 'POST',
@@ -2159,6 +2161,11 @@
                     const data = await response.json();
                     if (data.id) {
                         document.getElementById('manualOrderResult').style.display = 'block';
+                        if (pendingRequestRef) {
+                            allRequests = allRequests.filter(r => r.reference !== pendingRequestRef);
+                            updateRequestBadge();
+                            pendingRequestRef = null;
+                        }
                         // Reload orders so new manual order shows in dashboard
                         loadOrders();
                         // Reset form
@@ -2180,7 +2187,7 @@
                             'Authorization': `Bearer ${token}`,
                             'Content-Type': 'application/json'
                         },
-                        body: JSON.stringify({ journals, shipping, duties })
+                        body: JSON.stringify({ journals, shipping, duties, request_ref: pendingRequestRef || undefined })
                     });
                     const data = await response.json();
 
@@ -2256,6 +2263,15 @@
                 const statusBadge = document.getElementById('orderStatusBadge');
                 statusBadge.className = `status-badge status-${status}`;
                 statusBadge.textContent = status.replace(/_/g, ' ').toUpperCase();
+
+                // The website design request this order came from
+                const reqNote = document.getElementById('orderRequestNote');
+                if (order.request && order.request.reference) {
+                    reqNote.innerHTML = `From website design request <strong>${esc(order.request.reference)}</strong>${order.request.photo ? ' (with inspiration photo)' : ''}. <a href="#" onclick="viewRequest('${esc(order.request.reference)}', '${esc(order.id)}'); return false;">View the request</a>`;
+                    reqNote.style.display = 'block';
+                } else {
+                    reqNote.style.display = 'none';
+                }
 
                 // Customer details
                 document.getElementById('customerName').textContent = order.customer_name || '\u2014';
@@ -3382,7 +3398,21 @@
 
         // ============ WEBSITE REQUESTS & NEWSLETTER ============
         const GA_CONVERSION_EVENT = 'send_request';
-        const REQUEST_STATUS_LABELS = { new: 'New', contacted: 'Contacted', payment_sent: 'Payment sent', converted: 'Converted', declined: 'Declined' };
+        const REQUEST_STATUS_LABELS = { new: 'New', contacted: 'Contacted', payment_sent: 'Payment sent', converted: 'Paid', declined: 'Declined' };
+        let requestFromOrder = null; // set when a request is opened from an order
+
+        function requestGoBack() {
+            if (requestFromOrder) { const id = requestFromOrder; requestFromOrder = null; viewOrder(id); }
+            else showPage('requests', document.getElementById('navRequests'));
+        }
+
+        // Paid requests aren't listed; drop them from the list we already have
+        function dropPaidRequests() {
+            const before = allRequests.length;
+            allRequests = allRequests.filter(r => r.status !== 'converted');
+            requestsPaidCount += before - allRequests.length;
+        }
+        let requestsPaidCount = 0;
         const CUSTOM_TITLES = { embroidery: 'Embroidered initial', lace: 'Laced spine', stipple: 'Hand-stippled initial', grommet: 'Grommet design', wavy: 'The wave journal', other: 'Tell me your vision' };
         const CUSTOM_FIELD_LABELS = { 'embroidery-initial': 'Initial', 'embroidery-placement': 'Placement', 'embroidery-colour': 'Stitch colour', 'lace-material': 'Material', 'lace-colour': 'Colour', 'stipple-initial': 'Initial', 'stipple-placement': 'Placement', 'other-notes': 'Idea' };
         let allRequests = [];
@@ -3412,6 +3442,7 @@
                 const response = await apiFetch('/api/requests');
                 const data = await response.json();
                 allRequests = data.requests || [];
+                requestsPaidCount = data.paid || 0;
                 updateRequestBadge();
             } catch (e) {}
         }
@@ -3431,6 +3462,8 @@
                 const data = await response.json();
                 if (data.error) throw new Error(data.error);
                 allRequests = data.requests || [];
+                requestsPaidCount = data.paid || 0;
+                if (data.movedNow) showToast(`${data.movedNow} paid request${data.movedNow === 1 ? '' : 's'} moved to Orders`);
                 renderRequests();
             } catch (err) {
                 if (err.message !== 'Signed out') tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:2rem; color:var(--red);">Could not load requests: ${esc(err.message)}</td></tr>`;
@@ -3438,12 +3471,13 @@
         }
 
         function renderRequests() {
-            const counts = { new: 0, contacted: 0, payment_sent: 0, converted: 0 };
+            dropPaidRequests();
+            const counts = { new: 0, contacted: 0, payment_sent: 0 };
             allRequests.forEach(r => { if (r.status in counts) counts[r.status]++; });
             document.getElementById('reqCountNew').textContent = counts.new;
             document.getElementById('reqCountContacted').textContent = counts.contacted;
             document.getElementById('reqCountPayment').textContent = counts.payment_sent;
-            document.getElementById('reqCountConverted').textContent = counts.converted;
+            document.getElementById('reqPaidNote').textContent = requestsPaidCount ? `${requestsPaidCount} paid request${requestsPaidCount === 1 ? ' has' : 's have'} moved so far.` : '';
             updateRequestBadge();
             const list = requestFilter === 'all' ? allRequests : allRequests.filter(r => r.status === requestFilter);
             const tbody = document.getElementById('requestsTableBody');
@@ -3476,7 +3510,9 @@
             return `<div class="detail-card"><div class="detail-label">${esc(label)}</div><div class="detail-value" style="white-space:pre-line;">${esc(value || '—')}</div></div>`;
         }
 
-        async function viewRequest(ref) {
+        async function viewRequest(ref, fromOrderId) {
+            requestFromOrder = fromOrderId || null;
+            document.getElementById('reqBackLink').textContent = requestFromOrder ? 'Back to Order' : 'Back to Requests';
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
             document.getElementById('requestDetailPage').classList.add('active');
             document.getElementById('reqDetailBody').innerHTML = '<p class="loading">Loading request...</p>';
@@ -3504,7 +3540,10 @@
             document.getElementById('reqReplyLink').href = `mailto:${encodeURIComponent(d.email)}?subject=${encodeURIComponent('Your KASS journal request ' + r.reference)}`;
 
             const address = [a.address1, a.address2, a.city, a.region, a.postal, a.country].filter(Boolean).join('\n');
-            let html = `<div class="req-section"><h3>Customer</h3><div class="detail-grid">${reqCard('Name', d.name)}${reqCard('Email', d.email)}${reqCard('Phone', d.phone || 'Not provided')}${reqCard('Shipping address', address)}</div></div>`;
+            let html = r.status === 'converted' && r.orderId
+                ? `<div class="linked-note">Paid${r.paidAt ? ' on ' + new Date(r.paidAt).toLocaleDateString() : ''}. This request is now an order. <a href="#" onclick="viewOrder('${esc(r.orderId)}'); return false;">Open the order</a></div>`
+                : '';
+            html += `<div class="req-section"><h3>Customer</h3><div class="detail-grid">${reqCard('Name', d.name)}${reqCard('Email', d.email)}${reqCard('Phone', d.phone || 'Not provided')}${reqCard('Shipping address', address)}</div></div>`;
             html += `<div class="req-section"><h3>Journal</h3><div class="detail-grid">${reqCard('Size', d.size + (d.custom ? ' custom' : ''))}${reqCard('Leather', d.leather)}${reqCard('Elastic', d.elastic)}${reqCard('Eyelets', d.eyelet)}${reqCard('Embossed initials', d.embossed || 'None')}</div></div>`;
             if (d.customizations && d.customizations.length) {
                 html += `<div class="req-section"><h3>Customizations</h3><div class="detail-grid">` + d.customizations.map(c => reqCard(CUSTOM_TITLES[c.type] || c.type,
@@ -3546,6 +3585,7 @@
             if (data.error) throw new Error(data.error);
             const row = allRequests.find(x => x.reference === ref);
             if (row) row.status = data.request.status;
+            dropPaidRequests();
             updateRequestBadge();
             return data.request;
         }
@@ -3635,7 +3675,7 @@
             updateOrderTotals();
             pendingRequestRef = r.reference;
             const notice = document.getElementById('prefillNotice');
-            notice.innerHTML = `<strong>Prefilled from website request ${esc(r.reference)}</strong> for ${esc(d.name)}. Check the details${r.estimate.needsReview ? ', set the price for their vision' : ''}, add shipping, then create the link. The request will be marked “Payment sent”.`;
+            notice.innerHTML = `<strong>Prefilled from website request ${esc(r.reference)}</strong> for ${esc(d.name)}. Check the details${r.estimate.needsReview ? ', set the price for their vision' : ''}, add shipping, then create the link. The request will be marked “Payment sent” and moves to Orders once they pay.`;
             notice.style.display = 'block';
             window.scrollTo(0, 0);
         }
