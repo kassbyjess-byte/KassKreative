@@ -1318,6 +1318,7 @@
                                         <input type="text" id="paymentLinkDisplay" class="form-input" readonly>
                                         <button type="button" class="btn btn-secondary btn-small copy-btn" onclick="copyPaymentLink()">COPY</button>
                                     </div>
+                                    <p id="paymentLinkReminder" style="display:none; margin:0.75rem 0 0; font-size:0.85rem; color:var(--text-medium);"></p>
                                 </div>
                             </div>
 
@@ -1446,6 +1447,7 @@
                         <div class="stat-card"><div class="stat-label">Contacted</div><div class="stat-value" id="reqCountContacted">0</div></div>
                         <div class="stat-card"><div class="stat-label">Payment Sent</div><div class="stat-value" id="reqCountPayment">0</div></div>
                     </div>
+                    <label class="rv-setting"><input type="checkbox" id="reqReminderToggle" onchange="saveReminderSetting()"> Email the customer one reminder <strong>48 hours</strong> after their payment link, if they haven’t paid <small id="reqReminderHealth" style="color:var(--text-light); margin-left:0.35rem;"></small></label>
                     <div class="filters" id="requestFilters">
                         <button class="filter-btn active" onclick="filterRequests('all', this)">All</button>
                         <button class="filter-btn" onclick="filterRequests('new', this)">New</button>
@@ -2194,6 +2196,11 @@
                     if (data.url) {
                         document.getElementById('paymentLinkDisplay').value = data.url;
                         document.getElementById('paymentLinkResult').style.display = 'block';
+                        const remNote = document.getElementById('paymentLinkReminder');
+                        if (data.reminder && data.reminder.dueAt) {
+                            remNote.textContent = `If they haven’t paid by ${new Date(data.reminder.dueAt).toLocaleString([], { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}, they’ll get one friendly reminder email with this link. You can stop it from the request.`;
+                            remNote.style.display = 'block';
+                        } else remNote.style.display = 'none';
                         if (pendingRequestRef) {
                             markRequestPaymentSent(pendingRequestRef, data.url);
                             pendingRequestRef = null;
@@ -3401,6 +3408,74 @@
         const REQUEST_STATUS_LABELS = { new: 'New', contacted: 'Contacted', payment_sent: 'Payment sent', converted: 'Paid', declined: 'Declined' };
         let requestFromOrder = null; // set when a request is opened from an order
 
+        function renderReminderSetting(rem) {
+            if (!rem) return;
+            document.getElementById('reqReminderToggle').checked = rem.on !== false;
+            const health = document.getElementById('reqReminderHealth');
+            if (!rem.lastRun) { health.textContent = '· Waiting for the hourly check to be switched on in Cloudflare'; health.style.color = 'var(--orange)'; return; }
+            const mins = Math.round((Date.now() - rem.lastRun) / 60000);
+            health.style.color = mins > 120 ? 'var(--orange)' : 'var(--text-light)';
+            health.textContent = mins > 120 ? `· Last check ${Math.round(mins / 60)} hours ago (it should run every hour)` : `· Checked every hour (last ${mins < 1 ? 'just now' : mins + ' min ago'})`;
+        }
+
+        async function saveReminderSetting() {
+            const box = document.getElementById('reqReminderToggle');
+            try {
+                const res = await apiFetch('/api/requests/reminder-settings', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ on: box.checked }) });
+                const data = await res.json();
+                if (data.error) throw new Error(data.error);
+                showToast(data.on ? 'Payment reminders on' : 'Payment reminders off');
+            } catch (err) {
+                box.checked = !box.checked;
+                if (err.message !== 'Signed out') alert('Could not save: ' + err.message);
+            }
+        }
+
+        // ---- payment reminder on a request ----
+        let currentReminder = null, currentReminderLink = '';
+        function reminderBoxHtml(r) {
+            const rem = currentReminder;
+            const when = ms => new Date(ms).toLocaleString([], { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+            const sendNow = `<button type="button" class="btn btn-secondary btn-small" onclick="requestReminder('send')">Email a reminder now</button>`;
+            let text = '', buttons = '';
+            if (r.status === 'converted') return '';
+            if (rem && rem.status === 'scheduled') {
+                text = `A reminder with their payment link will be emailed to ${esc(r.design.email)} on <strong>${when(rem.dueAt)}</strong> if they haven’t paid by then.`;
+                buttons = `<button type="button" class="btn btn-secondary btn-small" onclick="requestReminder('cancel')">Don’t send it</button>`;
+            } else if (rem && rem.status === 'sent') {
+                text = `Reminder emailed ${when(rem.sentAt)}.`;
+            } else if (rem && rem.status === 'skipped') {
+                text = { paid: 'No reminder needed: they paid.', declined: 'No reminder: the request was declined.', reminders_off: 'Not sent: reminders were switched off.' }[rem.reason] || 'Reminder not sent.';
+            } else if (rem && rem.status === 'cancelled') {
+                text = 'Reminder cancelled.';
+                if (currentReminderLink) buttons = sendNow;
+            } else if (rem && rem.status === 'failed') {
+                text = 'The reminder email couldn’t be sent.';
+                if (currentReminderLink) buttons = sendNow;
+            } else if (currentReminderLink) {
+                text = 'No reminder scheduled for this payment link.';
+                buttons = sendNow;
+            } else {
+                text = 'A reminder is scheduled automatically when you create the payment link from this request.';
+            }
+            return `<div class="req-section" id="reqReminderBox"><h3>Payment reminder</h3><p style="margin:0 0 0.5rem;">${text}</p>${buttons ? `<div class="req-actions" style="margin-top:0.5rem;">${buttons}</div>` : ''}</div>`;
+        }
+
+        async function requestReminder(action) {
+            if (!currentRequest) return;
+            if (action === 'send' && !confirm(`Email ${currentRequest.design.email} a reminder with their payment link now?`)) return;
+            try {
+                const res = await apiFetch(`/api/requests/${encodeURIComponent(currentRequest.reference)}/reminder`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action }) });
+                const data = await res.json();
+                if (data.error) throw new Error(data.error);
+                currentReminder = data.reminder;
+                renderRequestDetail();
+                showToast(action === 'send' ? 'Reminder sent' : 'Reminder cancelled');
+            } catch (err) {
+                if (err.message !== 'Signed out') alert(err.message);
+            }
+        }
+
         function requestGoBack() {
             if (requestFromOrder) { const id = requestFromOrder; requestFromOrder = null; viewOrder(id); }
             else showPage('requests', document.getElementById('navRequests'));
@@ -3463,6 +3538,7 @@
                 if (data.error) throw new Error(data.error);
                 allRequests = data.requests || [];
                 requestsPaidCount = data.paid || 0;
+                renderReminderSetting(data.reminders);
                 if (data.movedNow) showToast(`${data.movedNow} paid request${data.movedNow === 1 ? '' : 's'} moved to Orders`);
                 renderRequests();
             } catch (err) {
@@ -3522,6 +3598,8 @@
                 const data = await response.json();
                 if (data.error) throw new Error(data.error);
                 currentRequest = data.request;
+                currentReminder = data.reminder || null;
+                currentReminderLink = data.reminderLink || '';
                 renderRequestDetail();
             } catch (err) {
                 if (err.message !== 'Signed out') document.getElementById('reqDetailBody').innerHTML = `<p style="color:var(--red);">Could not load request: ${esc(err.message)}</p>`;
@@ -3554,6 +3632,7 @@
             const emailNote = { sent: 'Emailed to the studio', failed: 'Email failed — check Resend settings', not_configured: 'Email not set up yet (saved here only)', pending: 'Email pending' }[r.notification] || '—';
             html += `<div class="req-section"><h3>Other</h3><div class="detail-grid">${reqCard('Notification', emailNote)}${reqCard('Customer confirmation', { sent: 'Emailed to the customer', failed: 'Confirmation email failed', skipped: 'Not sent (daily limit for this address)', not_configured: 'Email not set up' }[r.confirmation] || 'Not sent (older request)')}${reqCard('Country (from connection)', r.source?.country || '—')}</div></div>`;
             if (r.photo) html += `<div class="req-section"><h3>Inspiration Photo</h3><img id="reqPhoto" class="req-photo" alt="Customer inspiration photo"><p><a href="#" onclick="downloadRequestPhoto(); return false;">Download photo</a></p></div>`;
+            html = html.replace('<div class="req-section"><h3>Customer</h3>', reminderBoxHtml(r) + '<div class="req-section"><h3>Customer</h3>');
             document.getElementById('reqDetailBody').innerHTML = html;
             if (r.photo) loadRequestPhoto(r.reference);
         }
