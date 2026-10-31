@@ -3655,18 +3655,27 @@
         async function importCustomers() {
             if (!confirm('Add everyone who paid by Stripe or e-transfer in the last 2 years to the newsletter list?\n\nThey stay on the list until 2 years after their last purchase, unless they sign up themselves. People you’ve removed won’t be added back. Make sure every newsletter has an unsubscribe link.')) return;
             const btn = document.getElementById('importCustomersBtn'), status = document.getElementById('newsletterImportStatus');
+            const monthYear = ms => new Date(ms).toLocaleDateString([], { month: 'short', year: 'numeric' });
             btn.disabled = true; status.className = 'rv-save-status'; status.textContent = 'Adding customers…';
+            let next = {}, added = 0, updated = 0, scanned = 0, oldest = null, rounds = 0;
+            const signedUp = new Set(), removed = new Set();
             try {
-                const response = await apiFetch('/api/newsletter/import-customers', { method: 'POST' });
-                const data = await response.json();
-                if (!response.ok) throw new Error(data.error || 'Something went wrong');
-                const extra = [data.updated ? `${data.updated} updated` : '', data.alreadySignedUp ? `${data.alreadySignedUp} already signed up` : '', data.removedBefore ? `${data.removedBefore} removed before, not added` : ''].filter(Boolean).join(', ');
-                status.textContent = `Added ${data.added} customer${data.added === 1 ? '' : 's'}${extra ? ` (${extra})` : ''}.`;
+                while (next && rounds++ < 80) { // 100 payments per round
+                    const response = await apiFetch('/api/newsletter/import-customers', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(next) });
+                    const data = await response.json();
+                    if (!response.ok) throw new Error(data.error || 'Something went wrong');
+                    added += data.added || 0; updated += data.updated || 0; scanned += data.scanned || 0;
+                    if (data.oldest) oldest = data.oldest;
+                    (data.signedUp || []).forEach(e => signedUp.add(e)); (data.removed || []).forEach(e => removed.add(e));
+                    next = data.next;
+                    status.textContent = `Checked ${scanned} payments${oldest ? ` (back to ${monthYear(oldest)})` : ''}… ${added} added so far`;
+                }
+                const extra = [updated ? `${updated} updated` : '', signedUp.size ? `${signedUp.size} already signed up` : '', removed.size ? `${removed.size} removed before, not added` : ''].filter(Boolean).join(', ');
+                status.textContent = `Done. Checked ${scanned} payments${oldest ? ` back to ${monthYear(oldest)}` : ''} and added ${added} customer${added === 1 ? '' : 's'}${extra ? ` (${extra})` : ''}.`;
                 status.className = 'rv-save-status ok';
-                loadNewsletter();
             } catch (err) {
-                if (err.message !== 'Signed out') { status.textContent = `Couldn’t add customers: ${err.message}`; status.className = 'rv-save-status error'; }
-            } finally { btn.disabled = false; }
+                if (err.message !== 'Signed out') { status.textContent = `Stopped: ${err.message}. ${added} added so far; click again to continue.`; status.className = 'rv-save-status error'; }
+            } finally { btn.disabled = false; loadNewsletter(); }
         }
 
         async function removeSubscriber(index) {
