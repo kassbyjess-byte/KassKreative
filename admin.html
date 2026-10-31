@@ -1569,10 +1569,13 @@
                 <!-- NEWSLETTER PAGE -->
                 <div id="newsletterPage" class="page">
                     <h2>Newsletter</h2>
-                    <p class="page-intro">People who signed up for little notes from KASS on the website. Export the list as a CSV to import it into your email tool.</p>
+                    <p class="page-intro">People who signed up for little notes from KASS on the website, plus customers you’ve added from your orders. Customers who didn’t sign up themselves are removed automatically 2 years after their last purchase. Export the list as a CSV to import it into your email tool.</p>
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; gap:1rem; flex-wrap:wrap;">
-                        <strong id="newsletterCount">0 subscribers</strong>
-                        <button type="button" class="btn btn-secondary" onclick="exportNewsletterCsv()">Export CSV</button>
+                        <div><strong id="newsletterCount">0 subscribers</strong><div id="newsletterImportStatus" class="rv-save-status" aria-live="polite"></div></div>
+                        <span style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+                            <button type="button" class="btn btn-secondary" id="importCustomersBtn" onclick="importCustomers()">Add recent customers</button>
+                            <button type="button" class="btn btn-secondary" onclick="exportNewsletterCsv()">Export CSV</button>
+                        </span>
                     </div>
                     <div class="table-container">
                         <table>
@@ -3629,7 +3632,12 @@
 
         function renderNewsletter() {
             const sourceLabels = { footer: 'Footer', 'welcome-popup': 'Pop-up' };
-            document.getElementById('newsletterCount').textContent = `${allSubscribers.length} subscriber${allSubscribers.length === 1 ? '' : 's'}`;
+            const customers = allSubscribers.filter(s => s.consent === 'implied').length;
+            document.getElementById('newsletterCount').textContent = `${allSubscribers.length} subscriber${allSubscribers.length === 1 ? '' : 's'}${customers ? ` (${customers} from orders)` : ''}`;
+            const monthYear = ms => new Date(ms).toLocaleDateString([], { month: 'short', year: 'numeric' });
+            const where = s => s.consent === 'implied'
+                ? `Customer · bought ${esc(monthYear(s.lastPurchaseAt))}<br><small style="color:var(--text-light);">until ${esc(monthYear(s.expiresAt))}</small>`
+                : esc(sourceLabels[s.source] || s.source || 'Website');
             const tbody = document.getElementById('newsletterTableBody');
             if (!allSubscribers.length) {
                 tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:2rem;">No subscribers yet</td></tr>';
@@ -3637,16 +3645,33 @@
             }
             tbody.innerHTML = allSubscribers.map((s, i) => `
                 <tr>
-                    <td>${esc(s.email)}</td>
+                    <td>${esc(s.email)}${s.name ? `<br><small style="color:var(--text-light);">${esc(s.name)}</small>` : ''}</td>
                     <td>${s.createdAt ? new Date(s.createdAt).toLocaleDateString() : '—'}</td>
-                    <td>${esc(sourceLabels[s.source] || s.source || 'Website')}</td>
+                    <td>${where(s)}</td>
                     <td style="text-align:right;"><button type="button" class="btn btn-danger btn-small" onclick="removeSubscriber(${i})">Remove</button></td>
                 </tr>`).join('');
         }
 
+        async function importCustomers() {
+            if (!confirm('Add everyone who paid by Stripe or e-transfer in the last 2 years to the newsletter list?\n\nThey stay on the list until 2 years after their last purchase, unless they sign up themselves. People you’ve removed won’t be added back. Make sure every newsletter has an unsubscribe link.')) return;
+            const btn = document.getElementById('importCustomersBtn'), status = document.getElementById('newsletterImportStatus');
+            btn.disabled = true; status.className = 'rv-save-status'; status.textContent = 'Adding customers…';
+            try {
+                const response = await apiFetch('/api/newsletter/import-customers', { method: 'POST' });
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.error || 'Something went wrong');
+                const extra = [data.updated ? `${data.updated} updated` : '', data.alreadySignedUp ? `${data.alreadySignedUp} already signed up` : '', data.removedBefore ? `${data.removedBefore} removed before, not added` : ''].filter(Boolean).join(', ');
+                status.textContent = `Added ${data.added} customer${data.added === 1 ? '' : 's'}${extra ? ` (${extra})` : ''}.`;
+                status.className = 'rv-save-status ok';
+                loadNewsletter();
+            } catch (err) {
+                if (err.message !== 'Signed out') { status.textContent = `Couldn’t add customers: ${err.message}`; status.className = 'rv-save-status error'; }
+            } finally { btn.disabled = false; }
+        }
+
         async function removeSubscriber(index) {
             const email = allSubscribers[index]?.email;
-            if (!email || !confirm(`Remove ${email} from the newsletter list?`)) return;
+            if (!email || !confirm(`Remove ${email} from the newsletter list? They won’t be added back from future orders.`)) return;
             try {
                 await apiFetch(`/api/newsletter/${encodeURIComponent(email)}`, { method: 'DELETE' });
                 allSubscribers = allSubscribers.filter(s => s.email !== email);
@@ -3656,8 +3681,9 @@
 
         function exportNewsletterCsv() {
             const quote = v => `"${String(v ?? '').replace(/"/g, '""')}"`;
-            const rows = [['email', 'signed_up', 'source', 'country', 'consent']].concat(allSubscribers.map(s =>
-                [s.email, s.createdAt ? new Date(s.createdAt).toISOString() : '', s.source || '', s.country || '', s.consent ? 'yes' : '']));
+            const day = ms => ms ? new Date(ms).toISOString().slice(0, 10) : '';
+            const rows = [['email', 'name', 'added', 'source', 'country', 'consent', 'last_purchase', 'consent_expires']].concat(allSubscribers.map(s =>
+                [s.email, s.name || '', day(s.createdAt), s.source || '', s.country || '', s.consent === 'implied' ? 'implied (customer)' : 'express (signed up)', day(s.lastPurchaseAt), day(s.expiresAt)]));
             const blob = new Blob([rows.map(r => r.map(quote).join(',')).join('\n')], { type: 'text/csv' });
             const link = document.createElement('a');
             link.href = URL.createObjectURL(blob);
