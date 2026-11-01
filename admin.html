@@ -3414,8 +3414,11 @@
             const health = document.getElementById('reqReminderHealth');
             if (!rem.lastRun) { health.textContent = '· Waiting for the hourly check to be switched on in Cloudflare'; health.style.color = 'var(--orange)'; return; }
             const mins = Math.round((Date.now() - rem.lastRun) / 60000);
-            health.style.color = mins > 120 ? 'var(--orange)' : 'var(--text-light)';
-            health.textContent = mins > 120 ? `· Last check ${Math.round(mins / 60)} hours ago (it should run every hour)` : `· Checked every hour (last ${mins < 1 ? 'just now' : mins + ' min ago'})`;
+            const cronOk = rem.lastCron && Date.now() - rem.lastCron < 3 * 3600000;
+            health.style.color = mins > 120 || !cronOk ? 'var(--orange)' : 'var(--text-light)';
+            if (mins > 120) health.textContent = `· Last check ${Math.round(mins / 60)} hours ago (it should run every hour)`;
+            else if (!cronOk) health.textContent = `· Last check ${mins < 1 ? 'just now' : mins + ' min ago'} (backup check; the hourly schedule in Cloudflare isn’t running)`;
+            else health.textContent = `· Checked every hour (last ${mins < 1 ? 'just now' : mins + ' min ago'})`;
         }
 
         async function saveReminderSetting() {
