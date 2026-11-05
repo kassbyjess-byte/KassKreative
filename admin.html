@@ -957,6 +957,40 @@
         .stock-switch:checked { background: var(--green); }
         .stock-switch:checked::after { transform: translateX(18px); }
         .stock-switch:focus-visible { outline: 2px solid var(--cognac); outline-offset: 2px; }
+        .inv-table { background: var(--card); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+        .inv-head, .inv-row { display: grid; grid-template-columns: minmax(180px, 1fr) 92px 92px 70px; align-items: center; gap: 0.75rem; padding: 0.55rem 0.9rem 0.55rem 0.6rem; }
+        .inv-head { background: var(--cream); font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-light); padding-top: 0.5rem; padding-bottom: 0.5rem; }
+        .inv-head span:not(:first-child) { text-align: center; }
+        .inv-row { border-top: 1px solid var(--border); transition: background 0.15s; }
+        .inv-row.is-out { background: var(--red-light); }
+        .inv-row.is-out img { filter: grayscale(0.7); opacity: 0.55; }
+        .inv-row.is-part { background: #fdf6ec; }
+        .inv-leather { display: flex; align-items: center; gap: 0.8rem; min-width: 0; }
+        .inv-leather img { width: 46px; height: 46px; object-fit: cover; border-radius: 6px; flex: none; background: var(--cream); }
+        .inv-leather .stock-name small { color: var(--green); }
+        .inv-row.is-out .stock-name small { color: var(--red); }
+        .inv-row.is-part .stock-name small { color: #a8641c; }
+        .inv-qty { width: 100%; padding: 0.45rem 0.5rem; border: 1px solid var(--border); border-radius: 6px; font: inherit; font-size: 0.95rem; text-align: center; background: #fff; }
+        .inv-qty:focus { outline: 2px solid var(--cognac); outline-offset: 1px; border-color: transparent; }
+        .inv-qty.is-zero { border-color: #e3a9a9; color: var(--red); font-weight: 600; }
+        .inv-qty.is-bad { border-color: var(--red); background: var(--red-light); }
+        .inv-switch { display: flex; justify-content: center; }
+        @media (max-width: 640px) { .inv-head, .inv-row { grid-template-columns: 1fr 64px 64px 52px; gap: 0.5rem; } .inv-leather img { width: 36px; height: 36px; } }
+        .charm-filters { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.75rem; }
+        .charm-filters input, .charm-filters select { padding: 0.45rem 0.6rem; border: 1px solid var(--border); border-radius: 6px; font: inherit; font-size: 0.85rem; background: #fff; }
+        .charm-filters input { flex: 1; min-width: 180px; }
+        .charm-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 0.75rem; }
+        .charm-card { display: flex; flex-direction: column; background: var(--card); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; cursor: pointer; }
+        .charm-photo { position: relative; aspect-ratio: 1; overflow: hidden; background: #faf7f1; }
+        .charm-photo img { position: absolute; max-width: none; object-fit: contain; mix-blend-mode: multiply; }
+        .charm-card-info { display: flex; align-items: center; gap: 0.5rem; padding: 0.55rem 0.7rem; }
+        .charm-card-text { flex: 1; min-width: 0; display: flex; flex-direction: column; font-size: 0.82rem; color: var(--text-dark); }
+        .charm-card-text strong { font-size: 0.75rem; letter-spacing: 0.06em; color: var(--text-light); font-weight: 600; }
+        .charm-card-text small { color: var(--green); font-size: 0.72rem; margin-top: 2px; }
+        .charm-card.is-out { background: var(--red-light); border-color: #e3c9c9; }
+        .charm-card.is-out .charm-photo img { filter: grayscale(0.8); opacity: 0.5; }
+        .charm-card.is-out .charm-card-text small { color: var(--red); }
+        .charm-empty { color: var(--text-light); font-size: 0.9rem; padding: 1rem 0; }
         @media (max-width: 768px) {
             .nav-tabs { flex-wrap: wrap; row-gap: 0.4rem; }
             .stock-grid { grid-template-columns: 1fr; }
@@ -1023,7 +1057,8 @@
                         <li><a class="nav-link" id="navRequests" onclick="showPage('requests', this)">Requests <span id="requestsBadge" class="nav-badge" style="display:none;"></span></a></li>
                         <li><a class="nav-link" id="navNewOrder" onclick="showPage('newOrder', this)">+ New Order</a></li>
                         <li><a class="nav-link" id="navReviews" onclick="showPage('reviews', this)">Reviews <span id="reviewsBadge" class="nav-badge" style="display:none;"></span></a></li>
-                        <li><a class="nav-link" id="navStock" onclick="showPage('stock', this)">Leather Stock</a></li>
+                        <li><a class="nav-link" id="navStock" onclick="showPage('stock', this)">Inventory</a></li>
+                        <li><a class="nav-link" id="navCharms" onclick="showPage('charms', this)">Charms</a></li>
                         <li><a class="nav-link" onclick="showPage('newsletter', this)">Newsletter</a></li>
                         <li><a class="nav-link" onclick="showPage('analytics', this); initAnalytics();">Analytics</a></li>
                     </ul>
@@ -1610,13 +1645,29 @@
 
                 <!-- LEATHER STOCK PAGE -->
                 <div id="stockPage" class="page">
-                    <h2>Leather Stock</h2>
-                    <p class="page-intro">Switch a leather off when you run out. The website marks it “Sold out” and customers can’t choose it, usually within a minute. Switch it back on when you restock. Changes save automatically.</p>
+                    <h2>Inventory</h2>
+                    <p class="page-intro">Type how many journals you can make in each size. Every paid website order takes one off automatically. At <strong>0</strong>, that size shows “Sold out” on the website and customers can’t choose it. Leave a box <strong>blank</strong> if you don’t want to count that size. The switch turns the whole leather off. Changes save automatically and reach the website within about a minute.</p>
                     <div class="stock-summary">
                         <div id="stockSummary">Loading…</div>
                         <div id="stockSaveStatus" class="stock-save-status" aria-live="polite"></div>
                     </div>
                     <div id="stockGroups"></div>
+                </div>
+
+                <!-- CHARMS PAGE -->
+                <div id="charmsPage" class="page">
+                    <h2>Charms</h2>
+                    <p class="page-intro">These are the charms on the website. Switch a charm off when it sells out: the website shows it as “Sold out” and customers can’t add it. Switch it back on when it’s back. Changes save automatically.</p>
+                    <div class="stock-summary">
+                        <div id="charmSummary">Loading…</div>
+                        <div id="charmSaveStatus" class="stock-save-status" aria-live="polite"></div>
+                        <div class="charm-filters">
+                            <input type="search" id="charmSearch" placeholder="Search by code or name" oninput="renderCharms()" aria-label="Search charms">
+                            <select id="charmFinish" onchange="renderCharms()" aria-label="Finish"><option value="">All finishes</option><option>Gold</option><option>Silver</option></select>
+                            <select id="charmShow" onchange="renderCharms()" aria-label="Show"><option value="">All charms</option><option value="out">Sold out only</option><option value="in">In stock only</option></select>
+                        </div>
+                    </div>
+                    <div id="charmGrid" class="charm-grid"></div>
                 </div>
 
                 <!-- NEWSLETTER PAGE -->
@@ -1843,6 +1894,7 @@
             if (pageName === 'requests') { loadRequests(); loadCheckoutSettings(); }
             if (pageName === 'newsletter') loadNewsletter();
             if (pageName === 'stock') loadStock();
+            if (pageName === 'charms') loadCharms();
             if (pageName === 'reviews') { loadReviews(); loadCampaign(); }
             if (pageName === 'newOrder') {
                 pendingRequestRef = null;
@@ -4229,65 +4281,140 @@
         function sendOrderReviewRequest() { orderReviewAction(true); }
         function copyOrderReviewLink() { orderReviewAction(false); }
 
-        // LEATHER STOCK — sold-out leathers can't be chosen on the website
+        // INVENTORY — quantities per size, plus a switch per leather; sold-out leathers/sizes can't be chosen on the website
         const STOCK_GROUPS = [
             { name: 'Textured', leathers: ['Anthracite', 'Burgundy', 'Emerald', 'Rust', 'Sky', 'Tiffany'] },
             { name: 'Pull-up', leathers: ['Charcoal', 'Coffee', 'Olive'] },
             { name: 'Smooth', leathers: ['Aubergine', 'Chocolate', 'Cognac', 'Forest', 'Onyx', 'Scarlett'] },
         ];
+        const STOCK_SIZES = ['A5', 'A6'];
         const STOCK_PHOTO = { Cognac: 'tan' };
         const STOCK_CACHE = 'kass_stock_cache';
-        let stockSoldOut = new Set(), stockSaving = false, stockDirty = false;
+        let stockSoldOut = new Set(), stockQty = {}, stockSaving = false, stockDirty = false, stockSwitchDirty = false;
+        const stockQtyDirty = new Set();
+        let stockLoaded = false;
+
+        function stockCache(data) {
+            try { localStorage.setItem(STOCK_CACHE, JSON.stringify({ soldOut: data.switchedOff, qty: data.qty, updatedAt: data.updatedAt })); } catch (e) {}
+        }
 
         async function loadStock() {
             const summary = document.getElementById('stockSummary');
             try {
-                const res = await fetch(`${API_BASE}/api/stock`, { cache: 'no-store' });
+                const res = await apiFetch('/api/inventory', { cache: 'no-store' });
                 const data = await res.json();
-                if (!res.ok || !Array.isArray(data.soldOut)) throw new Error(data.error || 'Please refresh the page');
-                let list = data.soldOut;
+                if (!res.ok || !data.qty) throw new Error(data.error || 'Please refresh the page');
+                let off = data.switchedOff || [], qty = data.qty;
                 // A change saved from this browser in the last minute may not have reached every server yet
                 try {
                     const cached = JSON.parse(localStorage.getItem(STOCK_CACHE));
-                    if (cached && Array.isArray(cached.soldOut) && cached.updatedAt > (data.updatedAt || 0)) list = cached.soldOut;
+                    if (cached && Array.isArray(cached.soldOut) && cached.updatedAt > (data.updatedAt || 0)) { off = cached.soldOut; if (cached.qty) qty = cached.qty; }
                 } catch (e) {}
-                if (!stockSaving && !stockDirty) stockSoldOut = new Set(list);
+                if (!stockSaving && !stockDirty) {
+                    stockSoldOut = new Set(off);
+                    stockQty = {};
+                    for (const n of STOCK_GROUPS.flatMap(g => g.leathers)) stockQty[n] = { A5: qty[n]?.A5 ?? null, A6: qty[n]?.A6 ?? null };
+                }
+                stockLoaded = true;
                 renderStock();
             } catch (err) {
-                summary.innerHTML = `<span style="color:var(--red);">Could not load leather stock: ${esc(err.message)}</span>`;
+                if (err.message !== 'Signed out') summary.innerHTML = `<span style="color:var(--red);">Could not load inventory: ${esc(err.message)}</span>`;
             }
         }
 
+        // What the website shows for one leather
+        function stockState(name) {
+            if (stockSoldOut.has(name)) return { cls: 'is-out', text: 'Switched off · sold out on the website', gone: STOCK_SIZES };
+            const gone = STOCK_SIZES.filter(sz => stockQty[name]?.[sz] === 0);
+            if (gone.length === STOCK_SIZES.length) return { cls: 'is-out', text: 'Sold out', gone };
+            const low = STOCK_SIZES.filter(sz => stockQty[name]?.[sz] > 0 && stockQty[name][sz] <= 2).map(sz => `${stockQty[name][sz]} ${sz}`);
+            const lowText = low.length ? ` · only ${low.join(', ')} left` : '';
+            if (gone.length) return { cls: 'is-part', text: `Sold out in ${gone.join(' and ')}${lowText}`, gone };
+            return { cls: '', text: `In stock${lowText}`, gone };
+        }
+
+        function renderStockSummary() {
+            const names = STOCK_GROUPS.flatMap(g => g.leathers);
+            const out = names.filter(n => stockState(n).gone.length === STOCK_SIZES.length);
+            const part = names.filter(n => { const g = stockState(n).gone; return g.length && g.length < STOCK_SIZES.length; });
+            const bits = [];
+            if (out.length) bits.push(`<strong>${out.length} sold out:</strong> ${out.map(esc).join(', ')}`);
+            if (part.length) bits.push(`<strong>Sold out in one size:</strong> ${part.map(n => `${esc(n)} (${stockState(n).gone.join(', ')})`).join(', ')}`);
+            document.getElementById('stockSummary').innerHTML = bits.length ? bits.join('<br>') : '<strong>Every leather is in stock.</strong>';
+        }
+
         function renderStock() {
-            const out = STOCK_GROUPS.flatMap(g => g.leathers).filter(n => stockSoldOut.has(n));
-            document.getElementById('stockSummary').innerHTML = out.length
-                ? `<strong>${out.length} sold out:</strong> ${out.map(esc).join(', ')}`
-                : '<strong>Every leather is in stock.</strong>';
+            renderStockSummary();
+            const qtyBox = (name, sz) => {
+                const v = stockQty[name]?.[sz];
+                return `<input type="number" class="inv-qty${v === 0 ? ' is-zero' : ''}" min="0" max="9999" step="1" inputmode="numeric" placeholder="—" value="${v === null || v === undefined ? '' : v}"
+                    data-qty="${name}" data-size="${sz}" aria-label="${name} ${sz} quantity" oninput="stockQtyInput(this)" onchange="stockQtyChange(this)">`;
+            };
             document.getElementById('stockGroups').innerHTML = STOCK_GROUPS.map(g => `
                 <section class="stock-group">
                     <h3>${g.name}</h3>
-                    <div class="stock-grid">
+                    <div class="inv-table">
+                        <div class="inv-head"><span>Leather</span><span>A5</span><span>A6</span><span>On site</span></div>
                         ${g.leathers.map(name => {
-                            const inStock = !stockSoldOut.has(name);
-                            return `<label class="stock-item${inStock ? '' : ' is-out'}">
-                                <img src="assets/leathers/thumbs/${STOCK_PHOTO[name] || name.toLowerCase()}-surface.webp" alt="" loading="lazy">
-                                <span class="stock-name">${name}<small>${inStock ? 'In stock' : 'Sold out'}</small></span>
-                                <input type="checkbox" class="stock-switch" role="switch" data-stock="${name}" ${inStock ? 'checked' : ''} onchange="toggleStock('${name}', this.checked)" aria-label="${name} in stock">
-                            </label>`;
+                            const st = stockState(name), on = !stockSoldOut.has(name);
+                            return `<div class="inv-row ${st.cls}" data-row="${name}">
+                                <div class="inv-leather">
+                                    <img src="assets/leathers/thumbs/${STOCK_PHOTO[name] || name.toLowerCase()}-surface.webp" alt="" loading="lazy">
+                                    <span class="stock-name">${name}<small data-state="${name}">${st.text}</small></span>
+                                </div>
+                                ${STOCK_SIZES.map(sz => qtyBox(name, sz)).join('')}
+                                <div class="inv-switch"><input type="checkbox" class="stock-switch" role="switch" data-stock="${name}" ${on ? 'checked' : ''} onchange="toggleStock('${name}', this.checked)" aria-label="${name} on the website"></div>
+                            </div>`;
                         }).join('')}
                     </div>
                 </section>`).join('');
         }
 
+        // Update one row without redrawing the table (keeps the cursor in the box)
+        function refreshStockRow(name) {
+            const row = document.querySelector(`[data-row="${name}"]`);
+            if (!row) return;
+            const st = stockState(name);
+            row.className = `inv-row ${st.cls}`;
+            row.querySelector(`[data-state="${name}"]`).textContent = st.text;
+            row.querySelectorAll('.inv-qty').forEach(el => el.classList.toggle('is-zero', el.value.trim() === '0'));
+            renderStockSummary();
+        }
+
+        function readQty(el) {
+            const raw = el.value.trim();
+            if (raw === '') return { ok: true, value: null };
+            const v = Number(raw);
+            return Number.isInteger(v) && v >= 0 && v <= 9999 ? { ok: true, value: v } : { ok: false };
+        }
+
+        let stockQtyTimer = null;
+        function stockQtyInput(el) {
+            const r = readQty(el);
+            el.classList.toggle('is-bad', !r.ok);
+            const status = document.getElementById('stockSaveStatus');
+            if (!r.ok) { status.textContent = `${el.dataset.qty} ${el.dataset.size}: please type a whole number (or leave it blank).`; status.className = 'stock-save-status error'; return; }
+            stockQty[el.dataset.qty][el.dataset.size] = r.value;
+            stockQtyDirty.add(el.dataset.qty);
+            refreshStockRow(el.dataset.qty);
+            clearTimeout(stockQtyTimer);
+            stockQtyTimer = setTimeout(saveStock, 800);
+        }
+        function stockQtyChange(el) {
+            if (!readQty(el).ok) return;
+            clearTimeout(stockQtyTimer);
+            if (stockQtyDirty.size) saveStock();
+        }
+
         function toggleStock(name, inStock) {
             if (inStock) stockSoldOut.delete(name); else stockSoldOut.add(name);
-            renderStock();
-            const focus = document.querySelector(`[data-stock="${name}"]`);
-            if (focus) focus.focus();
+            stockSwitchDirty = true;
+            refreshStockRow(name);
             saveStock();
         }
 
-        // One save at a time; quick taps are combined into the next save.
+        // One save at a time; quick changes are combined into the next save.
+        // Only what changed is sent, so a paid order counted meanwhile isn't overwritten.
         async function saveStock() {
             stockDirty = true;
             if (stockSaving) return;
@@ -4297,22 +4424,26 @@
             try {
                 while (stockDirty) {
                     stockDirty = false;
+                    const body = {};
+                    if (stockSwitchDirty) { body.soldOut = [...stockSoldOut]; stockSwitchDirty = false; }
+                    if (stockQtyDirty.size) { body.qty = {}; for (const n of stockQtyDirty) body.qty[n] = { ...stockQty[n] }; stockQtyDirty.clear(); }
+                    if (!body.soldOut && !body.qty) continue;
                     status.textContent = 'Saving…';
                     status.className = 'stock-save-status';
                     const res = await apiFetch('/api/stock', {
                         method: 'PUT',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ soldOut: [...stockSoldOut] }),
+                        body: JSON.stringify(body),
                     });
                     const data = await res.json();
                     if (!res.ok) throw new Error(data.error || 'Could not save');
-                    try { localStorage.setItem(STOCK_CACHE, JSON.stringify({ soldOut: data.soldOut, updatedAt: data.updatedAt })); } catch (e) {}
+                    stockCache(data);
                 }
                 status.textContent = `Saved at ${new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}. The website updates within about a minute.`;
                 status.className = 'stock-save-status ok';
             } catch (err) {
                 failed = true;
-                stockDirty = false;
+                stockDirty = false; stockSwitchDirty = false; stockQtyDirty.clear();
                 if (err.message !== 'Signed out') {
                     status.textContent = `Not saved: ${err.message}. Please try again.`;
                     status.className = 'stock-save-status error';
@@ -4321,6 +4452,97 @@
                 stockSaving = false;
             }
             if (failed) loadStock(); // show what is really saved
+        }
+
+        // CHARMS — the website's charm list, with a sold-out switch for each
+        let charmSoldOut = new Set(), charmSaving = false, charmDirty = false;
+        function loadCharmCatalog() {
+            if (Array.isArray(window.KASS_CHARM_CATALOG)) return Promise.resolve(window.KASS_CHARM_CATALOG);
+            return new Promise((resolve, reject) => {
+                const sc = document.createElement('script');
+                sc.src = `assets/charm-demo.js?v=${Date.now().toString(36).slice(0, -4)}`;
+                sc.onload = () => Array.isArray(window.KASS_CHARM_CATALOG) ? resolve(window.KASS_CHARM_CATALOG) : reject(new Error('The charm list is missing from the website'));
+                sc.onerror = () => reject(new Error('Could not load the charm list from the website'));
+                document.head.appendChild(sc);
+            });
+        }
+        async function loadCharms() {
+            const summary = document.getElementById('charmSummary');
+            try {
+                const [catalog, res] = await Promise.all([loadCharmCatalog(), apiFetch('/api/inventory', { cache: 'no-store' })]);
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || 'Please refresh the page');
+                let list = data.charmsSoldOut || [];
+                try {
+                    const cached = JSON.parse(localStorage.getItem('kass_charm_cache'));
+                    if (cached && Array.isArray(cached.charmsSoldOut) && cached.updatedAt > (data.updatedAt || 0)) list = cached.charmsSoldOut;
+                } catch (e) {}
+                if (!charmSaving && !charmDirty) charmSoldOut = new Set(list);
+                renderCharms();
+            } catch (err) {
+                if (err.message !== 'Signed out') summary.innerHTML = `<span style="color:var(--red);">Could not load charms: ${esc(err.message)}</span>`;
+            }
+        }
+        function renderCharmSummary() {
+            const catalog = window.KASS_CHARM_CATALOG || [];
+            const out = catalog.filter(c => charmSoldOut.has(c.id));
+            document.getElementById('charmSummary').innerHTML = out.length
+                ? `<strong>${out.length} of ${catalog.length} sold out:</strong> ${out.map(c => esc(c.id)).join(', ')}`
+                : `<strong>All ${catalog.length} charms are in stock.</strong>`;
+        }
+        function renderCharms() {
+            const catalog = window.KASS_CHARM_CATALOG;
+            if (!Array.isArray(catalog)) return;
+            renderCharmSummary();
+            const q = (document.getElementById('charmSearch').value || '').trim().toLowerCase();
+            const finish = document.getElementById('charmFinish').value, show = document.getElementById('charmShow').value;
+            const list = catalog.filter(c => (!q || c.id.toLowerCase().includes(q) || c.name.toLowerCase().includes(q))
+                && (!finish || c.finish === finish) && (!show || (show === 'out') === charmSoldOut.has(c.id)));
+            const grid = document.getElementById('charmGrid');
+            grid.innerHTML = list.length ? list.map(c => {
+                const on = !charmSoldOut.has(c.id), f = c.frame || { width: 300, height: 300, left: -100, top: -100 };
+                return `<label class="charm-card${on ? '' : ' is-out'}" data-charm-card="${esc(c.id)}">
+                    <div class="charm-photo"><img src="${esc(c.image)}" alt="" loading="lazy" style="width:${f.width}%;height:${f.height}%;left:${f.left}%;top:${f.top}%"></div>
+                    <div class="charm-card-info">
+                        <span class="charm-card-text"><strong>${esc(c.id)} · $${c.price}</strong>${esc(c.name)}<small>${on ? 'In stock' : 'Sold out'}</small></span>
+                        <input type="checkbox" class="stock-switch" role="switch" data-charm="${esc(c.id)}" ${on ? 'checked' : ''} onchange="toggleCharm('${esc(c.id)}', this.checked)" aria-label="${esc(c.id)} ${esc(c.name)} in stock">
+                    </div>
+                </label>`;
+            }).join('') : '<p class="charm-empty">No charms match.</p>';
+        }
+        function toggleCharm(id, inStock) {
+            if (inStock) charmSoldOut.delete(id); else charmSoldOut.add(id);
+            const card = document.querySelector(`[data-charm-card="${id}"]`);
+            if (card) { card.classList.toggle('is-out', !inStock); card.querySelector('small').textContent = inStock ? 'In stock' : 'Sold out'; }
+            renderCharmSummary();
+            saveCharms();
+        }
+        async function saveCharms() {
+            charmDirty = true;
+            if (charmSaving) return;
+            charmSaving = true;
+            const status = document.getElementById('charmSaveStatus');
+            let failed = false;
+            try {
+                while (charmDirty) {
+                    charmDirty = false;
+                    status.textContent = 'Saving…';
+                    status.className = 'stock-save-status';
+                    const res = await apiFetch('/api/stock', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ charmsSoldOut: [...charmSoldOut] }) });
+                    const data = await res.json();
+                    if (!res.ok) throw new Error(data.error || 'Could not save');
+                    try { localStorage.setItem('kass_charm_cache', JSON.stringify({ charmsSoldOut: data.charmsSoldOut, updatedAt: data.updatedAt })); } catch (e) {}
+                }
+                status.textContent = `Saved at ${new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}. The website updates within about a minute.`;
+                status.className = 'stock-save-status ok';
+            } catch (err) {
+                failed = true;
+                charmDirty = false;
+                if (err.message !== 'Signed out') { status.textContent = `Not saved: ${err.message}. Please try again.`; status.className = 'stock-save-status error'; }
+            } finally {
+                charmSaving = false;
+            }
+            if (failed) loadCharms();
         }
 
         // CHECK AUTH ON LOAD — validate JWT structure
