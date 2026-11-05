@@ -957,6 +957,18 @@
         .stock-switch:checked { background: var(--green); }
         .stock-switch:checked::after { transform: translateX(18px); }
         .stock-switch:focus-visible { outline: 2px solid var(--cognac); outline-offset: 2px; }
+        .ship-compare { margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid var(--border); }
+        .ship-compare h4 { margin: 0 0 0.3rem; font-size: 0.95rem; color: var(--text-dark); }
+        .ship-compare p { margin: 0 0 0.6rem; font-size: 0.82rem; color: var(--text-medium); }
+        .ship-compare-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 0.6rem; margin-bottom: 0.7rem; }
+        .ship-compare-row label { font-size: 0.78rem; color: var(--text-medium); display: flex; flex-direction: column; gap: 0.25rem; }
+        .sc-table { width: 100%; border-collapse: collapse; margin-top: 0.8rem; font-size: 0.85rem; background: var(--card); }
+        .sc-table th, .sc-table td { text-align: left; padding: 0.45rem 0.6rem; border-bottom: 1px solid var(--border); }
+        .sc-table th { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-light); }
+        .sc-table tr.sc-cp td { background: var(--cream); font-weight: 500; }
+        .sc-table tr.sc-best td { color: var(--green); font-weight: 600; }
+        .sc-note { font-size: 0.8rem !important; color: var(--text-light) !important; margin: 0.6rem 0 0 !important; }
+        .sc-err { color: var(--red) !important; }
         .inv-table { background: var(--card); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
         .inv-head, .inv-row { display: grid; grid-template-columns: minmax(180px, 1fr) 92px 92px 70px; align-items: center; gap: 0.75rem; padding: 0.55rem 0.9rem 0.55rem 0.6rem; }
         .inv-head { background: var(--cream); font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-light); padding-top: 0.5rem; padding-bottom: 0.5rem; }
@@ -1507,6 +1519,20 @@
                             <label>Canada backup +$<input class="form-input" id="coCaFallbackX" type="number" min="0" step="1"></label>
                         </div>
                         <button type="button" class="btn btn-primary btn-small" onclick="saveCheckoutSettings()">Save</button> <small id="checkoutSaveStatus" style="color:var(--text-light)"></small>
+                        <div class="ship-compare">
+                            <h4>Compare shipping prices</h4>
+                            <p>See what Canada Post charges the website for a parcel, next to netParcel’s prices for the same parcel. This only asks for prices; nothing is bought.</p>
+                            <div class="ship-compare-row">
+                                <label>Country<select class="form-input" id="scCountry"><option value="GB">United Kingdom</option><option value="US">United States</option><option value="CA">Canada</option><option value="AU">Australia</option><option value="NL">Netherlands</option><option value="IE">Ireland</option><option value="AE">United Arab Emirates</option><option value="HK">Hong Kong</option></select></label>
+                                <label>Postal / ZIP code<input class="form-input" id="scPostal" value="RH1 4AS"></label>
+                                <label>City<input class="form-input" id="scCity" value="Redhill"></label>
+                                <label>Province / state<input class="form-input" id="scRegion" placeholder="e.g. ON or NY"></label>
+                                <label>Size<select class="form-input" id="scSize"><option>A6</option><option>A5</option></select></label>
+                                <label>Journals<select class="form-input" id="scCount"><option>1</option><option>2</option><option>3</option></select></label>
+                            </div>
+                            <button type="button" class="btn btn-secondary btn-small" id="scButton" onclick="compareShipping()">Compare prices</button>
+                            <div id="scResult" aria-live="polite"></div>
+                        </div>
                     </details>
                     <label class="rv-setting"><input type="checkbox" id="reqReminderToggle" onchange="saveReminderSetting()"> Email the customer one reminder <strong>48 hours</strong> after their payment link, if they haven’t paid <small id="reqReminderHealth" style="color:var(--text-light); margin-left:0.35rem;"></small></label>
                     <div class="filters" id="requestFilters">
@@ -3514,6 +3540,34 @@
                 ? `on · Canada: live Canada Post · US: ${st.us.live !== false ? 'live Canada Post' : '$' + st.us.shipping} + $${st.us.duties} duties · International: ${st.intl.live !== false ? 'live Canada Post' : '$' + st.intl.shipping}${st.intl.duties ? ' + $' + st.intl.duties + ' duties' : ''}`
                 : 'off (every design comes in as a request)';
         }
+        async function compareShipping() {
+            const out = document.getElementById('scResult'), btn = document.getElementById('scButton');
+            const v = id => document.getElementById(id).value.trim();
+            btn.disabled = true; out.innerHTML = '<p class="sc-note">Asking Canada Post and netParcel…</p>';
+            try {
+                const res = await apiFetch('/api/shipping/compare', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ country: v('scCountry'), postal: v('scPostal'), city: v('scCity'), region: v('scRegion'), size: v('scSize'), count: v('scCount') }) });
+                const d = await res.json();
+                if (!res.ok) throw new Error(d.error || 'Could not compare');
+                const money = n => '$' + Number(n).toFixed(2);
+                const cp = d.canadaPost, np = d.netParcel || {};
+                let html = `<p class="sc-note">${d.count} ${esc(d.size)} journal${d.count > 1 ? 's' : ''} packed (${d.weightKg} kg) to ${esc(d.destination.postal || '')} ${esc(d.destination.country)}</p><table class="sc-table"><thead><tr><th>Where</th><th>Service</th><th>Price</th><th>Delivery</th></tr></thead><tbody>`;
+                html += `<tr class="sc-cp"><td>Canada Post (website now)</td><td>${esc(cp.service || '')}</td><td>${cp.amount ? money(cp.amount) : esc(cp.error || '—')}</td><td></td></tr>`;
+                if (!np.configured) html += `<tr><td colspan="4">netParcel isn’t connected yet. In Cloudflare, add the secrets <strong>NETPARCEL_API_USER</strong> and <strong>NETPARCEL_API_PASSWORD</strong>.</td></tr>`;
+                const best = np.rates && np.rates.length ? np.rates[0].total : null;
+                for (const r of np.rates || []) {
+                    const tracked = /tracked/i.test(r.service);
+                    html += `<tr class="${r.total === best ? 'sc-best' : ''}${tracked ? ' sc-tracked' : ''}"><td>netParcel${r.carrier ? ' · ' + esc(r.carrier) : ''}</td><td>${esc(r.service)}</td><td>${money(r.total)}${r.currency && r.currency !== 'CAD' ? ' ' + esc(r.currency) : ''}</td><td>${esc(r.transit || '')}</td></tr>`;
+                }
+                html += '</tbody></table>';
+                if (np.configured && !(np.rates || []).length) html += '<p class="sc-note">netParcel didn’t return any prices for this parcel.</p>';
+                if ((np.errors || []).length) html += `<p class="sc-note sc-err">netParcel said: ${np.errors.map(esc).join(' · ')}</p>`;
+                out.innerHTML = html;
+            } catch (err) {
+                if (err.message !== 'Signed out') out.innerHTML = `<p class="sc-note sc-err">${esc(err.message)}</p>`;
+            } finally { btn.disabled = false; }
+        }
+
         async function saveCheckoutSettings() {
             const v = id => Number(document.getElementById(id).value);
             const status = document.getElementById('checkoutSaveStatus');
