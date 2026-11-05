@@ -2,7 +2,7 @@
 (function(global){
 'use strict';
 const leatherColours={Anthracite:'#49464a',Burgundy:'#681f38',Emerald:'#28684f',Rust:'#a65034',Sky:'#7598ac',Tiffany:'#65b5b1',Charcoal:'#363537',Coffee:'#49352b',Olive:'#687147',Aubergine:'#352032',Chocolate:'#4b3028',Forest:'#173c32',Onyx:'#242329',Scarlett:'#aa2830',Cognac:'#bb8959'};
-const cordColours={'Baby Pink':'#e6b4c4','Baby Blue':'#97cbdc',White:'#f4f0e8',Black:'#252526',Gray:'#9b999c','Forest Green':'#355747',Forest:'#355747','Dark Blue':'#293d64',Burgundy:'#782e46',Red:'#cb3b3f',Lilac:'#baa4d0',Yellow:'#e8c967',Cream:'#eee5cd',Pink:'#e6b4c4',Blue:'#97cbdc',Grey:'#9b999c',Gold:'#c4a16a',Silver:'#c2c6ca'};
+const cordColours={'Baby Pink':'#e6b4c4','Baby Blue':'#97cbdc',White:'#f4f0e8',Black:'#252526',Gray:'#9b999c','Forest Green':'#355747',Forest:'#355747','Dark Blue':'#293d64',Burgundy:'#782e46',Red:'#cb3b3f',Lilac:'#baa4d0',Yellow:'#e8c967',Cream:'#eee5cd',Pink:'#e6b4c4',Blue:'#97cbdc',Grey:'#9b999c',Gold:'#c4a16a',Silver:'#c2c6ca',Brown:'#6f4b34','Dark Green':'#2f5541',Purple:'#7a5c9e'};
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function colour(value,fallback){const v=String(value||'').trim();if(/^#[0-9a-f]{3}(?:[0-9a-f]{3})?$/i.test(v))return v;const key=Object.keys(cordColours).find(k=>k.toLowerCase()===v.toLowerCase());return key?cordColours[key]:fallback;}
 function journalIllustration(d){
