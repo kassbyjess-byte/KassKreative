@@ -1503,11 +1503,11 @@
                         <summary>Website checkout: <span id="checkoutSummary">loading…</span></summary>
                         <label class="rv-setting" style="margin:0.9rem 0 0"><input type="checkbox" id="coEnabled"> Let customers pay on the design page (designs with “Tell me your vision” still come in as requests)</label>
                         <div class="checkout-grid">
-                            <label>Canada shipping<input class="form-input" value="Live Canada Post rate" disabled></label>
-                            <label>Canada backup rate ($)<input class="form-input" id="coCaFallback" type="number" min="0" step="1" title="Used only if Canada Post can't be reached"></label>
+                            <label><span><input type="checkbox" id="coCaLive"> Canada: live Canada Post rate</span><small style="color:var(--text-light)">Set Canada shipping, or the backup if the live rate is on ($):</small><input class="form-input" id="coCaFallback" type="number" min="0" step="1"></label>
+                            <label><span><input type="checkbox" id="coIntlNp"> International: cheapest netParcel price</span><small style="color:var(--text-light)">Customers see “Tracked shipping”. If netParcel has no price, the options below are used.</small></label>
                             <label><span><input type="checkbox" id="coUsLive"> US: live Canada Post rate</span><small style="color:var(--text-light)">Backup or set US shipping ($):</small><input class="form-input" id="coUsShip" type="number" min="0" step="1"></label>
                             <label>US duties ($)<input class="form-input" id="coUsDuty" type="number" min="0" step="1"></label>
-                            <label><span><input type="checkbox" id="coIntlLive"> International: live Canada Post rate</span><small style="color:var(--text-light)">Backup or set international shipping ($):</small><input class="form-input" id="coIntlShip" type="number" min="0" step="1"></label>
+                            <label><span><input type="checkbox" id="coIntlLive"> International: live Canada Post rate (when netParcel has no price)</span><small style="color:var(--text-light)">Backup or set international shipping ($):</small><input class="form-input" id="coIntlShip" type="number" min="0" step="1"></label>
                             <label>International duties ($)<input class="form-input" id="coIntlDuty" type="number" min="0" step="1"></label>
                         </div>
                         <p style="margin:0 0 0.4rem;font-size:0.82rem;color:var(--text-medium);">Each extra journal in the same order adds (live Canada Post rates price the heavier parcel themselves, so the shipping amounts below are only used as backup or when the live rate is off):</p>
@@ -1516,12 +1516,12 @@
                             <label>US duties +$<input class="form-input" id="coUsDutyX" type="number" min="0" step="1"></label>
                             <label>International shipping +$<input class="form-input" id="coIntlShipX" type="number" min="0" step="1"></label>
                             <label>International duties +$<input class="form-input" id="coIntlDutyX" type="number" min="0" step="1"></label>
-                            <label>Canada backup +$<input class="form-input" id="coCaFallbackX" type="number" min="0" step="1"></label>
+                            <label>Canada shipping +$<input class="form-input" id="coCaFallbackX" type="number" min="0" step="1"></label>
                         </div>
                         <button type="button" class="btn btn-primary btn-small" onclick="saveCheckoutSettings()">Save</button> <small id="checkoutSaveStatus" style="color:var(--text-light)"></small>
                         <div class="ship-compare">
                             <h4>Compare shipping prices</h4>
-                            <p>See what Canada Post charges the website for a parcel, next to netParcel’s prices for the same parcel. This only asks for prices; nothing is bought.</p>
+                            <p>Canada Post’s live rate next to netParcel’s prices for the same parcel. International checkout charges the cheapest tracked netParcel price. This only asks for prices; nothing is bought.</p>
                             <div class="ship-compare-row">
                                 <label>Country<select class="form-input" id="scCountry"><option value="GB">United Kingdom</option><option value="US">United States</option><option value="CA">Canada</option><option value="AU">Australia</option><option value="NL">Netherlands</option><option value="IE">Ireland</option><option value="AE">United Arab Emirates</option><option value="HK">Hong Kong</option></select></label>
                                 <label>Postal / ZIP code<input class="form-input" id="scPostal" value="RH1 4AS"></label>
@@ -3525,6 +3525,8 @@
         function renderCheckoutSettings(st) {
             document.getElementById('coEnabled').checked = st.enabled;
             document.getElementById('coCaFallback').value = st.caFallback;
+            document.getElementById('coCaLive').checked = st.caLive === true;
+            document.getElementById('coIntlNp').checked = st.intl.netParcel !== false;
             document.getElementById('coUsShip').value = st.us.shipping;
             document.getElementById('coUsLive').checked = st.us.live !== false;
             document.getElementById('coIntlLive').checked = st.intl.live !== false;
@@ -3537,7 +3539,7 @@
             document.getElementById('coIntlDutyX').value = st.intl.dutiesExtra;
             document.getElementById('coCaFallbackX').value = st.caFallbackExtra;
             document.getElementById('checkoutSummary').textContent = st.enabled
-                ? `on · Canada: live Canada Post · US: ${st.us.live !== false ? 'live Canada Post' : '$' + st.us.shipping} + $${st.us.duties} duties · International: ${st.intl.live !== false ? 'live Canada Post' : '$' + st.intl.shipping}${st.intl.duties ? ' + $' + st.intl.duties + ' duties' : ''}`
+                ? `on · Canada: ${st.caLive ? 'live Canada Post' : '$' + st.caFallback} · US: ${st.us.live !== false ? 'live Canada Post' : '$' + st.us.shipping} + $${st.us.duties} duties · International: ${st.intl.netParcel !== false ? 'cheapest netParcel price' : st.intl.live !== false ? 'live Canada Post' : '$' + st.intl.shipping}${st.intl.duties ? ' + $' + st.intl.duties + ' duties' : ''}`
                 : 'off (every design comes in as a request)';
         }
         async function compareShipping() {
@@ -3552,7 +3554,7 @@
                 const money = n => '$' + Number(n).toFixed(2);
                 const cp = d.canadaPost, np = d.netParcel || {};
                 let html = `<p class="sc-note">${d.count} ${esc(d.size)} journal${d.count > 1 ? 's' : ''} packed (${d.weightKg} kg) to ${esc(d.destination.postal || '')} ${esc(d.destination.country)}</p><table class="sc-table"><thead><tr><th>Where</th><th>Service</th><th>Price</th><th>Delivery</th></tr></thead><tbody>`;
-                html += `<tr class="sc-cp"><td>Canada Post (website now)</td><td>${esc(cp.service || '')}</td><td>${cp.amount ? money(cp.amount) : esc(cp.error || '—')}</td><td></td></tr>`;
+                html += `<tr class="sc-cp"><td>Canada Post (live rate)</td><td>${esc(cp.service || '')}</td><td>${cp.amount ? money(cp.amount) : esc(cp.error || '—')}</td><td></td></tr>`;
                 if (!np.configured) html += `<tr><td colspan="4">netParcel isn’t connected yet. In Cloudflare, add the secrets <strong>NETPARCEL_API_USER</strong> and <strong>NETPARCEL_API_PASSWORD</strong>.</td></tr>`;
                 const best = np.rates && np.rates.length ? np.rates[0].total : null;
                 for (const r of np.rates || []) {
@@ -3576,7 +3578,8 @@
                 const res = await apiFetch('/api/checkout/settings', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({
                     enabled: document.getElementById('coEnabled').checked, caFallback: v('coCaFallback'), caFallbackExtra: v('coCaFallbackX'),
                     us: { live: document.getElementById('coUsLive').checked, shipping: v('coUsShip'), duties: v('coUsDuty'), shippingExtra: v('coUsShipX'), dutiesExtra: v('coUsDutyX') },
-                    intl: { live: document.getElementById('coIntlLive').checked, shipping: v('coIntlShip'), duties: v('coIntlDuty'), shippingExtra: v('coIntlShipX'), dutiesExtra: v('coIntlDutyX') } }) });
+                    caLive: document.getElementById('coCaLive').checked,
+                    intl: { netParcel: document.getElementById('coIntlNp').checked, live: document.getElementById('coIntlLive').checked, shipping: v('coIntlShip'), duties: v('coIntlDuty'), shippingExtra: v('coIntlShipX'), dutiesExtra: v('coIntlDutyX') } }) });
                 const data = await res.json();
                 if (data.error) throw new Error(data.error);
                 renderCheckoutSettings(data.settings);
