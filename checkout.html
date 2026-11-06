@@ -153,6 +153,8 @@ const surface=n=>'assets/leathers/'+(n==='Cognac'?'tan':String(n).toLowerCase())
 const q=new URLSearchParams(location.search);
 const newId=()=>{try{return crypto.randomUUID().slice(0,8)}catch(e){return Math.random().toString(36).slice(2,10)}};
 const BAG_ID='kass-bag-id';
+const FSID=(()=>{try{let v=sessionStorage.getItem('kass-fsid');if(!v){v=Math.random().toString(36).slice(2,12)+Date.now().toString(36);sessionStorage.setItem('kass-fsid',v)}return v}catch(e){return ''}})();
+const funnel=e=>{if(!FSID)return;const body=JSON.stringify({e,s:FSID}),url=API+'/api/track';try{if(navigator.sendBeacon&&navigator.sendBeacon(url,body))return}catch(x){}try{fetch(url,{method:'POST',body,keepalive:true}).catch(()=>{})}catch(x){}};
 const getBagId=()=>{try{return localStorage.getItem(BAG_ID)||''}catch(e){return ''}};
 const dropBagId=()=>{try{localStorage.removeItem(BAG_ID)}catch(e){}};
 
@@ -256,7 +258,7 @@ async function getQuote(){
         else quoteError=r.error||'Please check your order.';
         return;
       }
-      quote=r;
+      quote=r;funnel('shipping_shown');
     }catch(e){if(seq===quoteSeq)quoteError='We couldn’t calculate shipping just now. Please check your connection and try again.'}
     finally{if(seq===quoteSeq){quoting=null;calculating=false;renderTotals();renderActions()}}
   })();
@@ -274,7 +276,7 @@ function renderTotals(){
     if(quote){
       box.append(row('Shipping',fmt(quote.shipping)+' CAD'));
       if(quote.shippingLabel){const s=document.createElement('p');s.className='total-note';s.textContent=quote.shippingLabel;box.append(s)}
-      if(quote.duties)box.append(row('Duties & import fees',fmt(quote.duties)+' CAD'));
+      if(quote.duties){box.append(row('Duties (prepaid)',fmt(quote.duties)+' CAD'));const n=document.createElement('p');n.className='total-note';n.textContent='Import duties are paid upfront, so there are no surprise fees at delivery.';box.append(n)}
       box.append(row('Total',fmt(quote.total)+' CAD','total-final'));
     }else{
       box.append(row('Shipping',calculating?'Calculating…':'—','is-pending'));
@@ -355,7 +357,7 @@ function keyFor(name,payload){
 el('pay-now').onclick=async()=>{
   const m=missing();if(m)return formError(m[1],m[0]);
   const prob=payItems().map(itemProblem).find(Boolean);if(prob)return formError(prob);
-  formError('');
+  formError('');funnel('pay_click');
   const btn=el('pay-now');btn.disabled=true;btn.textContent='Opening secure checkout…';
   try{
     if(!quote){await (quoting||getQuote());if(!quote){btn.disabled=false;renderActions();return formError(quoteError||'Please check your address.')}}
@@ -376,7 +378,7 @@ el('send-request').onclick=async()=>{
   const items=requestItems(),prob=items.map(itemProblem).find(Boolean);if(prob)return formError(prob);
   const file=el('inspiration').files[0];
   if(file&&(file.size>5*1024*1024||!['image/jpeg','image/png','image/webp'].includes(file.type)))return formError('Choose a JPG, PNG or WebP photo up to 5 MB.',el('inspiration'));
-  formError('');
+  formError('');funnel('request_click');
   const btn=el('send-request'),label=btn.textContent;btn.disabled=true;btn.textContent='Sending…';
   const sent=[];
   try{
@@ -466,7 +468,7 @@ if(q.get('checkout')==='cancelled'||q.get('checkout')==='unavailable'){
 }
 if(!bag.length){showEmpty();track('view_cart',{currency:'CAD',value:0,items:[]});return}
 try{const c=JSON.parse(localStorage.getItem('kass-stock'));if(c&&Date.now()-c.at<864e5)updateStock(c)}catch(e){}
-refresh(false);getQuote();
+refresh(false);getQuote();funnel('checkout_view');
 track('view_cart',{currency:'CAD',value:bag.filter(j=>!isVision(j)).reduce((t,j)=>t+priceOf(j),0),items:bag.map(gaItem)});
 if(window.fetch)fetch(API+'/api/stock',{cache:'no-store'}).then(r=>r.ok?r.json():null).then(d=>{if(d&&Array.isArray(d.soldOut)){try{localStorage.setItem('kass-stock',JSON.stringify({soldOut:d.soldOut,soldOutSizes:d.soldOutSizes||{},charmsSoldOut:d.charmsSoldOut||[],at:Date.now()}))}catch(e){}updateStock(d)}}).catch(()=>{});
 }
@@ -484,7 +486,7 @@ if(backId&&backT&&window.fetch){
         if(d.country&&!el('country').value&&[...el('country').options].some(o=>o.value===d.country))el('country').value=d.country;
         labelsForCountry();keepContact();
         const n=el('checkout-notice');n.textContent='Welcome back! Your bag is just as you left it.';n.hidden=false;
-        track('bag_reminder_return',{items:bag.length});
+        track('bag_reminder_return',{items:bag.length});funnel('bag_return');
       }else if(!bag.length){const n=el('checkout-notice');n.textContent='That link has expired, but you can design your journal again in a minute.';n.hidden=false}
     }catch(e){}
     try{history.replaceState(null,'','/checkout')}catch(e){}

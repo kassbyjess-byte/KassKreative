@@ -957,6 +957,13 @@
         .stock-switch:checked { background: var(--green); }
         .stock-switch:checked::after { transform: translateX(18px); }
         .stock-switch:focus-visible { outline: 2px solid var(--cognac); outline-offset: 2px; }
+        .funnel-card { background: var(--card); border-radius: 8px; box-shadow: var(--shadow); padding: 1.25rem 1.5rem; margin-bottom: 1.75rem; }
+        .funnel-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 0.75rem; }
+        .funnel-head h2 { margin: 0; }
+        .funnel-intro, .funnel-note { font-size: 0.82rem; color: var(--text-light); margin: 0.5rem 0 0; }
+        .funnel-table td:not(:first-child), .funnel-table th:not(:first-child) { text-align: right; white-space: nowrap; }
+        .funnel-table tr.funnel-drop td { background: #fdf3ec; }
+        .funnel-extra { max-width: 520px; }
         .ship-compare { margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid var(--border); }
         .ship-compare h4 { margin: 0 0 0.3rem; font-size: 0.95rem; color: var(--text-dark); }
         .ship-compare p { margin: 0 0 0.6rem; font-size: 0.82rem; color: var(--text-medium); }
@@ -1385,6 +1392,18 @@
 
                 <!-- ANALYTICS PAGE -->
                 <div id="analyticsPage" class="page">
+                    <div class="funnel-card" id="funnelCard">
+                        <div class="funnel-head">
+                            <h2>Website funnel</h2>
+                            <div class="ga-period-selector">
+                                <button class="ga-period-btn" onclick="loadFunnel(1, this)">Today</button>
+                                <button class="ga-period-btn active" onclick="loadFunnel(7, this)">7 days</button>
+                                <button class="ga-period-btn" onclick="loadFunnel(30, this)">30 days</button>
+                            </div>
+                        </div>
+                        <p class="funnel-intro">Counted by the website itself: how many people reached each step, by device. Each person counts once per step per day. No names or emails are stored.</p>
+                        <div id="funnelTable">Loading…</div>
+                    </div>
                     <div id="gaAuthSection" class="ga-auth-card">
                         <h3>Connect Google Analytics</h3>
                         <p>Sign in with the Google account that has access to your GA4 property</p>
@@ -1921,6 +1940,7 @@
             if (pageName === 'newsletter') loadNewsletter();
             if (pageName === 'stock') loadStock();
             if (pageName === 'charms') loadCharms();
+            if (pageName === 'analytics') loadFunnel();
             if (pageName === 'reviews') { loadReviews(); loadCampaign(); }
             if (pageName === 'newOrder') {
                 pendingRequestRef = null;
@@ -3542,6 +3562,52 @@
                 ? `on · Canada: ${st.caLive ? 'live Canada Post' : '$' + st.caFallback} · US: ${st.us.live !== false ? 'live Canada Post' : '$' + st.us.shipping} + $${st.us.duties} duties · International: ${st.intl.netParcel !== false ? 'cheapest netParcel price' : st.intl.live !== false ? 'live Canada Post' : '$' + st.intl.shipping}${st.intl.duties ? ' + $' + st.intl.duties + ' duties' : ''}`
                 : 'off (every design comes in as a request)';
         }
+        // WEBSITE FUNNEL — built-in counter
+        let funnelDays = 7;
+        const FUNNEL_STEPS = [
+            ['design_view', 'Opened the designer'], ['leather_pick', 'Picked a leather'], ['add_to_cart', 'Added to bag'],
+            ['checkout_view', 'Reached checkout'], ['shipping_shown', 'Saw their shipping price'], ['pay_click', 'Clicked Pay'], ['paid', 'Paid on the website'],
+        ];
+        const FUNNEL_EXTRA = [
+            ['request_click', 'Clicked “Send request” (Tell me your vision)'], ['request_sent', 'Requests received'], ['link_paid', 'Paid by payment link'],
+            ['bag_email_sent', 'Bag reminder emails sent'], ['bag_return', 'Came back from a bag reminder'],
+        ];
+        async function loadFunnel(days, btn) {
+            if (days) funnelDays = days;
+            if (btn) { btn.parentElement.querySelectorAll('.ga-period-btn').forEach(b => b.classList.toggle('active', b === btn)); }
+            const box = document.getElementById('funnelTable');
+            try {
+                const res = await apiFetch(`/api/funnel?days=${funnelDays}`, { cache: 'no-store' });
+                const d = await res.json();
+                if (!d.configured) {
+                    box.innerHTML = '<p class="funnel-note">The counter isn’t connected yet. In Cloudflare, open <strong>kass-admin → Settings → Bindings</strong>, add a <strong>D1 database</strong> binding named <strong>FUNNEL_DB</strong> and choose <strong>kass-funnel</strong>.</p>';
+                    return;
+                }
+                if (d.error) throw new Error(d.error);
+                const n = {};
+                for (const r of d.rows) { n[r.event] = n[r.event] || { phone: 0, computer: 0, tablet: 0, all: 0, total: 0 }; n[r.event][r.device] = (n[r.event][r.device] || 0) + r.n; n[r.event].total += r.n; }
+                const get = (e, k) => (n[e] ? n[e][k] || 0 : 0);
+                const pct = (a, b) => (b ? `${Math.round((a / b) * 100)}%` : '—');
+                const first = get('design_view', 'total');
+                let prev = null;
+                let html = '<table class="sc-table funnel-table"><thead><tr><th>Step</th><th>Phones</th><th>Computers</th><th>Tablets</th><th>Total</th><th>Of step above</th><th>Of designer</th></tr></thead><tbody>';
+                for (const [e, label] of FUNNEL_STEPS) {
+                    const t = get(e, 'total');
+                    const drop = prev !== null && prev > 0 && t / prev < 0.35;
+                    html += `<tr class="${drop ? 'funnel-drop' : ''}"><td>${label}</td><td>${get(e, 'phone')}</td><td>${get(e, 'computer')}</td><td>${get(e, 'tablet')}</td><td><strong>${t}</strong></td><td>${prev === null ? '' : pct(t, prev)}</td><td>${e === 'design_view' ? '' : pct(t, first)}</td></tr>`;
+                    prev = t;
+                }
+                html += '</tbody></table><table class="sc-table funnel-table funnel-extra"><tbody>';
+                for (const [e, label] of FUNNEL_EXTRA) html += `<tr><td>${label}</td><td><strong>${get(e, 'total')}</strong></td></tr>`;
+                html += '</tbody></table>';
+                const started = d.firstDay && d.firstDay > d.since ? `Counting started on ${d.firstDay}. ` : '';
+                html += `<p class="funnel-note">${started}Big drops are highlighted. Days run on Toronto time.</p>`;
+                box.innerHTML = html;
+            } catch (err) {
+                if (err.message !== 'Signed out') box.innerHTML = `<p class="funnel-note" style="color:var(--red)">Couldn’t load the funnel: ${esc(err.message)}</p>`;
+            }
+        }
+
         async function compareShipping() {
             const out = document.getElementById('scResult'), btn = document.getElementById('scButton');
             const v = id => document.getElementById(id).value.trim();
