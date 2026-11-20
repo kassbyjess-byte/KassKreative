@@ -345,3 +345,31 @@ body[data-view=design] #design .sectionhead>div>p{max-width:720px;margin:16px 0 
 body .minimal-product:nth-child(3) .minimal-product-image img{position:absolute!important;width:90%!important;height:100%!important;left:5%!important;top:0!important;max-width:none!important;object-fit:cover!important;object-position:center 43%!important;transform:none!important;mix-blend-mode:multiply!important}
 
 body[data-view=home] .centered-header nav [data-page=design]{color:#fffaf8!important}body[data-view=home] .centered-header nav [data-page=design]:hover{color:#fff!important}
+
+/* ---- Phones: compact header (logo, Bag, Menu); the page links open in a side panel ---- */
+.kass-header-actions,.kass-menu-panel,.kass-menu-backdrop{display:none}
+@media(max-width:700px){
+html body .centered-header{display:flex!important;flex-direction:row!important;flex-wrap:nowrap!important;align-items:center;justify-content:space-between;gap:10px;padding:10px 5%!important;min-height:0}
+html body .centered-header>nav{display:none!important}
+html body .centered-header .logo{margin:0;flex:none}
+html body .centered-header .logo img{width:auto!important;height:30px}
+.notice{padding:6px 12px!important}
+.kass-header-actions{display:flex;align-items:center;gap:8px;margin-left:auto}
+.kass-bag-link,.kass-menu-btn{display:inline-flex;align-items:center;gap:7px;height:38px;padding:0 15px;border:1px solid rgba(53,28,16,.28);border-radius:999px;background:transparent;color:var(--ink,#351c10);font:11px/1 Arial,Helvetica,sans-serif;letter-spacing:.08em;text-transform:uppercase;text-decoration:none;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.kass-menu-btn .kass-burger{display:inline-block;width:14px;height:10px;border-top:1.5px solid currentColor;border-bottom:1.5px solid currentColor;position:relative}
+.kass-menu-btn .kass-burger:after{content:"";position:absolute;left:0;right:0;top:3.5px;border-top:1.5px solid currentColor}
+body[data-view=home] .kass-bag-link,body[data-view=home] .kass-menu-btn{color:#fffaf8;border-color:rgba(255,250,248,.65)}
+.kass-menu-backdrop{display:block;position:fixed;inset:0;background:rgba(35,20,12,.38);z-index:9998}
+.kass-menu-backdrop[hidden]{display:none}
+.kass-menu-panel{display:block;position:fixed;top:0;right:0;bottom:0;width:min(84vw,340px);background:var(--paper,#f8f6f3);z-index:9999;padding:18px 24px 30px;box-shadow:-10px 0 34px rgba(0,0,0,.14);transform:translateX(105%);transition:transform .25s ease;overflow-y:auto}
+.kass-menu-panel[hidden]{display:none}
+.kass-menu-panel.open{transform:none}
+.kass-menu-head{display:flex;align-items:center;justify-content:space-between;margin:0 0 8px}
+.kass-menu-head img{height:26px;width:auto}
+.kass-menu-close{width:40px;height:40px;border:0;background:transparent;font:28px/1 Arial,sans-serif;color:var(--ink,#351c10);cursor:pointer}
+.kass-menu-panel a.kass-menu-link{display:block;padding:15px 2px;border-bottom:1px solid var(--line,#ddd7cd);font:19px/1.2 Georgia,serif;color:var(--ink,#351c10);text-decoration:none}
+.kass-menu-panel a.kass-menu-link[aria-current=page]{color:var(--wine,#7d0404)}
+.kass-menu-panel a.kass-menu-cta{display:block;margin:18px 0 6px;padding:14px 16px;text-align:center;background:var(--studio-blue,#4f6a80);color:#fffaf8;font:13px/1 Arial,Helvetica,sans-serif;letter-spacing:.06em;text-transform:uppercase;text-decoration:none}
+.kass-menu-note{margin:16px 0 0;font:12px/1.6 Arial,Helvetica,sans-serif;color:var(--muted,#75675f)}
+body.kass-menu-open{overflow:hidden}
+}
