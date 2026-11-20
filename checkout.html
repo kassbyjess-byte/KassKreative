@@ -126,7 +126,7 @@ body[data-view=checkout] .editorial-footer .footer-columns{grid-template-columns
 <div class="checkout-pay">
 <div class="trust-box" id="trust-box" hidden></div><div id="terms-block"><label class="checkline terms"><input type="checkbox" id="terms" required><span>I agree to KASS Kreative’s <a href="/care#policies" target="_blank" rel="noopener">Shipping, Payment &amp; Refund Policies</a>. Handmade orders are final sale.</span></label></div>
 <p id="form-error" role="alert" hidden></p>
-<div id="pay-block"><button type="button" class="button primary pay-button" id="pay-now">Pay securely</button><p class="subtle pay-note">Apple Pay, Google Pay and cards accepted · Secure checkout by Stripe<br>Have a discount code? You can add it on the secure payment page.</p></div><p class="subtle make-time">Made by hand in up to 14 business days after payment, plus delivery time.</p>
+<div id="pay-block"><button type="button" class="button primary pay-button" id="pay-now">Pay securely</button><p class="subtle pay-note">Apple Pay, Google Pay and cards accepted · Secure checkout by Stripe<br>Have a discount code? You can add it on the secure payment page.</p></div><p class="subtle make-time" id="make-time">Made by hand and shipped within 7–10 business days in Canada and the US (up to 14 elsewhere), plus delivery time.</p>
 <div class="request-block" id="request-block" hidden><h3 id="request-title">Send your request</h3><p class="subtle" id="request-text"></p><label class="inspiration-field" id="inspiration-field" hidden>Inspiration photo <span class="subtle">(optional · JPG, PNG or WebP up to 5 MB)</span><input id="inspiration" type="file" accept="image/jpeg,image/png,image/webp"></label><button type="button" class="button primary" id="send-request">Send request ↗</button></div>
 </div>
 </div>
@@ -226,6 +226,10 @@ function labelsForCountry(){
   el('region-label').textContent=c==='CA'?'Province':c==='US'?'State':'State / province / region';
   el('postal-label').textContent=c==='CA'?'Postal code':c==='US'?'ZIP code':'Postal code';
   el('postal-optional').hidden=c==='CA'||c==='US'||!c;
+  const mt=el('make-time');
+  if(mt)mt.textContent=c==='CA'||c==='US'?'Made by hand and shipped within 7–10 business days after payment, plus delivery time.'
+    :c?'Made by hand and shipped in up to 14 business days after payment, plus delivery time.'
+    :'Made by hand and shipped within 7–10 business days in Canada and the US (up to 14 elsewhere), plus delivery time.';
   const line=el('ship-country-line');
   if(line){
     const o=el('country').selectedOptions[0];
