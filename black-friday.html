@@ -150,10 +150,19 @@ body.bf-building .bf{padding-top:34px}
 .bf-j-head{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin:0 0 14px}
 .bf-j-head strong{font-weight:normal;font-size:16px}
 .bf-j-head span{font-size:12px;color:var(--muted)}
-.bf-j-body{display:grid;grid-template-columns:170px minmax(0,1fr);gap:24px;align-items:start}
+.bf-j-body{display:block}
 .bf-field-leather{min-width:0}
-.bf-j-preview{background:var(--paper);padding:8px}
-.bf-j-preview svg{width:100%;height:auto;display:block}
+.bf-b-layout{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:44px;align-items:start}
+.bf-b-main{min-width:0}
+.bf-stage{background:#eee8df;text-align:center}
+.bf-stage-desk{position:sticky;top:20px;padding:26px 24px 22px}
+.bf-stage-pic svg{width:100%;height:auto;display:block}
+.bf-stage-desk .bf-stage-pic{max-width:470px;margin:10px auto 0}
+.bf-stage-name{font:22px/1.3 Georgia,serif;color:var(--ink);margin:12px 0 4px}
+.bf-stage-detail{font-size:12px;line-height:1.6;color:var(--muted);margin:0}
+.bf-stage-card{display:none}
+.bf-j.is-closed{cursor:pointer}
+.bf-j.is-closed:hover{border-color:var(--muted)}
 .bf-j-fields{display:grid;gap:16px;min-width:0}
 .bf-label{font-size:12px;color:var(--muted);margin:0 0 8px}
 .bf-label strong{font-weight:normal;color:var(--ink)}
@@ -191,8 +200,8 @@ body.bf-building .bf{padding-top:34px}
 .bf-charm-photo img{position:absolute;max-width:none;object-fit:contain;mix-blend-mode:multiply}
 .bf-charm-id{display:block;margin-top:2px}
 .bf-charm.on{border:2px solid var(--ink);color:var(--ink);font-weight:bold}
-@media(max-width:900px){.bf-sets{grid-template-columns:repeat(2,minmax(0,1fr))}.bf-sws{grid-template-columns:repeat(8,minmax(0,1fr))}}
-@media(max-width:700px){.bf-banner{min-height:250px;margin-bottom:34px}.bf-banner-copy{padding:34px 7%}.bf-banner h1{font-size:36px;letter-spacing:-.8px}.bf-sets{gap:26px 14px;padding:0 4%}.bf-set h2{font-size:14px;margin-top:12px}.bf-includes{font-size:11px}.bf-set .button{padding:11px 8px;font-size:11px}.bf-builder{padding:0 4%}body.bf-building .bf{padding-top:20px}.bf-b-head{flex-direction:column;align-items:flex-start;gap:4px}.bf-b-head h2{font-size:26px}.bf-b-sub{margin-bottom:16px}.bf-j.is-open{padding:14px 12px 16px}.bf-j-body{grid-template-columns:minmax(0,1fr);gap:12px}.bf-j-preview{width:120px;margin:0 auto}.bf-sws{display:flex;overflow-x:auto;gap:6px;padding:3px 2px 6px;scroll-snap-type:x proximity}.bf-sw{flex:0 0 46px;height:46px;scroll-snap-align:start}.bf-row{grid-template-columns:repeat(2,minmax(0,1fr))}.bf-row .bf-field:last-child{grid-column:1/-1}.bf-field select,.bf-field input{font-size:16px}.bf-bar{gap:10px;padding:10px 0}.bf-bar-text{font-size:12px}.bf-bar .button{padding:12px 14px}.bf-charms{grid-template-columns:repeat(auto-fill,minmax(64px,1fr))}.bf-dialog{padding:26px 16px 20px}.bf-charm-dialog h2{font-size:21px;padding-right:26px}}
+@media(max-width:900px){.bf-sets{grid-template-columns:repeat(2,minmax(0,1fr))}.bf-b-layout{grid-template-columns:minmax(0,1fr)}.bf-stage-desk{display:none}.bf-stage-card{display:block;padding:16px 12px 14px;margin:0 0 16px}.bf-stage-card .bf-stage-pic{max-width:300px;margin:0 auto}.bf-sws{grid-template-columns:repeat(8,minmax(0,1fr))}}
+@media(max-width:700px){.bf-banner{min-height:250px;margin-bottom:34px}.bf-banner-copy{padding:34px 7%}.bf-banner h1{font-size:36px;letter-spacing:-.8px}.bf-sets{gap:26px 14px;padding:0 4%}.bf-set h2{font-size:14px;margin-top:12px}.bf-includes{font-size:11px}.bf-set .button{padding:11px 8px;font-size:11px}.bf-builder{padding:0 4%}body.bf-building .bf{padding-top:20px}.bf-b-head{flex-direction:column;align-items:flex-start;gap:4px}.bf-b-head h2{font-size:26px}.bf-b-sub{margin-bottom:16px}.bf-j.is-open{padding:14px 12px 16px}.bf-stage-card .bf-stage-pic{max-width:230px}.bf-stage-name{font-size:19px;margin-top:8px}.bf-sws{display:flex;overflow-x:auto;gap:6px;padding:3px 2px 6px;scroll-snap-type:x proximity}.bf-sw{flex:0 0 46px;height:46px;scroll-snap-align:start}.bf-row{grid-template-columns:repeat(2,minmax(0,1fr))}.bf-row .bf-field:last-child{grid-column:1/-1}.bf-field select,.bf-field input{font-size:16px}.bf-bar{gap:10px;padding:10px 0}.bf-bar-text{font-size:12px}.bf-bar .button{padding:12px 14px}.bf-charms{grid-template-columns:repeat(auto-fill,minmax(64px,1fr))}.bf-dialog{padding:26px 16px 20px}.bf-charm-dialog h2{font-size:21px;padding-right:26px}}
 </style></head><body data-view="black-friday">
 <div class="notice">Handmade in Canada · Shipping worldwide · Secure checkout</div>
 <header class="centered-header"><nav class="nav-left" aria-label="Shop"><a data-page="home" href="/">Home</a><a data-page="journals" href="/journals">The Journals</a><a data-page="leathers" href="/leathers">The Leathers</a><a data-page="design" href="/design">Design Your Journal</a></nav><a class="logo" href="/" aria-label="KASS home"><img src="assets/kass-logo.svg" alt="KASS"></a><nav class="nav-right" aria-label="About and help"><a data-page="story" href="/story">Our Story</a><a data-page="care" href="/care">FAQ & Care</a><a data-page="reviews" href="/reviews">Customer Reviews</a></nav></header>
@@ -242,10 +251,15 @@ body.bf-building .bf{padding-top:34px}
   <button type="button" class="bf-link" id="bf-back">← All sets</button>
   <div class="bf-b-head"><div><span class="eyebrow">Black Friday set</span><h2 id="bf-b-title">The Travel Set</h2></div><p class="bf-b-price" id="bf-b-price"></p></div>
   <p class="bf-b-sub" id="bf-b-sub"></p>
+  <div class="bf-b-layout">
+  <aside class="bf-stage bf-stage-desk" id="bf-stage" aria-live="polite"></aside>
+  <div class="bf-b-main">
   <div class="bf-journals" id="bf-journals"></div>
   <p class="bf-fine">Classic designs: custom work isn’t part of the sets. Canadian and US orders are made and shipped within 7–10 business days; shipping is added at checkout. Set prices can’t be combined with discount codes. Until Sunday, November 29 at 11:59 pm ET, or while sets last.</p>
   <div class="bf-bar" id="bf-bar"><p class="bf-bar-text" id="bf-bar-text" role="status" aria-live="polite"></p><button type="button" class="button primary" id="bf-add">Add set to bag</button></div>
   <p class="bf-error" id="bf-error" role="alert"></p>
+  </div>
+  </div>
 </section>
 
 <dialog class="bf-dialog bf-charm-dialog" id="bf-charm-dlg" aria-labelledby="bf-charm-title">
@@ -445,13 +459,22 @@ function cardHtml(j,i){
   const opt=(list,cur)=>list.map(v=>`<option${v===cur?' selected':''}>${v}</option>`).join('');
   return `<article class="bf-j is-open" data-j="${i}">
 <div class="bf-j-head"><strong>Journal ${i+1} of ${n} · ${j.size}</strong><span>Includes ${j.size==='A5'?3:2} lined notebooks and a dust bag</span></div>
-<div class="bf-j-body"><div class="bf-j-preview" aria-hidden="true">${pic(j,i,'p')}</div><div class="bf-j-fields">
+<div class="bf-j-body"><div class="bf-stage bf-stage-card" aria-hidden="true">${stageHtml(i,'p',true)}</div><div class="bf-j-fields">
 <div class="bf-field-leather"><p class="bf-label">Leather: <strong>${j.leather}</strong></p><div class="bf-sws" role="group" aria-label="Leather for journal ${i+1}">${sws}</div>${lok?'':`<p class="bf-note">${j.leather} has just sold out in ${j.size}. Please choose another leather.</p>`}</div>
 <div class="bf-row"><label class="bf-field">Elastic<select data-field="elastic">${opt(D.elastics.map(e=>e[0]),j.elastic)}</select></label><label class="bf-field">Eyelets<select data-field="eyelet">${opt(['Gold','Silver'],j.eyelet)}</select></label><label class="bf-field"><span>Embossed initials <small>optional</small></span><input data-field="embossed" maxlength="4" value="${esc(j.embossed)}" placeholder="Up to 4 letters" autocomplete="off" aria-label="Embossed initials for journal ${i+1}, up to 4 letters"></label></div>
 <div class="bf-charm-field">${c?`<p class="bf-label">Charm <small>included</small></p><div class="bf-charm-pick"><span class="bf-charm-photo">${charmImg(c)}</span><span>${esc(c.id+' · '+c.name)}</span><button type="button" class="bf-link" data-charm-open="${i}">Change</button></div>`
   :`<button type="button" class="button primary bf-charm-btn" data-charm-open="${i}">${j.charm?'Your charm sold out: choose another':'Choose a charm (included)'}</button>`}</div>
 </div></div></article>`;
 }
+// The big journal picture (like the design page): on a computer a panel beside the cards that always shows the journal
+// being designed; on a phone the same picture sits at the top of the open journal.
+function stageHtml(i,tag,inCard){
+  const j=B.journals[i];if(!j)return '';const c=charmOf(j.charm),n=B.journals.length;
+  return (inCard?'':`<span class="eyebrow">Journal ${i+1} of ${n}</span>`)+`<div class="bf-stage-pic">${pic(j,i,tag)}</div><p class="bf-stage-name">${j.leather} / ${j.size}</p>`
+    +`<p class="bf-stage-detail">${esc(j.elastic+' elastic · '+j.eyelet+' eyelets'+(j.embossed?' · '+j.embossed:''))}</p>`
+    +`<p class="bf-stage-detail">${c?'Charm: '+esc(c.name):'Charm: not chosen yet'}</p>`;
+}
+function renderStage(){if(!B)return;if(B.open>=0)B.shown=B.open;if(!(B.shown>=0&&B.shown<B.journals.length))B.shown=0;el('bf-stage').innerHTML=stageHtml(B.shown,'s',false)}
 function renderBar(){
   if(!B)return;const n=B.journals.length,ready=B.journals.filter(done).length;
   el('bf-bar-text').textContent=ready===n?(n===2?'Both journals ready':'All '+n+' journals ready'):ready+' of '+n+' journals ready';
@@ -464,15 +487,19 @@ function renderBuilder(){
   el('bf-b-price').innerHTML=money(s.price)+' CAD <s>'+money(s.value)+'</s>';
   el('bf-b-sub').textContent='Choose the leather, elastic, eyelets and a charm for each of your '+(n===2?'two':n===5?'five':n)+' journals.';
   el('bf-journals').innerHTML=B.journals.map(cardHtml).join('');
+  renderStage();
   el('bf-error').textContent='';
   renderBar();saveDraft();
 }
 function refreshCard(i){ // after a typed change: redraw the preview and the bar without losing the cursor
-  const card=document.querySelector('.bf-j[data-j="'+i+'"] .bf-j-preview');if(card)card.innerHTML=pic(B.journals[i],i,'p');renderBar();saveDraft();
+  const card=document.querySelector('.bf-j[data-j="'+i+'"] .bf-stage-card');if(card)card.innerHTML=stageHtml(i,'p',true);
+  if(B.shown===i)renderStage();renderBar();saveDraft();
 }
 const scrollToCard=i=>{const c=document.querySelector('.bf-j[data-j="'+i+'"]');if(c&&c.scrollIntoView)c.scrollIntoView({block:'start',behavior:'smooth'})};
 el('bf-journals').addEventListener('click',e=>{
-  const t=e.target instanceof Element?e.target.closest('button'):null;if(!t||!B)return;
+  let t=e.target instanceof Element?e.target.closest('button'):null;
+  if(!t&&e.target instanceof Element){const row=e.target.closest('.bf-j.is-closed');if(row)t=row.querySelector('[data-open]')}
+  if(!t||!B)return;
   if(t.dataset.open){B.open=Number(t.dataset.open);renderBuilder();scrollToCard(B.open);return}
   const i=B.open,j=B.journals[i];if(!j)return;
   if(t.dataset.leather){j.leather=t.dataset.leather;return renderBuilder()}
