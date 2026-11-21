@@ -373,3 +373,6 @@ body[data-view=home] .kass-bag-link,body[data-view=home] .kass-menu-btn{color:#f
 .kass-menu-note{margin:16px 0 0;font:12px/1.6 Arial,Helvetica,sans-serif;color:var(--muted,#75675f)}
 body.kass-menu-open{overflow:hidden}
 }
+/* Black Friday notice (Nov 2026) */
+.notice .kass-bf-notice{color:inherit;text-decoration:underline;text-underline-offset:3px;font-weight:bold}
+.kass-bf-bar{text-align:center;font-size:11px;letter-spacing:.07em;padding:9px 16px;line-height:1.5}

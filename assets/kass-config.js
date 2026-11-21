@@ -14,20 +14,25 @@ window.KASS_LEATHER_SIZES = {
   // e.g. Forest: ['A5'],
 };
 
+/* Black Friday page (kasskreative.com/black-friday). While live is false, customers can't see the page or the sale bar
+   at the top of the site. To look at it before launch, open kasskreative.com/black-friday?preview=kass-sneak-peek once
+   on a phone or computer; that device can then see it (…?preview=off stops that). Set live: true to launch. */
+window.KASS_BLACK_FRIDAY = window.KASS_BLACK_FRIDAY || { live: false };
+
 /* Newsletter pop-up ("little notes from kass"). It appears after delaySeconds on a page, or once
    the visitor has scrolled scrollPercent of the way down, whichever comes first. It never appears
    on the pages listed in neverOn, and stays hidden for 7 days after someone closes it. */
 window.KASS_NEWSLETTER_POPUP = {
   delaySeconds: 30,
   scrollPercent: 60,
-  neverOn: ['design', 'review'],
+  neverOn: ['design', 'review', 'black-friday'],
 };
 
 
 /* ---- Phones: compact header with Bag and Menu (styles in studio-palette.css). Desktop is unchanged. ---- */
 (function () {
   function bagCount() {
-    try { var b = JSON.parse(localStorage.getItem('kass-bag')); return b && b.items && b.items.length && Date.now() - b.at < 30 * 864e5 ? Math.min(b.items.length, 4) : 0; } catch (e) { return 0; }
+    try { var b = JSON.parse(localStorage.getItem('kass-bag')); return b && b.items && b.items.length && Date.now() - b.at < 30 * 864e5 ? Math.min(b.items.length, 12) : 0; } catch (e) { return 0; }
   }
   function build() {
     var header = document.querySelector('.centered-header');
@@ -88,4 +93,26 @@ window.KASS_NEWSLETTER_POPUP = {
     window.kassUpdateBagCount = showCount;
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', build); else build();
+})();
+
+
+/* ---- Black Friday (Nov 25–29, 2026): once KASS_BLACK_FRIDAY.live is true (above), the top notice links to the sets.
+   It switches itself off after Sunday, Nov 29 at 11:59 pm Eastern; this block can be deleted after the sale. ---- */
+(function () {
+  var EARLY = 1795615200000, PUBLIC = 1795755600000, END = 1796014800000; // Nov 25 9 am, Nov 27 12 am, Nov 30 12 am Eastern
+  function show() {
+    var now = Date.now(), n = document.querySelector('.notice');
+    if (!(window.KASS_BLACK_FRIDAY || {}).live) return;
+    if (now >= END || /^\/(black-friday|checkout|review)\b/.test(location.pathname)) return;
+    if (!n) { // pages without the top notice (product pages) get one for the sale
+      var header = document.querySelector('header'); if (!header) return;
+      n = document.createElement('div'); n.className = 'notice kass-bf-bar'; header.parentNode.insertBefore(n, header);
+    }
+    var text = now < EARLY ? 'Black Friday sets: subscribers shop first on Nov 25 · Get early access'
+      : now < PUBLIC ? 'Early access is open: Black Friday journal sets for email subscribers'
+      : 'Black Friday journal sets are here, until Sunday';
+    var a = document.createElement('a'); a.href = now < PUBLIC ? '/black-friday#early-access' : '/black-friday'; a.className = 'kass-bf-notice'; a.textContent = text + ' →';
+    n.replaceChildren(a);
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', show); else show();
 })();
