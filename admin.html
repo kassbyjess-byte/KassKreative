@@ -1518,6 +1518,15 @@
                         <div class="stat-card"><div class="stat-label">Contacted</div><div class="stat-value" id="reqCountContacted">0</div></div>
                         <div class="stat-card"><div class="stat-label">Payment Sent</div><div class="stat-value" id="reqCountPayment">0</div></div>
                     </div>
+                    <details class="checkout-settings" id="bfSettings">
+                        <summary>Black Friday sets: <span id="bfSummary">loading…</span></summary>
+                        <p style="margin:0.8rem 0 0.4rem;font-size:0.85rem;color:var(--text-medium);">Subscribers: Wed Nov 25, 9 am ET · Everyone: Fri Nov 27, 12 am ET · Ends: Sun Nov 29, 11:59 pm ET. Untick a set to stop selling it (for example when you run out). People who already have it in their bag are told it has sold out.</p>
+                        <div id="bfSetList" style="display:grid;gap:0.45rem;margin:0.6rem 0 0.8rem;"></div>
+                        <button type="button" class="btn btn-primary btn-small" onclick="saveBfSettings()">Save</button> <small id="bfSaveStatus" style="color:var(--text-light)"></small>
+                        <p style="margin:1rem 0 0.3rem;font-size:0.85rem;"><strong>Early-access link for the subscriber email</strong> (anyone with it can shop from Wednesday 9 am):</p>
+                        <div style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;"><input class="form-input" id="bfEarlyLink" readonly style="flex:1;min-width:240px;font-size:0.82rem;"><button type="button" class="btn btn-secondary btn-small" onclick="copyBfLink()">Copy link</button></div>
+                        <p style="margin:0.6rem 0 0;font-size:0.8rem;color:var(--text-light);">Preview link (only devices that open this link can see the page until it’s switched on in assets/kass-config.js): kasskreative.com/black-friday?preview=kass-sneak-peek. You can try the set designer; paying opens with the sale.</p>
+                    </details>
                     <details class="checkout-settings" id="checkoutSettings">
                         <summary>Website checkout: <span id="checkoutSummary">loading…</span></summary>
                         <label class="rv-setting" style="margin:0.9rem 0 0"><input type="checkbox" id="coEnabled"> Let customers pay on the design page (designs with “Tell me your vision” still come in as requests)</label>
@@ -1724,8 +1733,10 @@
                         <span style="display:flex; gap:0.5rem; flex-wrap:wrap;">
                             <button type="button" class="btn btn-secondary" id="importCustomersBtn" onclick="importCustomers()">Add recent customers</button>
                             <button type="button" class="btn btn-secondary" onclick="exportNewsletterCsv()">Export CSV</button>
+                            <button type="button" class="btn btn-primary" id="resendSyncBtn" onclick="syncResend()">Copy list to Resend</button>
                         </span>
                     </div>
+                    <p id="resendSyncStatus" class="rv-save-status" aria-live="polite" style="margin:-0.4rem 0 1rem;font-size:0.85rem;">Send newsletters from Resend → Broadcasts (free up to 1,000 contacts, no daily limit). The list is copied to Resend’s contacts here; new signups are added automatically, and anyone who unsubscribes from a Resend email is taken off this list within the hour.</p>
                     <div class="table-container">
                         <table>
                             <thead><tr><th>Email</th><th>Signed Up</th><th>Where</th><th></th></tr></thead>
@@ -1936,7 +1947,7 @@
                 loadOrderDetail();
             }
             if (pageName === 'dashboard') { renderOrders(); updateStats(); loadOrders(); }
-            if (pageName === 'requests') { loadRequests(); loadCheckoutSettings(); }
+            if (pageName === 'requests') { loadRequests(); loadCheckoutSettings(); loadBfSettings(); }
             if (pageName === 'newsletter') loadNewsletter();
             if (pageName === 'stock') loadStock();
             if (pageName === 'charms') loadCharms();
@@ -3534,6 +3545,42 @@
         const REQUEST_STATUS_LABELS = { new: 'New', contacted: 'Contacted', payment_sent: 'Payment sent', converted: 'Paid', declined: 'Declined', checkout_started: 'Started checkout' };
 
         // ---- website checkout settings ----
+        // BLACK FRIDAY SETS
+        let bfState = null;
+        async function loadBfSettings() {
+            try {
+                const res = await apiFetch('/api/bf/settings');
+                const data = await res.json();
+                if (data.error) throw new Error(data.error);
+                renderBfSettings(data);
+            } catch (err) { if (err.message !== 'Signed out') document.getElementById('bfSummary').textContent = 'couldn’t load'; }
+        }
+        function renderBfSettings(data) {
+            bfState = data;
+            const phase = { soon: 'opens Wed Nov 25, 9 am ET', early: 'early access is open (subscribers)', open: 'open to everyone', ended: 'the sale has ended' }[data.phase] || '';
+            const sold = Object.values(data.sold || {}).reduce((t, n) => t + n, 0);
+            document.getElementById('bfSummary').textContent = `${phase} · ${sold} set${sold === 1 ? '' : 's'} sold`;
+            document.getElementById('bfSetList').innerHTML = data.sets.map(x => `<label class="rv-setting" style="margin:0;display:flex;gap:0.6rem;align-items:flex-start;"><input type="checkbox" data-bf-set="${esc(x.id)}" ${data.off.includes(x.id) ? '' : 'checked'}><span><strong>${esc(x.name)}</strong> · $${x.price} · ${data.sold?.[x.id] || 0} sold<br><small style="color:var(--text-light);">${esc(x.contents)}</small></span></label>`).join('');
+            document.getElementById('bfEarlyLink').value = data.earlyLink || '';
+        }
+        async function saveBfSettings() {
+            const status = document.getElementById('bfSaveStatus');
+            const off = [...document.querySelectorAll('[data-bf-set]')].filter(b => !b.checked).map(b => b.dataset.bfSet);
+            status.textContent = 'Saving…';
+            try {
+                const res = await apiFetch('/api/bf/settings', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ off }) });
+                const data = await res.json();
+                if (data.error) throw new Error(data.error);
+                renderBfSettings(data);
+                status.textContent = off.length ? `Saved. Not selling: ${data.sets.filter(x => off.includes(x.id)).map(x => x.name).join(', ')}.` : 'Saved. All four sets are on sale.';
+            } catch (err) { if (err.message !== 'Signed out') status.textContent = 'Could not save: ' + err.message; }
+        }
+        function copyBfLink() {
+            const f = document.getElementById('bfEarlyLink'); f.select();
+            try { navigator.clipboard.writeText(f.value); } catch (e) { document.execCommand('copy'); }
+            document.getElementById('bfSaveStatus').textContent = 'Link copied.';
+        }
+
         async function loadCheckoutSettings() {
             try {
                 const res = await apiFetch('/api/checkout/settings');
@@ -3571,6 +3618,7 @@
         const FUNNEL_EXTRA = [
             ['request_click', 'Clicked “Send request” (Tell me your vision)'], ['request_sent', 'Requests received'], ['link_paid', 'Paid by payment link'],
             ['design_emailed', 'Designs emailed from the designer'], ['bag_email_sent', 'Bag reminder emails sent'], ['bag_return', 'Came back from a bag reminder'],
+            ['bf_view', 'Black Friday: opened the page'], ['bf_unlock', 'Black Friday: unlocked early access'], ['bf_set_added', 'Black Friday: added a set to the bag'], ['bf_paid', 'Black Friday: sets paid'],
         ];
         async function loadFunnel(days, btn) {
             if (days) funnelDays = days;
@@ -4017,7 +4065,35 @@
             window.scrollTo(0, 0);
         }
 
+        async function syncResend() {
+            const btn = document.getElementById('resendSyncBtn'), status = document.getElementById('resendSyncStatus');
+            btn.disabled = true; status.className = 'rv-save-status'; status.textContent = 'Copying to Resend…';
+            let rounds = 0, added = 0, removed = 0, data = null;
+            try {
+                do {
+                    const res = await apiFetch('/api/newsletter/resend-sync', { method: 'POST' });
+                    data = await res.json();
+                    if (!res.ok || data.error) throw new Error(data.error || 'Something went wrong');
+                    added += data.added || 0; removed += data.removed || 0;
+                    status.textContent = `Copying to Resend… ${added} added${data.remaining ? `, ${data.remaining} to go` : ''}`;
+                } while (data && !data.done && rounds++ < 40);
+                status.textContent = `Done. ${data.inResend} people are in Resend and can get Broadcasts${added ? ` (${added} just added)` : ''}${removed ? `. ${removed} who unsubscribed in Resend were taken off this list` : ''}.`;
+                status.className = 'rv-save-status ok';
+            } catch (err) {
+                if (err.message !== 'Signed out') { status.textContent = 'Not finished: ' + err.message; status.className = 'rv-save-status error'; }
+            } finally { btn.disabled = false; if (removed) loadNewsletter(); }
+        }
+        async function showResendSync() {
+            try {
+                const res = await apiFetch('/api/newsletter/resend-sync');
+                const { sync } = await res.json();
+                if (sync && !sync.error) document.getElementById('resendSyncStatus').textContent = `Resend: ${sync.inResend} contacts · last copied ${new Date(sync.at).toLocaleString()}${sync.remaining ? ` · ${sync.remaining} still to copy (click Copy list to Resend)` : ''}. Send newsletters from Resend → Broadcasts.`;
+                else if (sync && sync.error) { const st = document.getElementById('resendSyncStatus'); st.textContent = sync.error; st.className = 'rv-save-status error'; }
+            } catch (e) { /* the help text stays */ }
+        }
+
         async function loadNewsletter() {
+            showResendSync();
             const tbody = document.getElementById('newsletterTableBody');
             try {
                 const response = await apiFetch('/api/newsletter');
@@ -4031,7 +4107,7 @@
         }
 
         function renderNewsletter() {
-            const sourceLabels = { footer: 'Footer', 'welcome-popup': 'Pop-up' };
+            const sourceLabels = { footer: 'Footer', 'welcome-popup': 'Pop-up', 'black-friday': 'Black Friday early access' };
             const customers = allSubscribers.filter(s => s.consent === 'implied').length;
             document.getElementById('newsletterCount').textContent = `${allSubscribers.length} subscriber${allSubscribers.length === 1 ? '' : 's'}${customers ? ` (${customers} from orders)` : ''}`;
             const monthYear = ms => new Date(ms).toLocaleDateString([], { month: 'short', year: 'numeric' });

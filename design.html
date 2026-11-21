@@ -103,12 +103,12 @@ $('design-start-over').addEventListener('click',()=>{try{localStorage.removeItem
 (()=>{
 'use strict';
 const el=id=>document.getElementById(id);
-const BAG='kass-bag',MAX=4;
+const BAG='kass-bag',MAX=4,MAX_ITEMS=12;
 const fmt=n=>'$'+(Math.round(Number(n)*100)/100).toFixed(2).replace(/\.00$/,'');
-const loadBag=()=>{try{const b=JSON.parse(localStorage.getItem(BAG));if(b&&Array.isArray(b.items)&&Date.now()-b.at<30*864e5)return b.items.slice(0,MAX)}catch(e){}return []};
+const loadBag=()=>{try{const b=JSON.parse(localStorage.getItem(BAG));if(b&&Array.isArray(b.items)&&Date.now()-b.at<30*864e5)return b.items.slice(0,MAX_ITEMS)}catch(e){}return []};
 const saveBag=items=>{try{items.length?localStorage.setItem(BAG,JSON.stringify({v:1,at:Date.now(),items})):localStorage.removeItem(BAG)}catch(e){}};
 const isVision=j=>!!(j.custom&&j.customizations.some(c=>c.type==='other'));
-const priceOf=j=>(j.custom?{A5:208,A6:178}[j.size]+40*Math.max(0,j.customizations.length-1):{A5:158,A6:128}[j.size])+j.charms.reduce((t,c)=>t+c.price*(c.quantity||1),0);
+const priceOf=j=>j.set?0:(j.custom?{A5:208,A6:178}[j.size]+40*Math.max(0,j.customizations.length-1):{A5:158,A6:128}[j.size])+j.charms.reduce((t,c)=>t+c.price*(c.quantity||1),0);
 const gaItem=j=>({item_id:j.size+(j.custom?'-custom':''),item_name:j.size+(j.custom?' custom':'')+' journal',item_variant:j.leather,price:isVision(j)?undefined:priceOf(j),quantity:1});
 const newId=()=>{try{return crypto.randomUUID().slice(0,8)}catch(e){return Math.random().toString(36).slice(2,10)}};
 const q=new URLSearchParams(location.search);
@@ -119,6 +119,10 @@ funnel('design_view');
 el('options')?.addEventListener('click',e=>{if(e.target instanceof Element&&e.target.closest('[data-select]'))funnel('leather_pick')});
 let bag=loadBag();
 const editing=bag.find(j=>j.id===q.get('edit'))||null;
+// Black Friday set journals are edited on the Black Friday page; sets are priced once (the Worker checks them)
+if(editing&&editing.set){location.replace('/black-friday?edit='+encodeURIComponent(editing.set.key));return}
+const regularCount=list=>list.filter(j=>!j.set).length;
+const subOf=list=>list.filter(j=>!j.set).reduce((t,j)=>t+priceOf(j),0)+[...new Map(list.filter(j=>j.set).map(j=>[j.set.key,j.set])).values()].reduce((t,s)=>t+(Number(s.price)||0),0);
 
 // ---- customization fields: lace is always cream; ribbon has its own colours
 function syncLace(){
@@ -167,7 +171,7 @@ function renderBanner(){
     box.hidden=false;return;
   }
   if(!others.length){box.hidden=true;return}
-  const priced=others.filter(j=>!isVision(j)),sum=priced.reduce((t,j)=>t+priceOf(j),0);
+  const priced=others.filter(j=>!isVision(j)),sum=subOf(priced);
   el('bag-banner-text').textContent='Your bag: '+others.length+' journal'+(others.length>1?'s':'')+(priced.length?' · '+fmt(sum)+' CAD':'')+'. You’re designing journal '+(others.length+1)+'.';
   el('bag-banner-link').textContent='Go to checkout →';
   box.hidden=false;
@@ -246,7 +250,7 @@ const keep=(k,d)=>{estCache[k]=d;try{sessionStorage.setItem('kass-ship-est',JSON
 try{const c=localStorage.getItem(SHIP_KEY);if(validCountry(c)){shipSel.value=c;shipCountry=c}}catch(e){}
 const countryLabel=()=>{const o=shipSel&&shipSel.selectedOptions[0];const n=o&&o.value?o.textContent:'';return /^(United |Netherlands$|Philippines$|Bahamas$|Czech Republic$|Dominican Republic$|Maldives$|Gambia$|Central African)/.test(n)?'the '+n:n};
 const orderItems=()=>{const d=designData();return [...bag.filter(j=>!editing||j.id!==editing.id),d].filter(j=>!isVision(j))};
-const orderShape=()=>{const items=orderItems();return {size:items.some(j=>j.size==='A5')?'A5':'A6',count:Math.max(1,Math.min(items.length,MAX))}};
+const orderShape=()=>{const items=orderItems();return {size:items.some(j=>j.size==='A5')?'A5':'A6',count:Math.max(1,Math.min(items.length,MAX_ITEMS))}};
 function estimateKey(){const items=orderItems(),o=orderShape();return shipCountry&&items.length?[shipCountry,o.size,o.count].join('|'):''}
 async function fetchEstimate(){
   const key=estimateKey();
@@ -354,7 +358,7 @@ ed.form?.addEventListener('submit',async e=>{
   const btn=ed.form.querySelector('button[type=submit]'),email=ed.input.value.trim();
   if(!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)){ed.status.textContent='Please add a valid email address.';ed.input.focus();return}
   const others=bag.filter(j=>!editing||j.id!==editing.id);
-  const items=(others.length>=MAX?others:[...others,designData()]).slice(0,MAX);
+  const items=(regularCount(others)>=MAX?others:[...others,designData()]).slice(0,MAX_ITEMS);
   let id='';try{id=localStorage.getItem('kass-bag-id')||''}catch(x){}
   btn.disabled=true;ed.status.textContent='Sending…';
   try{
@@ -423,7 +427,7 @@ el('review').onclick=e=>{
   const j={...d,id:editing?editing.id:newId()};
   if(editing){const i=items.findIndex(x=>x.id===editing.id);if(i>=0)items[i]=j;else items.push(j)}
   else{
-    if(items.length>=MAX)return fail('Your bag already has 4 journals, the most for one online order. Please check out first, then design your next one. Ordering more as gifts or for a group? Email kassbyjess@gmail.com and we’ll put it together with you.');
+    if(regularCount(items)>=MAX)return fail('Your bag already has 4 journals, the most for one online order. Please check out first, then design your next one. Ordering more as gifts or for a group? Email kassbyjess@gmail.com and we’ll put it together with you.');
     if(isVision(j)&&items.some(isVision))return fail('Your bag already has a “Tell me your vision” journal. Please describe both ideas in that one, or send it first.');
     items.push(j);
   }

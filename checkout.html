@@ -109,7 +109,7 @@ body[data-view=journals] #journals h1{font:normal clamp(42px,5vw,72px)/1.05 Geor
 .ship-note{margin:16px 0 0}
 body[data-view=checkout] .editorial-footer .footer-columns{grid-template-columns:repeat(3,minmax(0,1fr))}
 @media(max-width:700px){body[data-view=checkout] .checkout{padding:32px 5% 50px}#checkout .sectionhead h1.section-title{font-size:37px}.checkout .address-fields{grid-template-columns:1fr}.bag-item{grid-template-columns:64px minmax(0,1fr)}.bag-thumb{width:64px;height:64px}.checkout-bag,.checkout-pay{padding:18px}body[data-view=checkout] .editorial-footer .footer-columns{grid-template-columns:1fr}}
-.ship-to{display:flex;align-items:center;justify-content:space-between;gap:14px;margin:18px 0 14px;padding-top:16px;border-top:1px solid var(--line)}.ship-to label{margin:0;font-size:13px;white-space:nowrap}.ship-to select{flex:1;min-width:0;max-width:260px;margin:0}.checkout-bag .quote-error{margin:12px 0 0}.ship-country-line{margin:0;font-size:13px;color:var(--muted)}.ship-country-line .textbutton{margin-left:4px}.gift-note{margin:10px 0 0;font-size:12px;color:var(--muted);line-height:1.5}.gift-note a{text-decoration:underline;text-underline-offset:3px}</style><style>.trust-box{margin:18px 0 0;padding:12px 14px;background:#faf7f1;border-left:3px solid var(--line)}.trust-box[hidden]{display:none}.trust-box .trust-stars{margin:0 0 4px;font-size:12px;letter-spacing:.03em}.trust-box blockquote{margin:0;font:14px/1.55 Georgia,serif}.trust-box .trust-who{margin:4px 0 0;font-size:12px;color:var(--muted)}</style></head><body data-view="checkout">
+.ship-to{display:flex;align-items:center;justify-content:space-between;gap:14px;margin:18px 0 14px;padding-top:16px;border-top:1px solid var(--line)}.ship-to label{margin:0;font-size:13px;white-space:nowrap}.ship-to select{flex:1;min-width:0;max-width:260px;margin:0}.checkout-bag .quote-error{margin:12px 0 0}.ship-country-line{margin:0;font-size:13px;color:var(--muted)}.ship-country-line .textbutton{margin-left:4px}.gift-note{margin:10px 0 0;font-size:12px;color:var(--muted);line-height:1.5}.gift-note a{text-decoration:underline;text-underline-offset:3px}</style><style>.trust-box{margin:18px 0 0;padding:12px 14px;background:#faf7f1;border-left:3px solid var(--line)}.trust-box[hidden]{display:none}.trust-box .trust-stars{margin:0 0 4px;font-size:12px;letter-spacing:.03em}.trust-box blockquote{margin:0;font:14px/1.55 Georgia,serif}.trust-box .trust-who{margin:4px 0 0;font-size:12px;color:var(--muted)}</style><style>.bag-set-thumbs{display:flex;flex-wrap:wrap;align-content:flex-start;align-self:start;height:auto;min-height:42px}.bag-set-thumbs span{display:block;width:50%;height:42px}.bag-set-thumbs svg{width:100%;height:100%;display:block}.bag-set .bag-price s{font-weight:normal;color:var(--muted);font-size:12px}.bag-set-note{margin-top:4px;color:#526047}</style></head><body data-view="checkout">
 <div class="notice">Handmade in Canada · Shipping worldwide · Secure checkout</div>
 <header class="centered-header"><nav class="nav-left" aria-label="Shop"><a data-page="home" href="/">Home</a><a data-page="journals" href="/journals">The Journals</a><a data-page="leathers" href="/leathers">The Leathers</a><a data-page="design" href="/design">Design Your Journal</a></nav><a class="logo" href="/" aria-label="KASS home"><img src="assets/kass-logo.svg" alt="KASS"></a><nav class="nav-right" aria-label="About and help"><a data-page="story" href="/story">Our Story</a><a data-page="care" href="/care">FAQ & Care</a><a data-page="reviews" href="/reviews">Customer Reviews</a></nav></header>
 <main><section class="checkout" id="checkout"><div class="sectionhead"><div><span class="eyebrow">Checkout</span><h1 class="section-title" id="checkout-title">Your bag</h1><p id="checkout-intro">Your total with shipping is shown right away. Add your details and pay securely with Apple Pay, Google Pay or card.</p></div></div>
@@ -138,14 +138,20 @@ body[data-view=checkout] .editorial-footer .footer-columns{grid-template-columns
 'use strict';
 const API=window.KASS_API_BASE||'';
 const el=id=>document.getElementById(id);
-const BAG='kass-bag',MAX=4,CONTACT='kass-checkout-contact';
+const BAG='kass-bag',MAX=4,MAX_ITEMS=12,CONTACT='kass-checkout-contact';
 const fmt=n=>'$'+(Math.round(Number(n)*100)/100).toFixed(2).replace(/\.00$/,'');
 const track=(n,p)=>{try{if(window.gtag)gtag('event',n,p||{})}catch(e){}};
-const loadBag=()=>{try{const b=JSON.parse(localStorage.getItem(BAG));if(b&&Array.isArray(b.items)&&Date.now()-b.at<30*864e5)return b.items.filter(j=>j&&['A5','A6'].includes(j.size)&&j.leather).slice(0,MAX)}catch(e){}return []};
+const loadBag=()=>{try{const b=JSON.parse(localStorage.getItem(BAG));if(b&&Array.isArray(b.items)&&Date.now()-b.at<30*864e5)return b.items.filter(j=>j&&['A5','A6'].includes(j.size)&&j.leather).slice(0,MAX_ITEMS)}catch(e){}return []};
 const saveBag=items=>{try{items.length?localStorage.setItem(BAG,JSON.stringify({v:1,at:Date.now(),items})):localStorage.removeItem(BAG)}catch(e){}};
 const isVision=j=>!!(j.custom&&(j.customizations||[]).some(c=>c.type==='other'));
-const priceOf=j=>(j.custom?{A5:208,A6:178}[j.size]+40*Math.max(0,j.customizations.length-1):{A5:158,A6:128}[j.size])+(j.charms||[]).reduce((t,c)=>t+c.price*(c.quantity||1),0);
+const priceOf=j=>j.set?0:(j.custom?{A5:208,A6:178}[j.size]+40*Math.max(0,j.customizations.length-1):{A5:158,A6:128}[j.size])+(j.charms||[]).reduce((t,c)=>t+c.price*(c.quantity||1),0);
 const gaItem=j=>({item_id:j.size+(j.custom?'-custom':''),item_name:j.size+(j.custom?' custom':'')+' journal',item_variant:j.leather,price:isVision(j)?undefined:priceOf(j),quantity:1});
+// Black Friday sets: several journals in the bag that share set.key, priced once (the Worker checks the set and its price)
+const regular=list=>list.filter(j=>!j.set);
+const setsIn=list=>{const m=new Map();list.forEach((j,i)=>{if(!j.set)return;const g=m.get(j.set.key)||{key:j.set.key,set:j.set,items:[],at:i};g.items.push(j);m.set(j.set.key,g)});return [...m.values()]};
+const subOf=list=>regular(list).reduce((t,j)=>t+priceOf(j),0)+setsIn(list).reduce((t,g)=>t+(Number(g.set.price)||0),0);
+const gaItems=list=>[...regular(list).map(gaItem),...setsIn(list).map(g=>({item_id:'bf-'+g.set.id,item_name:g.set.name,item_category:'Black Friday set',price:g.set.price,quantity:1}))];
+const earlyCode=()=>{try{return localStorage.getItem('kass-bf-early')||''}catch(e){return ''}};
 const strip=j=>{const {id,...rest}=j;return rest};
 const TITLES={embroidery:'Embroidered initial',lace:'Laced spine',stipple:'Hand-stippled initial',wavy:'The wave journal',other:'Tell me your vision'};
 const surface=n=>'assets/leathers/'+(n==='Cognac'?'tan':String(n).toLowerCase())+'-surface.webp';
@@ -177,15 +183,41 @@ function itemProblem(j){
   if(charm)return 'Sorry, charm '+charm.id+' has sold out. Please edit this journal to remove it.';
   return '';
 }
+function renderSet(g,list,n){
+  const li=document.createElement('li');li.className='bag-item bag-set'+(g.items.some(itemProblem)?' has-problem':'');
+  const pic=document.createElement('div');pic.className='bag-thumb bag-set-thumbs';
+  try{pic.innerHTML=g.items.map((j,k)=>'<span>'+(window.KassJournalPreview?KassJournalPreview.render({...j,surface:surface(j.leather)}).replace(/jp-/g,'jp'+g.at+'s'+k+'-'):'')+'</span>').join('')}catch(e){}
+  const info=document.createElement('div');info.className='bag-info';
+  const head=document.createElement('div');head.className='bag-head';
+  const name=document.createElement('strong');name.textContent=(n>1?(g.at+1)+'. ':'')+g.set.name+' · Black Friday';
+  const price=document.createElement('span');price.className='bag-price';price.textContent=fmt(g.set.price)+' CAD';
+  if(g.set.value){const s=document.createElement('s');s.textContent=fmt(g.set.value);price.append(' ',s)}
+  head.append(name,price);
+  const ul=document.createElement('ul');ul.className='bag-lines';
+  g.items.forEach((j,k)=>{const x=document.createElement('li');const c=(j.charms||[])[0];
+    x.textContent='Journal '+(k+1)+': '+j.size+' · '+j.leather+' · '+j.elastic+' elastic · '+j.eyelet+' eyelets'+(j.embossed?' · Embossed '+j.embossed:'')+(c?' · Charm '+c.id+' '+c.name:'');ul.append(x)});
+  const inc=document.createElement('li');inc.className='bag-set-note';inc.textContent='Includes lined notebooks and a KASS dust bag for each journal. Black Friday price: discount codes can’t be added.';ul.append(inc);
+  info.append(head,ul);
+  const prob=g.items.map(itemProblem).find(Boolean);
+  if(prob){const p=document.createElement('p');p.className='bag-problem';p.setAttribute('role','alert');p.textContent=prob.replace('Please edit this journal','Please edit the set');info.append(p)}
+  const acts=document.createElement('div');acts.className='bag-actions';
+  const edit=document.createElement('a');edit.className='textbutton';edit.href='/black-friday?edit='+encodeURIComponent(g.key);edit.textContent='Edit set';
+  const rm=document.createElement('button');rm.type='button';rm.className='textbutton';rm.textContent='Remove set';rm.setAttribute('aria-label','Remove '+g.set.name);
+  rm.onclick=()=>{undo={items:g.items,at:g.at};bag=bag.filter(j=>!(j.set&&j.set.key===g.key));saveBag(bag);track('remove_from_cart',{currency:'CAD',items:gaItems(g.items)});refresh(true)};
+  acts.append(edit,rm);info.append(acts);
+  li.append(pic,info);list.append(li);
+}
 function renderBag(){
   const list=el('bag-list');list.replaceChildren();
+  const units=regular(bag).length+setsIn(bag).length,shown=new Set();
   bag.forEach((j,i)=>{
+    if(j.set){if(shown.has(j.set.key))return;shown.add(j.set.key);return renderSet(setsIn(bag).find(g=>g.key===j.set.key),list,units)}
     const li=document.createElement('li');li.className='bag-item'+(itemProblem(j)?' has-problem':'');
     const pic=document.createElement('div');pic.className='bag-thumb';
     try{pic.innerHTML=window.KassJournalPreview?KassJournalPreview.render({...j,surface:surface(j.leather)}).replace(/jp-/g,'jp'+i+'-'):''}catch(e){}
     const info=document.createElement('div');info.className='bag-info';
     const head=document.createElement('div');head.className='bag-head';
-    const name=document.createElement('strong');name.textContent=(bag.length>1?(i+1)+'. ':'')+j.size+(j.custom?' Custom':'')+' Journal — '+j.leather;
+    const name=document.createElement('strong');name.textContent=(units>1?(i+1)+'. ':'')+j.size+(j.custom?' Custom':'')+' Journal — '+j.leather;
     const price=document.createElement('span');price.className='bag-price';price.textContent=isVision(j)?'Price by email':fmt(priceOf(j))+' CAD';
     head.append(name,price);
     const lines=[j.elastic+' elastic · '+j.eyelet+' eyelets'+(j.embossed?' · Embossed '+j.embossed:'')];
@@ -200,16 +232,16 @@ function renderBag(){
     const acts=document.createElement('div');acts.className='bag-actions';
     const edit=document.createElement('a');edit.className='textbutton';edit.href='/design?edit='+encodeURIComponent(j.id);edit.textContent='Edit';edit.setAttribute('aria-label','Edit journal '+(i+1));
     const rm=document.createElement('button');rm.type='button';rm.className='textbutton';rm.textContent='Remove';rm.setAttribute('aria-label','Remove journal '+(i+1));
-    rm.onclick=()=>{undo={item:j,at:i};bag.splice(i,1);saveBag(bag);track('remove_from_cart',{currency:'CAD',items:[gaItem(j)]});refresh(true)};
+    rm.onclick=()=>{undo={items:[j],at:i};bag.splice(i,1);saveBag(bag);track('remove_from_cart',{currency:'CAD',items:[gaItem(j)]});refresh(true)};
     acts.append(edit,rm);info.append(acts);
     li.append(pic,info);list.append(li);
   });
-  el('add-journal').hidden=bag.length>=MAX;
+  el('add-journal').hidden=regular(bag).length>=MAX;
   el('bag-count').textContent=bag.length?bag.length+' journal'+(bag.length>1?'s':''):'';
   const n=el('bag-undo');
-  if(undo){n.hidden=false;el('bag-undo-text').textContent='Journal removed.'}else n.hidden=true;
+  if(undo){n.hidden=false;el('bag-undo-text').textContent=undo.items.length>1||undo.items[0].set?'Set removed.':'Journal removed.'}else n.hidden=true;
 }
-el('bag-undo-btn').onclick=()=>{if(!undo)return;bag.splice(Math.min(undo.at,bag.length),0,undo.item);bag=bag.slice(0,MAX);saveBag(bag);undo=null;refresh(true)};
+el('bag-undo-btn').onclick=()=>{if(!undo)return;bag.splice(Math.min(undo.at,bag.length),0,...undo.items);bag=bag.slice(0,MAX_ITEMS);saveBag(bag);undo=null;refresh(true)};
 
 // ---------- contact + address (kept for this visit only) ----------
 const FIELDS=['customer-name','customer-email','customer-phone','country','address1','address2','city','region','postal'];
@@ -262,7 +294,7 @@ function addressGap(){
 // ---------- shipping + total ----------
 const payItems=()=>forceRequest?[]:bag.filter(j=>!isVision(j));
 const requestItems=()=>forceRequest?bag:bag.filter(isVision);
-function quoteBody(){const items=bag.filter(j=>!isVision(j)),c=contact();return {design:{...strip(items[0]),...c},extraJournals:items.slice(1).map(strip)}}
+function quoteBody(){const items=bag.filter(j=>!isVision(j)),c=contact(),early=earlyCode();return {design:{...strip(items[0]),...c},extraJournals:items.slice(1).map(strip),...(early?{early}:{})}}
 function scheduleQuote(now){clearTimeout(quoteTimer);quoteTimer=setTimeout(getQuote,now?0:450)}
 async function getQuote(){
   const items=bag.filter(j=>!isVision(j)),seq=++quoteSeq;
@@ -295,7 +327,7 @@ function renderTotals(){
   if(!items.length){box.hidden=true}
   else{
     box.hidden=false;
-    const sub=items.reduce((t,j)=>t+priceOf(j),0);
+    const sub=subOf(items);
     box.append(row(items.length>1?'Subtotal ('+items.length+' journals)':'Subtotal',fmt(quote?quote.subtotal:sub)+' CAD'));
     if(quote){
       box.append(row('Shipping',fmt(quote.shipping)+' CAD'));
@@ -346,7 +378,8 @@ function syncBag(){clearTimeout(syncTimer);syncTimer=setTimeout(async()=>{
   const email=el('customer-email').value.trim();if(!emailOk(email))return;
   const items=bag.map(strip),name=el('customer-name').value.trim(),country=el('country').value;
   const sig=JSON.stringify([id,email,name,country,items]);if(sig===lastSync)return;lastSync=sig;
-  try{const r=await fetch(API+'/api/bag',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id,email,name,country,items})});const d=await r.json();
+  const early=earlyCode();
+  try{const r=await fetch(API+'/api/bag',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id,email,name,country,items,...(early?{early}:{})})});const d=await r.json();
     if(d.id){try{localStorage.setItem(BAG_ID,d.id)}catch(e){}lastSync=JSON.stringify([d.id,email,name,country,items])}}catch(e){lastSync=''}
 },1500)}
 function refresh(requote){syncBag();renderBag();if(!bag.length)return showEmpty();renderActions();renderTotals();if(requote)scheduleQuote(true)}
@@ -393,8 +426,8 @@ el('pay-now').onclick=async()=>{
     if(res.status===409&&data.code==='sold_out'){updateStock(data);track('sold_out_at_checkout',{});throw Error(data.error)}
     if(!res.ok||!data.url)throw Error(data.error||'We couldn’t open the secure checkout. Please try again.');
     const items=payItems();
-    try{sessionStorage.setItem('kass-checkout',JSON.stringify({ref:data.reference,at:Date.now(),ids:items.map(j=>j.id),total:quote.total,items:items.map(gaItem)}))}catch(e){}
-    track('begin_checkout',{currency:'CAD',value:quote.total,items:items.map(gaItem)});
+    try{sessionStorage.setItem('kass-checkout',JSON.stringify({ref:data.reference,at:Date.now(),ids:items.map(j=>j.id),total:quote.total,items:gaItems(items)}))}catch(e){}
+    track('begin_checkout',{currency:'CAD',value:quote.total,items:gaItems(items)});
     location.href=data.url;
   }catch(e){formError(e.message);btn.disabled=false;renderActions()}
 };
@@ -511,7 +544,7 @@ if(q.get('checkout')==='cancelled'||q.get('checkout')==='unavailable'){
 if(!bag.length){showEmpty();track('view_cart',{currency:'CAD',value:0,items:[]});return}
 try{const c=JSON.parse(localStorage.getItem('kass-stock'));if(c&&Date.now()-c.at<864e5)updateStock(c)}catch(e){}
 refresh(false);getQuote();detectCountry();funnel('checkout_view');
-track('view_cart',{currency:'CAD',value:bag.filter(j=>!isVision(j)).reduce((t,j)=>t+priceOf(j),0),items:bag.map(gaItem)});
+track('view_cart',{currency:'CAD',value:subOf(bag.filter(j=>!isVision(j))),items:gaItems(bag)});
 if(window.fetch)fetch(API+'/api/stock',{cache:'no-store'}).then(r=>r.ok?r.json():null).then(d=>{if(d&&Array.isArray(d.soldOut)){try{localStorage.setItem('kass-stock',JSON.stringify({soldOut:d.soldOut,soldOutSizes:d.soldOutSizes||{},charmsSoldOut:d.charmsSoldOut||[],at:Date.now()}))}catch(e){}updateStock(d)}}).catch(()=>{});
 }
 const backId=q.get('bag'),backT=q.get('t');
@@ -521,7 +554,8 @@ if(backId&&backT&&window.fetch){
       const r=await fetch(API+'/api/bag?id='+encodeURIComponent(backId)+'&t='+encodeURIComponent(backT),{cache:'no-store'});
       const d=await r.json();
       if(r.ok&&Array.isArray(d.items)&&d.items.length){
-        bag=d.items.slice(0,MAX).map(j=>({...j,id:newId()}));saveBag(bag);
+        bag=d.items.slice(0,MAX_ITEMS).map(j=>({...j,id:newId()}));saveBag(bag);
+        if(d.early){try{localStorage.setItem('kass-bf-early',d.early)}catch(e){}}
         try{localStorage.setItem(BAG_ID,backId)}catch(e){}
         const fill=(id,v)=>{const f=el(id);if(f&&v&&!f.value)f.value=v};
         fill('customer-email',d.email);fill('customer-name',d.name);
