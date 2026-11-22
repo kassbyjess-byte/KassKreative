@@ -103,7 +103,9 @@ body[data-view=journals] #journals h1{font-family:Arial,Helvetica,sans-serif;fon
 .bf-when{margin:0;max-width:420px;font-size:13px;line-height:1.7;color:var(--ink)}
 .bf-banner-actions{margin:14px 0 0}
 .bf-early-link{background:none;border:0;border-bottom:1px solid currentColor;padding:0 0 4px;font:12px Arial,Helvetica,sans-serif;color:var(--ink);cursor:pointer}
-.bf-preview-note{margin:14px 0 0;font-size:12px;background:#fff3a8;padding:5px 10px;display:inline-block}
+.bf-preview-note{display:table;margin:-30px auto 26px;font-size:12px;background:#fff3a8;padding:6px 12px;text-align:center}
+.bf-preview-note[hidden]{display:none}
+body.bf-building .bf-preview-note{display:none}
 .bf-sets{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:28px 22px;padding:0 5%;max-width:1240px;margin:0 auto;box-sizing:border-box}
 .bf-set{display:flex;flex-direction:column}
 .bf-photo{aspect-ratio:1;width:100%}
@@ -212,9 +214,10 @@ body.bf-building .bf{padding-top:34px}
     <h1 id="bf-title">Black Friday <em>sets</em></h1>
     <p class="bf-when" id="bf-when" role="status" aria-live="polite">Email subscribers shop first on Wednesday, November 25 at 9 am ET. Everyone else from Friday, November 27.</p>
     <p class="bf-banner-actions"><button type="button" class="underlink bf-early-link" id="bf-early-open" hidden>Get early access</button><a class="underlink" id="bf-ended-link" href="/design" hidden>Design a journal</a></p>
-    <p class="bf-preview-note" id="bf-preview-note" hidden>Preview: you can try the set designer now. Checkout opens with the sale.</p>
   </div>
 </section>
+
+<p class="bf-preview-note" id="bf-preview-note" hidden>Preview (only you can see this note): you can try the set designer now. Checkout opens with the sale.</p>
 
 <section class="bf-sets" id="bf-sets" aria-label="The Black Friday sets">
   <article class="bf-set" id="set-travel">
