@@ -116,3 +116,63 @@ window.KASS_NEWSLETTER_POPUP = {
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', show); else show();
 })();
+
+/* ---- Black Friday pop-up (until Fri, Nov 27 at 12 am Eastern): the newsletter pop-up gets a Black Friday stamp and
+   early-access wording. Signing up there also unlocks early access on that device. Afterwards the usual pop-up is back
+   on its own; this block can be deleted after the sale. ---- */
+(function () {
+  var EARLY = 1795615200000, PUBLIC = 1795755600000; // Nov 25 9 am, Nov 27 12 am Eastern
+  var API = function () { return window.KASS_API_BASE || ''; };
+  function setup() {
+    var now = window.KASS_TEST_NOW || Date.now();
+    var dlg = document.getElementById('studio-welcome');
+    if (now >= PUBLIC || !dlg) return;
+    var open = now >= EARLY;
+    var scene = dlg.querySelector('.paper-signup-scene'), form = dlg.querySelector('.studio-newsletter-form');
+    var copy = document.getElementById('studio-welcome-copy'), button = form && form.querySelector('button[type=submit]');
+    var status = form && form.querySelector('[role=status]'), fine = form && form.querySelector('.newsletter-fineprint em');
+    if (!scene || !form || !copy || !button || !status) return;
+    var css = document.createElement('style');
+    css.textContent = '.kass-bf-stamp{position:absolute;top:63%;left:29%;width:42%;box-sizing:border-box;transform:rotate(-5deg);background:#f7f1e8;'
+      + 'border:.7cqw solid #5b3f66;outline:.35cqw dashed #5b3f66;outline-offset:-1.9cqw;padding:3.2cqw 2cqw 2.8cqw;text-align:center;color:#5b3f66;'
+      + 'box-shadow:0 1cqw 2.5cqw rgba(40,25,45,.25);z-index:2;pointer-events:none}'
+      + '.kass-bf-stamp b{display:block;font:700 4.3cqw/1.05 Arial,Helvetica,sans-serif;letter-spacing:.35cqw}'
+      + '.kass-bf-stamp i{display:block;font:italic 400 4.8cqw/1.15 Arial,Helvetica,sans-serif;margin-top:.6cqw}'
+      + '.kass-bf-stamp span{display:block;font:600 1.7cqw/1.3 Arial,Helvetica,sans-serif;letter-spacing:.2cqw;margin-top:1.2cqw;text-transform:uppercase}'
+      + '#studio-welcome .newsletter-status a{color:inherit;font-weight:bold;text-decoration:underline;text-underline-offset:2px}';
+    document.head.appendChild(css);
+    var stamp = document.createElement('div');
+    stamp.className = 'kass-bf-stamp'; stamp.setAttribute('aria-hidden', 'true');
+    stamp.innerHTML = '<b>BLACK FRIDAY</b><i>early access ♡</i><span>' + (open ? 'Open now' : 'Wed · Nov 25 · 9 am ET') + '</span>';
+    scene.appendChild(stamp);
+    copy.textContent = open
+      ? 'Black Friday early access is open now for subscribers. Join the list and shop our handmade journal sets today.'
+      : 'Black Friday early access ♡ Subscribers shop our handmade journal sets first, on Wednesday at 9 am ET.';
+    button.textContent = 'Get early access ♡';
+    if (fine) fine.textContent = 'Plus little notes from the studio. Unsubscribe anytime.';
+    dlg.setAttribute('aria-label', 'Black Friday early access: join the KASS email list');
+    // Sign-ups here join the list and unlock early access on this device (the same as the Black Friday page)
+    document.addEventListener('submit', function (e) {
+      if (e.target !== form) return;
+      e.preventDefault(); e.stopImmediatePropagation();
+      if (!form.reportValidity()) return;
+      var fields = new FormData(form);
+      button.disabled = true; button.textContent = 'Saving your spot…'; status.textContent = '';
+      fetch(API() + '/api/bf/early', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: fields.get('email'), consent: true, website: fields.get('website') }) })
+        .then(function (r) { return r.json().then(function (d) { if (!r.ok || !d.code) throw new Error(d.error || 'Please try again in a moment.'); return d; }); })
+        .then(function (d) {
+          try { localStorage.setItem('kass-newsletter-subscribed', 'yes'); localStorage.setItem('kass-bf-early', d.code); } catch (x) {}
+          try { if (window.gtag) gtag('event', 'newsletter_signup', { source: 'black-friday-popup' }); } catch (x) {}
+          var live = (window.KASS_BLACK_FRIDAY || {}).live && (window.KASS_TEST_NOW || Date.now()) >= EARLY;
+          status.textContent = live ? 'You’re in ♡ Early access is open. ' : 'You’re on the list ♡ Your early-access link arrives by email on Wednesday at 9 am ET.';
+          if (live) { var a = document.createElement('a'); a.href = '/black-friday'; a.textContent = 'Shop the sets →'; status.appendChild(a); }
+          form.classList.add('is-newsletter-saved');
+          form.querySelectorAll('input').forEach(function (i) { i.disabled = true; });
+          button.textContent = 'You’re on the list ♡';
+        })
+        .catch(function (err) { status.textContent = err.message || 'We couldn’t save your email. Please try again.'; button.disabled = false; button.textContent = 'Get early access ♡'; });
+    }, true);
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', setup); else setup();
+})();
