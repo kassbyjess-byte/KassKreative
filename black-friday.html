@@ -100,9 +100,8 @@ body[data-view=journals] #journals h1{font-family:Arial,Helvetica,sans-serif;fon
 .bf-banner-copy{position:relative;z-index:1;width:37%;box-sizing:border-box;text-align:left;padding:24px 2% 24px 6%}
 .bf-banner h1{font:400 clamp(36px,4vw,56px)/1.1 Arial,Helvetica,sans-serif;letter-spacing:-1.2px;margin:0 0 14px}
 .bf-banner h1 em{font-style:italic;font-weight:400;color:inherit}
-.bf-when{margin:0;max-width:420px;font-size:13px;line-height:1.7;color:var(--ink)}
 .bf-banner-actions{margin:14px 0 0}
-.bf-early-link{background:none;border:0;border-bottom:1px solid currentColor;padding:0 0 4px;font:12px Arial,Helvetica,sans-serif;color:var(--ink);cursor:pointer}
+.bf-banner-actions[hidden]{display:none}
 .bf-preview-note{display:table;margin:-30px auto 26px;font-size:12px;background:#fff3a8;padding:6px 12px;text-align:center}
 .bf-preview-note[hidden]{display:none}
 body.bf-building .bf-preview-note{display:none}
@@ -203,7 +202,7 @@ body.bf-building .bf{padding-top:34px}
 .bf-charm-id{display:block;margin-top:2px}
 .bf-charm.on{border:2px solid var(--ink);color:var(--ink);font-weight:bold}
 @media(max-width:900px){.bf-sets{grid-template-columns:repeat(2,minmax(0,1fr))}.bf-b-layout{grid-template-columns:minmax(0,1fr)}.bf-stage-desk{display:none}.bf-stage-card{display:block;padding:16px 12px 14px;margin:0 0 16px}.bf-stage-card .bf-stage-pic{max-width:300px;margin:0 auto}.bf-sws{grid-template-columns:repeat(8,minmax(0,1fr))}}
-@media(max-width:700px){.bf-banner{aspect-ratio:auto;height:min(128vw,560px);max-height:none;align-items:end;margin-bottom:34px}.bf-banner:after{content:"";position:absolute;inset:0;background:linear-gradient(to bottom,rgba(246,243,238,0) 56%,rgba(246,243,238,.9) 86%);pointer-events:none}.bf-banner-photo img{object-position:33% 50%}.bf-banner-copy{width:100%;text-align:center;padding:0 7% 20px}.bf-when{margin:0 auto;max-width:330px}.bf-banner h1{font-size:36px;letter-spacing:-.8px}.bf-sets{gap:26px 14px;padding:0 4%}.bf-set h2{font-size:14px;margin-top:12px}.bf-includes{font-size:11px}.bf-set .button{padding:11px 8px;font-size:11px}.bf-builder{padding:0 4%}body.bf-building .bf{padding-top:20px}.bf-b-head{flex-direction:column;align-items:flex-start;gap:4px}.bf-b-head h2{font-size:26px}.bf-b-sub{margin-bottom:16px}.bf-j.is-open{padding:14px 12px 16px}.bf-stage-card .bf-stage-pic{max-width:230px}.bf-stage-name{font-size:19px;margin-top:8px}.bf-sws{display:flex;overflow-x:auto;gap:6px;padding:3px 2px 6px;scroll-snap-type:x proximity}.bf-sw{flex:0 0 46px;height:46px;scroll-snap-align:start}.bf-row{grid-template-columns:repeat(2,minmax(0,1fr))}.bf-row .bf-field:last-child{grid-column:1/-1}.bf-field select,.bf-field input{font-size:16px}.bf-bar{gap:10px;padding:10px 0}.bf-bar-text{font-size:12px}.bf-bar .button{padding:12px 14px}.bf-charms{grid-template-columns:repeat(auto-fill,minmax(64px,1fr))}.bf-dialog{padding:26px 16px 20px}.bf-charm-dialog h2{font-size:21px;padding-right:26px}}
+@media(max-width:700px){.bf-banner{aspect-ratio:auto;height:min(128vw,560px);max-height:none;align-items:end;margin-bottom:34px}.bf-banner:after{content:"";position:absolute;inset:0;background:linear-gradient(to bottom,rgba(246,243,238,0) 56%,rgba(246,243,238,.9) 86%);pointer-events:none}.bf-banner-photo img{object-position:33% 50%}.bf-banner-copy{width:100%;text-align:center;padding:0 7% 20px}.bf-banner h1{font-size:36px;letter-spacing:-.8px}.bf-sets{gap:26px 14px;padding:0 4%}.bf-set h2{font-size:14px;margin-top:12px}.bf-includes{font-size:11px}.bf-set .button{padding:11px 8px;font-size:11px}.bf-builder{padding:0 4%}body.bf-building .bf{padding-top:20px}.bf-b-head{flex-direction:column;align-items:flex-start;gap:4px}.bf-b-head h2{font-size:26px}.bf-b-sub{margin-bottom:16px}.bf-j.is-open{padding:14px 12px 16px}.bf-stage-card .bf-stage-pic{max-width:230px}.bf-stage-name{font-size:19px;margin-top:8px}.bf-sws{display:flex;overflow-x:auto;gap:6px;padding:3px 2px 6px;scroll-snap-type:x proximity}.bf-sw{flex:0 0 46px;height:46px;scroll-snap-align:start}.bf-row{grid-template-columns:repeat(2,minmax(0,1fr))}.bf-row .bf-field:last-child{grid-column:1/-1}.bf-field select,.bf-field input{font-size:16px}.bf-bar{gap:10px;padding:10px 0}.bf-bar-text{font-size:12px}.bf-bar .button{padding:12px 14px}.bf-charms{grid-template-columns:repeat(auto-fill,minmax(64px,1fr))}.bf-dialog{padding:26px 16px 20px}.bf-charm-dialog h2{font-size:21px;padding-right:26px}}
 </style></head><body data-view="black-friday">
 <div class="notice">Handmade in Canada · Shipping worldwide · Secure checkout</div>
 <header class="centered-header"><nav class="nav-left" aria-label="Shop"><a data-page="home" href="/">Home</a><a data-page="journals" href="/journals">The Journals</a><a data-page="leathers" href="/leathers">The Leathers</a><a data-page="design" href="/design">Design Your Journal</a></nav><a class="logo" href="/" aria-label="KASS home"><img src="assets/kass-logo.svg" alt="KASS"></a><nav class="nav-right" aria-label="About and help"><a data-page="story" href="/story">Our Story</a><a data-page="care" href="/care">FAQ & Care</a><a data-page="reviews" href="/reviews">Customer Reviews</a></nav></header>
@@ -212,8 +211,7 @@ body.bf-building .bf{padding-top:34px}
   <div class="bf-banner-photo"><picture><source media="(max-width: 700px)" srcset="assets/bf-banner-900.webp 900w, assets/bf-banner.webp 1605w" sizes="210vw"><img src="assets/bf-banner-wide.webp" srcset="assets/bf-banner-wide-1600.webp 1600w, assets/bf-banner-wide.webp 2555w" sizes="100vw" alt="Two rolled KASS leather journals, one forest green and one red, held in someone’s hands" width="2555" height="980" fetchpriority="high"></picture></div>
   <div class="bf-banner-copy">
     <h1 id="bf-title">Black Friday <em>sets</em></h1>
-    <p class="bf-when" id="bf-when" role="status" aria-live="polite">Email subscribers shop first on Wednesday, November 25 at 9 am ET. Everyone else from Friday, November 27.</p>
-    <p class="bf-banner-actions"><button type="button" class="underlink bf-early-link" id="bf-early-open" hidden>Get early access</button><a class="underlink" id="bf-ended-link" href="/design" hidden>Design a journal</a></p>
+    <p class="bf-banner-actions" hidden><a class="underlink" id="bf-ended-link" href="/design">Design a journal</a></p>
   </div>
 </section>
 
@@ -335,18 +333,11 @@ const always=new Set(window.KASS_UNAVAILABLE_LEATHERS||[]),onlySizes=window.KASS
 const leatherOk=(name,size)=>!always.has(name)&&!(stock.soldOut||[]).includes(name)&&!((stock.soldOutSizes||{})[name]||[]).includes(size)&&(onlySizes[name]||['A5','A6']).includes(size);
 const charmOk=id=>!(stock.charmsSoldOut||[]).includes(id);
 
-// ---------- banner line and set buttons ----------
-const L={early:'Wednesday, November 25 at 9 am ET',public:'Friday, November 27',end:'Sunday, November 29 at 11:59 pm ET'};
+// ---------- banner (title only) and set buttons ----------
+const L={early:'Wednesday, November 25 at 9 am ET'};
 function renderStatus(){
   const p=phase(),u=unlocked();
-  const text=p==='soon'?(u?'You’re on the early-access list ♡ The sets open for you on '+L.early+'.':'Email subscribers shop first on '+L.early+'. Everyone else from '+L.public+'.')
-    :p==='early'?(u?'Early access is open for you, until '+L.end+', or while sets last.':'Early access is open for email subscribers. Everyone else from '+L.public+' at 12 am ET.')
-    :p==='open'?'Until '+L.end+', or while sets last.'
-    :'The Black Friday sale has ended. Thank you for all your love this weekend ♡';
-  el('bf-when').textContent=text;
-  const early=(p==='soon'||p==='early')&&!u,ended=p==='ended';
-  el('bf-early-open').hidden=!early;el('bf-ended-link').hidden=!ended;
-  el('bf-early-open').parentElement.hidden=!early&&!ended;
+  el('bf-ended-link').parentElement.hidden=p!=='ended'; // after the sale: a link to design a journal
   el('bf-preview-note').hidden=!preview||p==='open'||(p==='early'&&u);
 }
 function renderCards(){
@@ -376,7 +367,6 @@ function openEarly(){
   track('bf_early_open',{phase:phase()});
 }
 function closeEarly(){try{dlg.close()}catch(e){dlg.removeAttribute('open')}}
-el('bf-early-open').addEventListener('click',openEarly);
 el('bf-early-close').addEventListener('click',closeEarly);
 el('bf-early-ok').addEventListener('click',closeEarly);
 dlg.addEventListener('click',e=>{if(e.target===dlg)closeEarly()});
