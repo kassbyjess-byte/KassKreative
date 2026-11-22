@@ -108,7 +108,8 @@ body[data-view=journals] #journals h1{font-family:Arial,Helvetica,sans-serif;fon
 .bf-sets{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:28px 22px;padding:0 5%;max-width:1240px;margin:0 auto;box-sizing:border-box}
 .bf-set{display:flex;flex-direction:column}
 .bf-photo{aspect-ratio:1;width:100%}
-.bf-photo img{width:100%;height:100%;object-fit:cover;display:block}
+.bf-photo:not(.blank){background:var(--paper)}
+.bf-photo img{width:100%;height:100%;object-fit:cover;display:block;mix-blend-mode:multiply}
 .bf-set h2{font:normal 16px/1.4 Arial,Helvetica,sans-serif;letter-spacing:0;margin:17px 0 6px;color:var(--ink)}
 .bf-includes{font-size:12px;line-height:1.6;color:var(--muted);margin:0 0 8px}
 .bf-price{font-size:13px;margin:auto 0 14px;color:var(--ink)}
@@ -218,21 +219,21 @@ body.bf-building .bf{padding-top:34px}
 
 <section class="bf-sets" id="bf-sets" aria-label="The Black Friday sets">
   <article class="bf-set" id="set-travel">
-    <div class="bf-photo blank" aria-hidden="true"><span>Travel Set photo</span></div>
+    <div class="bf-photo"><img src="assets/travel.webp" alt="The Travel Set: a burgundy and a brown A6 KASS leather journal" width="1000" height="1000" decoding="async"></div>
     <h2>The Travel Set</h2>
     <p class="bf-includes">2 A6 journals · 4 lined notebooks · 2 charms · 2 dust bags</p>
     <p class="bf-price">$209 CAD <s>$306</s></p>
     <button type="button" class="button primary" data-build="travel">Design your set</button>
   </article>
   <article class="bf-set" id="set-everyday">
-    <div class="bf-photo blank" aria-hidden="true"><span>Everyday Set photo</span></div>
+    <div class="bf-photo"><img src="assets/everyday.webp" alt="The Everyday Set: a red A5 and a red A6 KASS leather journal" width="1000" height="1000" decoding="async"></div>
     <h2>The Everyday Set</h2>
     <p class="bf-includes">1 A5 + 1 A6 journal · 5 lined notebooks · 2 charms · 2 dust bags</p>
     <p class="bf-price">$249 CAD <s>$336</s></p>
     <button type="button" class="button primary" data-build="everyday">Design your set</button>
   </article>
   <article class="bf-set" id="set-signature">
-    <div class="bf-photo blank" aria-hidden="true"><span>Signature Set photo</span></div>
+    <div class="bf-photo"><img src="assets/signature.webp" alt="The Signature Set: a forest green and a brown A5 KASS leather journal" width="1000" height="1000" decoding="async"></div>
     <h2>The Signature Set</h2>
     <p class="bf-includes">2 A5 journals · 6 lined notebooks · 2 charms · 2 dust bags</p>
     <p class="bf-price">$269 CAD <s>$366</s></p>
