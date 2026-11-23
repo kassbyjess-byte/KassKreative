@@ -1999,6 +1999,7 @@
                     journals: journalsFromFulfillment(ff) || o.journals || [],
                     accessories: o.accessories || [],
                     item_counts: o.item_counts || null,
+                    bf_sets: o.bf_sets || [],
                     status: ff.status || 'paid',
                     fulfillment: ff,
                     is_manual: !!o.is_manual,
@@ -2029,6 +2030,9 @@
                 const manualBadge = order.is_manual
                     ? `<span style="display:inline-block; margin-left:0.4rem; padding:0.15rem 0.5rem; background:#5C3A21; color:#fff; border-radius:3px; font-size:0.65rem; font-weight:500; letter-spacing:0.05em;">${manualLabels[order.payment_method] || 'MANUAL'}</span>`
                     : '';
+                const bfBadge = order.bf_sets && order.bf_sets.length
+                    ? `<span title="${esc(order.bf_sets.map(x => x.name).join(', '))}" style="display:inline-block; margin-left:0.4rem; padding:0.15rem 0.5rem; background:#8f1d2b; color:#fff; border-radius:3px; font-size:0.65rem; font-weight:500; letter-spacing:0.05em;">BLACK FRIDAY</span>`
+                    : '';
                 const journals = order.journals && order.journals.length
                     ? order.journals
                     : [{ size: order.metadata.size, leather: order.metadata.leather }];
@@ -2043,7 +2047,7 @@
                 <tr onclick="viewOrder('${order.id}')" class="${selectedOrderIds.has(order.id) ? 'is-selected' : ''}">
                     <td class="select-cell" onclick="event.stopPropagation()"><input type="checkbox" ${selectedOrderIds.has(order.id) ? 'checked' : ''} onchange="toggleOrderSelect('${order.id}', this.checked)" aria-label="Select order"></td>
                     <td>${date}</td>
-                    <td>${esc(order.customer_name)}${manualBadge}<br><small style="color:var(--text-light);">${esc(order.customer_email || (order.is_manual ? '(manual order)' : ''))}</small></td>
+                    <td>${esc(order.customer_name)}${manualBadge}${bfBadge}<br><small style="color:var(--text-light);">${esc(order.customer_email || (order.is_manual ? '(manual order)' : ''))}</small></td>
                     <td>${col('size')}</td>
                     <td>${col('leather')}</td>
                     <td>${col('string_colour')}</td>
@@ -2457,11 +2461,23 @@
                 }
 
                 const orderAccessories = order.accessories || [];
-                const boxes = journalsList.map((j, i) => journalBoxHtml(i, j)).join('');
+                // Black Friday sets: which journals are in which set, and the charm included with each
+                const bfSets = order.bf_sets || [];
+                const setCharms = orderAccessories.filter(a => a.in_set);
+                bfSets.forEach(set => set.journals.forEach(n => {
+                    const j = journalsList[n - 1], c = setCharms.find(a => a.journal === n);
+                    if (j) { j.set_name = j.set_name || set.name; j.set_charm = j.set_charm || (c && c.charm) || ''; }
+                }));
+                const packNotes = bfSets.map(set => `
+                    <div class="bf-pack-note" style="border:1px solid #e8c9cd; background:#fbf3f3; border-radius:12px; padding:0.85rem 1rem; margin-bottom:1rem;">
+                        <div style="font-weight:600; color:#8f1d2b;">${esc(set.name)} · Black Friday set · Journal${set.journals.length > 1 ? 's' : ''} ${set.journals.join(', ')}</div>
+                        <div style="margin-top:0.3rem;">Pack: ${esc(set.includes)}. Each journal gets the charm shown on it below. Set price $${((set.amount || 0) / 100).toFixed(2)} (charms included).</div>
+                    </div>`).join('');
+                const boxes = packNotes + journalsList.map((j, i) => journalBoxHtml(i, j)).join('');
                 const accRows = orderAccessories.map(a => `
                             <div class="detail-card">
                                 <div class="detail-label">${a.kind === 'add-on' ? 'Add-on' : 'Charm'}</div>
-                                <div class="detail-value" style="margin-top:0.25rem;">${esc(a.accessory_name || a.name)}${(a.quantity || 1) > 1 ? ' × ' + a.quantity : ''} — <span style="color:var(--cognac); font-weight:500;">$${((a.amount || 0) / 100).toFixed(2)}</span></div>
+                                <div class="detail-value" style="margin-top:0.25rem;">${esc(a.accessory_name || a.name)}${(a.quantity || 1) > 1 ? ' × ' + a.quantity : ''} — <span style="color:var(--cognac); font-weight:500;">${a.in_set ? 'included in the set' : '$' + ((a.amount || 0) / 100).toFixed(2)}</span></div>
                             </div>`).join('');
                 journalSpecs.innerHTML = `
                     <div id="journalBoxes">${boxes || '<p style="color:var(--text-light); margin:0 0 1rem;">No journals on this order.</p>'}</div>
@@ -2535,10 +2551,11 @@
             return `
                     <div class="journal-detail-edit" data-journal-detail-index="${i}" style="border: 1px solid var(--border); border-radius: 12px; padding: 1rem; margin-bottom: 1rem;">
                         <div class="journal-box-head">
-                            <h3 style="color: var(--primary);">Journal ${i + 1}</h3>
+                            <h3 style="color: var(--primary);">Journal ${i + 1}</h3>${j.set_name ? `<span class="jd-set-tag" style="margin-right:auto; margin-left:0.6rem; padding:0.15rem 0.55rem; border-radius:999px; background:#8f1d2b; color:#fff; font-size:0.7rem; letter-spacing:0.04em;">${esc(j.set_name)} · Black Friday</span>` : ''}
                             <button type="button" class="btn-remove-journal-detail" onclick="removeJournalDetailRow(this)">Remove</button>
                         </div>
-                        <div class="detail-grid" style="margin-bottom: 0;">
+                        <div class="detail-grid" style="margin-bottom: 0;">${j.set_name ? `
+                            <div class="detail-card" style="border-color:#e8c9cd; background:#fbf3f3;"><div class="detail-label">Charm (included in the set)</div><div class="detail-value" style="margin-top:0.25rem; font-weight:600;">${esc(j.set_charm || 'See the website request')}</div></div>` : ''}
                             <div class="detail-card"><div class="detail-label">Size</div>${sel('jd-size', o.sizeOptions, j.size || '')}</div>
                             <div class="detail-card"><div class="detail-label">Leather Colour</div>${sel('jd-leather', o.leatherOptions, j.leather || '')}</div>
                             <div class="detail-card"><div class="detail-label">String Colour</div>${sel('jd-string', o.stringOptions, j.string_colour || '')}</div>
