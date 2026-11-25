@@ -17,7 +17,7 @@ window.KASS_LEATHER_SIZES = {
 /* Black Friday page (kasskreative.com/black-friday). While live is false, customers can't see the page or the sale bar
    at the top of the site. To look at it before launch, open kasskreative.com/black-friday?preview=kass-sneak-peek once
    on a phone or computer; that device can then see it (…?preview=off stops that). Set live: true to launch. */
-window.KASS_BLACK_FRIDAY = window.KASS_BLACK_FRIDAY || { live: false };
+window.KASS_BLACK_FRIDAY = window.KASS_BLACK_FRIDAY || { live: true };
 
 /* Newsletter pop-up ("little notes from kass"). It appears after delaySeconds on a page, or once
    the visitor has scrolled scrollPercent of the way down, whichever comes first. It never appears
